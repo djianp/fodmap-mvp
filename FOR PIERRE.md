@@ -31,7 +31,7 @@ Three components, sitting in three places on the internet:
 When you open `fodmap-mvp.vercel.app` on your phone:
 
 1. **Vercel** ships you an `index.html` (715 bytes), a CSS bundle (1 KB), and a JS bundle (~120 KB gzipped). All served via HTTP/2 from a server in Paris, ~10ms away from your phone.
-2. The JS bundle boots. It's a **React app** that renders inside a phone-frame mockup. Before doing anything else, it asks **Supabase**: "do I have a session?" If no, it shows the **Login screen**. If yes, it queries the database.
+2. The JS bundle boots. It's a **React app** that renders as a mobile-first column — edge-to-edge on phones, centered with cream margins on desktop. Before doing anything else, it asks **Supabase**: "do I have a session?" If no, it shows the **Login screen**. If yes, it queries the database.
 3. **Supabase** handles two jobs: it issues short-lived JWTs (proof-of-identity tokens) when you click a magic link, and it serves data through a Postgres-backed REST API that respects per-row authorization rules.
 4. Every database query the app makes (`SELECT * FROM restos`, `INSERT INTO meals`, etc.) carries your JWT. Supabase reads the JWT, extracts your user ID, and uses it to filter what you can see and write. **Other users querying the same tables can't see your rows, ever.**
 
@@ -51,7 +51,7 @@ The project lives in `fodmap/`. Every file fits in your head.
 
 - **`src/App.jsx`** — the **router**, even though we don't use a routing library. It checks Supabase for a session, and either:
   - Shows `<Login />` if you're logged out, or
-  - Shows `<AppShell />` (the phone frame, status bar, sign-out button, current screen, and tab bar) if you're logged in.
+  - Shows `<AppShell />` (the current screen wrapped in a centered column, the bottom tab bar, and a muted "se déconnecter" link below the tab content) if you're logged in.
 
   React Router would be over-engineering for two tabs that aren't even URL-routed. We use plain `useState` for which tab is active.
 
@@ -74,7 +74,7 @@ The project lives in `fodmap/`. Every file fits in your head.
 
 ### The presentation layer (`src/components/`, `src/screens/`)
 
-- **`components/ui.jsx`** — small, dumb, reusable pieces: `Thumb` (the round food icon), `Verdict` (the green/amber/red pill), `Chip` (the filter pill), `FoodRow`, `BlobLogo`, `IconBtn`, `StatusBar`. None of them touch Supabase or know about user data. They just render based on props.
+- **`components/ui.jsx`** — small, dumb, reusable pieces: `Thumb` (the round food icon), `Verdict` (the green/amber/red pill), `Chip` (the filter pill), `FoodRow`, `BlobLogo`, `IconBtn`. None of them touch Supabase or know about user data. They just render based on props.
 
 - **`screens/aliments.jsx`** — the food browser. Takes `FOODS`, applies search + category filter, groups by category, sorts by verdict within each group. Uses only `useState` and `useMemo`.
 

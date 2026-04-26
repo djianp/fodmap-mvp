@@ -110,13 +110,39 @@ Three things tipped Supabase:
 
 The real cost of Supabase (and Firebase) is that you're tied to their identity and authorization model. If you ever want self-hosted Postgres, Supabase's open-source mode is migratable. Firebase is more locked-in. But you won't think about this for years.
 
-### Why Vercel, not Netlify / Cloudflare Pages / GitHub Pages
+### Vercel: what it is, and what it does for this project
 
-- **Vercel auto-detected Vite** without any config, set up the GitHub integration, and gave you a free `*.vercel.app` URL with HTTPS. That's the entire onboarding.
-- **Atomic rollback** — every push creates a new immutable deploy. If `git push` ships a bug, you click "promote to production" on the previous deploy and instantly roll back. No `git revert`. That's a real safety net.
-- **Preview deploys for branches** — every PR gets its own URL. We didn't use this yet, but it's free safety once you have it.
+**Vercel is a build-and-deploy platform for the front-end.** You give it a Git repo; it gives you a live URL with HTTPS, fast global delivery, and automatic redeploys on every push. Everything else is variations on that theme.
 
-Netlify and Cloudflare Pages would do all of this fine too. The choice was largely "Vercel has marginally better DX for Vite specifically." Don't overthink hosting choices for static sites.
+That sentence is true but abstract. Concretely, Vercel did **eight specific things** for this project, and noticing them once helps you remember what's where forever:
+
+1. **Listened to GitHub.** When you imported the repo, Vercel installed a webhook on it. Every `git push` to `main` fires the webhook, and Vercel reacts within ~1 second.
+2. **Built your code on demand.** When the webhook fires, Vercel spins up a clean container in the cloud, runs `npm install` (cached after first run), runs `npm run build`, and captures the contents of `dist/`. Total: ~10-15 seconds. You never touched a build server. You don't have credentials for one. You don't pay for one when it's idle.
+3. **Distributed the output to its CDN.** Once `dist/` is captured, Vercel pushes the files to its edge network — dozens of servers worldwide, with one in Paris (`cdg1`) that's a few milliseconds from your phone. When your phone hits `fodmap-mvp.vercel.app`, it's actually talking to the closest edge.
+4. **Issued HTTPS for free.** Vercel auto-issued an SSL certificate via Let's Encrypt for the domain. They renew it. They set the HSTS header that tells browsers "always use HTTPS for this domain." You don't think about it.
+5. **Promoted the new bundle atomically.** When a build finishes, Vercel doesn't replace files one-by-one (which would create a half-state where some users see old files and some see new). It atomically swaps *the whole deployment* — a single pointer flip. Every user globally gets either the old version or the new version, never a mix.
+6. **Kept every previous deploy alive forever.** You can roll back to any past deploy with one click. They don't garbage-collect old deploys on your plan. *This is what makes "ship and pray" actually safe.* No `git revert`, no panic.
+7. **Blocked an unsigned commit.** Remember "deployment blocked because the commit email couldn't be matched"? That's CI security — Vercel refusing to ship code from an unverified author. Annoying when you trip on it; valuable in the abstract.
+8. **Triggered bot mitigation when *I* hammered it.** The "Vercel Security Checkpoint" page my polling loop got is their DDoS protection. Real users never see it; automated traffic does. The fact that you, as a real user, never saw the challenge is exactly what's supposed to happen.
+
+**The four-word version**: code-to-URL in one step.
+
+Without Vercel (or one of its competitors), the same outcome would need: a Linux server running 24/7 ($5-20/mo), nginx config, SSL cert renewal automation (Let's Encrypt + cron), a CI pipeline (~30 lines of GitHub Actions YAML), a deploy script (rsync? scp? push-to-server-and-restart?), and rollback logic you'd implement yourself or just hope. Vercel reduces all of it to "connect GitHub, click Deploy."
+
+#### What Vercel is *not*
+
+- **Not a server.** It serves static files; it doesn't run application code continuously. If you ever need a custom backend endpoint (e.g., to send a Slack notification when a meal is added), you'd write a **serverless function** — Vercel cold-starts it on demand, runs it, shuts it down. Cheap for low traffic but limited (10-second timeouts on Hobby plan, no persistent state).
+- **Not a database.** That's why we needed Supabase separately. Vercel can hold static files; persistent user data lives elsewhere on purpose.
+- **Not React-specific.** Despite Vercel being founded by the team behind Next.js, it hosts any static site or framework: Vite (us), Astro, SvelteKit, Hugo, raw HTML.
+
+#### Why Vercel and not Netlify / Cloudflare Pages / GitHub Pages
+
+- **Netlify** is functionally equivalent. Slightly different UI, same capabilities, same pricing. We picked Vercel because the team that builds Next.js builds Vercel, the Vite auto-detection was instantaneous, and the GitHub integration setup was zero-config.
+- **Cloudflare Pages** is also equivalent, with bonus access to Workers (their serverless platform) at the edge. Best if you already use Cloudflare for DNS/email.
+- **GitHub Pages** is free and basic; no real build step (or a clunky GitHub Actions one). Fine for static documentation; underpowered for app-like projects.
+- **AWS Amplify** is Amazon's version. More configurable, more complex to set up. Skip until you're committed to AWS for other reasons.
+
+The honest answer: hosting choice for a static site barely matters. Don't overthink it.
 
 ### Why magic-link auth, not email/password / Google OAuth / passkeys
 

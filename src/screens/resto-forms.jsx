@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { addResto, addMeal, getAllProteines } from '../lib/user-data.js'
+import { addResto, addMeal } from '../lib/user-data.js'
 
 function Field({ label, children, hint }) {
   return (
@@ -62,7 +62,7 @@ function StarInput({ value, onChange }) {
   )
 }
 
-function FormShell({ title, onClose, onSubmit, submitLabel, disabled, children }) {
+function FormShell({ title, onClose, onSubmit, submitLabel, disabled, error, children }) {
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', esc)
@@ -96,6 +96,13 @@ function FormShell({ title, onClose, onSubmit, submitLabel, disabled, children }
         </div>
         <div style={{ padding: '16px 18px' }}>
           {children}
+          {error && (
+            <div style={{ padding: '10px 12px', background: '#f0a390',
+              border: '1.5px solid #1f1a14', borderRadius: 10, fontSize: 12,
+              color: '#1f1a14', marginTop: 8 }}>
+              {error}
+            </div>
+          )}
         </div>
         <div style={{
           padding: '12px 18px 18px', borderTop: '2px dashed rgba(31,26,20,0.18)',
@@ -125,26 +132,36 @@ export function AddRestoForm({ onClose, onSaved }) {
     distance_bureau: '', distance_domicile: '',
     rating: 4, takeaway: false,
   })
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
   const update = (k, v) => setForm(s => ({ ...s, [k]: v }))
   const valid = form.nom.trim() && form.adresse.trim() && form.rating
 
-  const submit = () => {
-    if (!valid) return
-    const saved = addResto({
-      nom: form.nom.trim(),
-      adresse: form.adresse.trim(),
-      phone: form.phone.trim() || '',
-      distance_bureau: parseFloat(form.distance_bureau) || 0,
-      distance_domicile: parseFloat(form.distance_domicile) || 0,
-      rating: parseFloat(form.rating),
-      takeaway: !!form.takeaway,
-    })
-    onSaved(saved)
+  const submit = async () => {
+    if (!valid || submitting) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      const saved = await addResto({
+        nom: form.nom.trim(),
+        adresse: form.adresse.trim(),
+        phone: form.phone.trim() || '',
+        distance_bureau: parseFloat(form.distance_bureau) || 0,
+        distance_domicile: parseFloat(form.distance_domicile) || 0,
+        rating: parseFloat(form.rating),
+        takeaway: !!form.takeaway,
+      })
+      onSaved(saved)
+    } catch (err) {
+      setError(err.message || 'Erreur d’enregistrement')
+      setSubmitting(false)
+    }
   }
 
   return (
     <FormShell title="Nouveau restaurant" onClose={onClose} onSubmit={submit}
-      submitLabel="Ajouter" disabled={!valid}>
+      submitLabel={submitting ? 'Enregistrement…' : 'Ajouter'}
+      disabled={!valid || submitting} error={error}>
       <Field label="Nom *">
         <input value={form.nom} onChange={e => update('nom', e.target.value)}
           placeholder="Ex. Le Petit Marguery" style={inputStyle} autoFocus />
@@ -189,30 +206,40 @@ export function AddRestoForm({ onClose, onSaved }) {
   )
 }
 
-export function AddMealForm({ resto, onClose, onSaved }) {
-  const existingProteines = getAllProteines().filter(p => p !== 'Toutes')
+export function AddMealForm({ resto, proteines, onClose, onSaved }) {
+  const existingProteines = (proteines || []).filter(p => p !== 'Toutes')
   const [form, setForm] = useState({
     nom: '', proteine: '', proteine_custom: '',
     rating: 4, comment: '',
   })
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
   const update = (k, v) => setForm(s => ({ ...s, [k]: v }))
   const proteineValue = form.proteine === '__new' ? form.proteine_custom.trim() : form.proteine
   const valid = form.nom.trim() && proteineValue && form.rating
 
-  const submit = () => {
-    if (!valid) return
-    addMeal(resto.id, {
-      nom: form.nom.trim(),
-      proteine: proteineValue,
-      rating: parseFloat(form.rating),
-      comment: form.comment.trim(),
-    })
-    onSaved()
+  const submit = async () => {
+    if (!valid || submitting) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      await addMeal(resto.id, {
+        nom: form.nom.trim(),
+        proteine: proteineValue,
+        rating: parseFloat(form.rating),
+        comment: form.comment.trim(),
+      })
+      onSaved()
+    } catch (err) {
+      setError(err.message || 'Erreur d’enregistrement')
+      setSubmitting(false)
+    }
   }
 
   return (
     <FormShell title={`Nouveau plat · ${resto.nom}`} onClose={onClose} onSubmit={submit}
-      submitLabel="Ajouter" disabled={!valid}>
+      submitLabel={submitting ? 'Enregistrement…' : 'Ajouter'}
+      disabled={!valid || submitting} error={error}>
       <Field label="Nom du plat *" hint="Terminer par le prix entre parenthèses, ex. (22€)">
         <input value={form.nom} onChange={e => update('nom', e.target.value)}
           placeholder="Ex. Dorade grillée, riz blanc (24€)" style={inputStyle} autoFocus />

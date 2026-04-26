@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BlobLogo, Chip } from '../components/ui.jsx'
-import { getMergedRestos, getAllProteines } from '../lib/user-data.js'
+import { useRestos } from '../lib/user-data.js'
 import { AddRestoForm, AddMealForm } from './resto-forms.jsx'
 
 function Stars({ value, size = 11 }) {
@@ -50,33 +50,35 @@ function RestoCard({ r, location, onAddMeal }) {
             <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 3 }}>{r.adresse}</div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#1f1a14', letterSpacing: '-0.2px' }}>{r.rating.toFixed(1)}</div>
-            <Stars value={r.rating} size={10} />
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#1f1a14', letterSpacing: '-0.2px' }}>{Number(r.rating).toFixed(1)}</div>
+            <Stars value={Number(r.rating)} size={10} />
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ padding: '4px 9px', borderRadius: 999,
             background: '#e9d7b6', border: '1.5px solid #1f1a14',
             fontSize: 10, fontWeight: 600, color: '#2d1e0f', whiteSpace: 'nowrap' }}>
-            {dist.toFixed(1)} km · {location === 'bureau' ? 'bureau' : 'domicile'}
+            {Number(dist).toFixed(1)} km · {location === 'bureau' ? 'bureau' : 'domicile'}
           </span>
           {r.takeaway && <span style={{ padding: '4px 9px', borderRadius: 999,
             background: '#b8d398', border: '1.5px solid #1f1a14',
             fontSize: 10, fontWeight: 600, color: '#1f1a14', whiteSpace: 'nowrap' }}>
             À emporter
           </span>}
-          <a href={`tel:${r.phone}`} style={{
-            marginLeft: 'auto', padding: '6px 12px',
-            background: '#1f1a14', color: '#f5f0e6', textDecoration: 'none',
-            borderRadius: 999, fontSize: 11, fontWeight: 600,
-            border: '1.5px solid #1f1a14', display: 'inline-flex', alignItems: 'center', gap: 5,
-            whiteSpace: 'nowrap',
-          }}>
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
-            Appeler
-          </a>
+          {r.phone && (
+            <a href={`tel:${r.phone}`} style={{
+              marginLeft: 'auto', padding: '6px 12px',
+              background: '#1f1a14', color: '#f5f0e6', textDecoration: 'none',
+              borderRadius: 999, fontSize: 11, fontWeight: 600,
+              border: '1.5px solid #1f1a14', display: 'inline-flex', alignItems: 'center', gap: 5,
+              whiteSpace: 'nowrap',
+            }}>
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              Appeler
+            </a>
+          )}
           {onAddMeal && (
             <button onClick={() => onAddMeal(r)} aria-label="Ajouter un plat" title="Ajouter un plat" style={{
               padding: 0, width: 28, height: 28,
@@ -86,16 +88,17 @@ function RestoCard({ r, location, onAddMeal }) {
               cursor: 'pointer', fontFamily: 'inherit',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
+              marginLeft: r.phone ? 0 : 'auto',
             }}>+</button>
           )}
         </div>
       </div>
 
       <div style={{ padding: '10px 14px 14px' }}>
-        {r.meals.map((m, i) => (
-          <div key={i} style={{
+        {(r.meals || []).map((m) => (
+          <div key={m.id || m.nom} style={{
             padding: '10px 0',
-            borderBottom: i < r.meals.length - 1 ? '1px dashed rgba(31,26,20,0.12)' : 'none',
+            borderBottom: '1px dashed rgba(31,26,20,0.12)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -103,8 +106,8 @@ function RestoCard({ r, location, onAddMeal }) {
                   {m.nom}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                  <Stars value={m.rating} size={10} />
-                  <span style={{ fontSize: 10, color: '#7a6b55', fontWeight: 600 }}>{m.rating.toFixed(1)}</span>
+                  <Stars value={Number(m.rating)} size={10} />
+                  <span style={{ fontSize: 10, color: '#7a6b55', fontWeight: 600 }}>{Number(m.rating).toFixed(1)}</span>
                 </div>
               </div>
             </div>
@@ -117,6 +120,11 @@ function RestoCard({ r, location, onAddMeal }) {
             )}
           </div>
         ))}
+        {(!r.meals || r.meals.length === 0) && (
+          <div style={{ padding: '10px 0', fontSize: 11, color: '#a39a8d', fontStyle: 'italic' }}>
+            Aucun plat noté pour ce resto.
+          </div>
+        )}
       </div>
     </div>
   )
@@ -124,7 +132,8 @@ function RestoCard({ r, location, onAddMeal }) {
 
 function MapView({ restos, location, onPinClick }) {
   const positioned = restos.map((r, i) => {
-    const hash = r.id.charCodeAt(1) * 17
+    const seedChar = (r.id || r.nom || 'x').charCodeAt(1) || 17
+    const hash = seedChar * 17
     const x = 15 + ((hash * 3.1) % 70)
     const y = 12 + ((hash * 1.7 + i * 11) % 76)
     return { ...r, x, y }
@@ -220,6 +229,7 @@ function RestoModal({ resto, location, onClose, onAddMeal }) {
 }
 
 export function MVPRestosScreen() {
+  const { restos, loading, error, proteines, refresh } = useRestos()
   const [location, setLocation] = useState('bureau')
   const [takeaway, setTakeaway] = useState('all')
   const [proteine, setProteine] = useState('Toutes')
@@ -227,24 +237,19 @@ export function MVPRestosScreen() {
   const [selected, setSelected] = useState(null)
   const [showAddResto, setShowAddResto] = useState(false)
   const [addMealFor, setAddMealFor] = useState(null)
-  const [refreshTick, setRefreshTick] = useState(0)
-  const bump = () => setRefreshTick(t => t + 1)
-
-  const allRestos = useMemo(() => getMergedRestos(), [refreshTick])
-  const proteinesList = useMemo(() => getAllProteines(), [refreshTick])
 
   const filtered = useMemo(() => {
-    let list = allRestos.slice()
+    let list = restos.slice()
     if (takeaway === 'yes') list = list.filter(r => r.takeaway)
     if (takeaway === 'no') list = list.filter(r => !r.takeaway)
     if (proteine !== 'Toutes') {
       list = list
-        .map(r => ({ ...r, meals: r.meals.filter(m => m.proteine === proteine) }))
+        .map(r => ({ ...r, meals: (r.meals || []).filter(m => m.proteine === proteine) }))
         .filter(r => r.meals.length > 0)
     }
-    list.sort((a, b) => b.rating - a.rating)
+    list.sort((a, b) => Number(b.rating) - Number(a.rating))
     return list
-  }, [takeaway, proteine, allRestos])
+  }, [takeaway, proteine, restos])
 
   return (
     <>
@@ -265,12 +270,15 @@ export function MVPRestosScreen() {
         </div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div style={{ fontSize: 12, color: '#7a6b55' }}>{filtered.length} approuvés · triés par note</div>
-        <button onClick={() => setShowAddResto(true)} style={{
+        <div style={{ fontSize: 12, color: '#7a6b55' }}>
+          {loading ? 'Chargement…' : `${filtered.length} approuvés · triés par note`}
+        </div>
+        <button onClick={() => setShowAddResto(true)} disabled={loading} style={{
           padding: '6px 12px', borderRadius: 999,
-          background: '#1f1a14', color: '#f5f0e6',
-          border: '2px solid #1f1a14', boxShadow: '0 2px 0 #1f1a14',
-          fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+          background: loading ? '#d9c3a0' : '#1f1a14',
+          color: loading ? '#7a6b55' : '#f5f0e6',
+          border: '2px solid #1f1a14', boxShadow: loading ? 'none' : '0 2px 0 #1f1a14',
+          fontSize: 11, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
           display: 'inline-flex', alignItems: 'center', gap: 4, letterSpacing: 0.3,
         }}>
           <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> Resto
@@ -290,15 +298,26 @@ export function MVPRestosScreen() {
         <span style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
           fontWeight: 700, color: '#7a6b55' }}>Protéine</span>
         <div style={{ flex: 1 }}>
-          <Select value={proteine} options={proteinesList} onChange={setProteine} />
+          <Select value={proteine} options={proteines} onChange={setProteine} />
         </div>
       </div>
 
-      {view === 'map' ? (
+      {error && (
+        <div style={{ padding: 14, background: '#f0a390', border: '2px solid #1f1a14',
+          borderRadius: 12, fontSize: 12, color: '#1f1a14', marginBottom: 14 }}>
+          Erreur de chargement : {error.message || String(error)}
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#7a6b55', fontSize: 13 }}>
+          Chargement des restos…
+        </div>
+      ) : view === 'map' ? (
         <MapView restos={filtered} location={location} onPinClick={setSelected} />
       ) : (
         <>
-          {filtered.map(r => <RestoCard key={r.id + ':' + r.meals.length} r={r} location={location} onAddMeal={setAddMealFor} />)}
+          {filtered.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} />)}
           {filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7a6b55' }}>
               Aucun resto trouvé avec ces filtres.
@@ -312,14 +331,15 @@ export function MVPRestosScreen() {
       {showAddResto && (
         <AddRestoForm
           onClose={() => setShowAddResto(false)}
-          onSaved={() => { setShowAddResto(false); bump() }}
+          onSaved={() => { setShowAddResto(false); refresh() }}
         />
       )}
       {addMealFor && (
         <AddMealForm
           resto={addMealFor}
+          proteines={proteines}
           onClose={() => setAddMealFor(null)}
-          onSaved={() => { setAddMealFor(null); bump() }}
+          onSaved={() => { setAddMealFor(null); refresh() }}
         />
       )}
     </>

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { StatusBar } from './components/ui.jsx'
 import { MVPAlimentsScreen } from './screens/aliments.jsx'
 import { MVPRestosScreen } from './screens/restos.jsx'
+import { Login } from './screens/login.jsx'
+import { supabase } from './lib/supabase.js'
 
 function MVPTabBar({ current, onChange }) {
   const tabs = [
@@ -40,7 +42,31 @@ function MVPTabBar({ current, onChange }) {
   )
 }
 
-export default function App() {
+function SignOutButton() {
+  return (
+    <button
+      onClick={() => supabase.auth.signOut()}
+      title="Se déconnecter"
+      aria-label="Se déconnecter"
+      style={{
+        position: 'absolute', top: 12, right: 14, zIndex: 25,
+        width: 30, height: 30, borderRadius: 999,
+        background: '#fff', border: '1.5px solid #1f1a14',
+        boxShadow: '0 2px 0 #1f1a14',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', padding: 0,
+      }}
+    >
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#1f1a14" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+    </button>
+  )
+}
+
+function AppShell() {
   const initialTab = (() => {
     try { return localStorage.getItem('mvp_tab') || 'aliments' }
     catch { return 'aliments' }
@@ -62,6 +88,7 @@ export default function App() {
       <div className="phone">
         <div className="notch" />
         <StatusBar />
+        <SignOutButton />
         <div ref={scrollRef} className="scroll">
           {tab === 'aliments' && <MVPAlimentsScreen moment={moment} setMoment={setMoment} />}
           {tab === 'restos' && <MVPRestosScreen />}
@@ -71,4 +98,34 @@ export default function App() {
       <div className="caption">MVP · 2 features · Aliments + Restos</div>
     </div>
   )
+}
+
+export default function App() {
+  const [session, setSession] = useState(null)
+  const [loadingSession, setLoadingSession] = useState(true)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setLoadingSession(false)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s)
+    })
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  if (loadingSession) {
+    // Avoid flashing the login screen while we resolve the cached session
+    return (
+      <div className="wrap">
+        <div className="phone">
+          <div className="notch" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!session) return <Login />
+  return <AppShell />
 }

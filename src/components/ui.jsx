@@ -115,19 +115,3 @@ export function IconBtn({ children, onClick }) {
   )
 }
 
-export function StatusBar() {
-  return (
-    <div style={{
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "14px 28px 0", fontSize: 14, fontWeight: 600,
-      position: "absolute", top: 0, left: 0, right: 0, zIndex: 10,
-      color: "#1f1a14", fontFamily: "'Bricolage Grotesque', sans-serif",
-    }}>
-      <span>9:41</span>
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <svg width="16" height="10" viewBox="0 0 16 10"><path d="M1 7h2v2H1zM5 5h2v4H5zM9 3h2v6H9zM13 1h2v8h-2z" fill="currentColor"/></svg>
-        <svg width="22" height="10" viewBox="0 0 22 10"><rect x="0.5" y="0.5" width="18" height="9" rx="2" stroke="currentColor" fill="none"/><rect x="2" y="2" width="15" height="6" rx="1" fill="currentColor"/></svg>
-      </div>
-    </div>
-  )
-}

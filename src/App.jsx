@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import { StatusBar } from './components/ui.jsx'
+import { useEffect, useState } from 'react'
 import { MVPAlimentsScreen } from './screens/aliments.jsx'
 import { MVPRestosScreen } from './screens/restos.jsx'
 import { Login } from './screens/login.jsx'
@@ -21,7 +20,8 @@ function MVPTabBar({ current, onChange }) {
   ]
   return (
     <div style={{
-      position: 'absolute', bottom: 0, left: 0, right: 0, height: 76,
+      position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+      width: '100%', maxWidth: 430, height: 76,
       background: '#fff', borderTop: '2px solid #1f1a14',
       display: 'flex', padding: '10px 14px 18px', gap: 4, zIndex: 20,
     }}>
@@ -42,27 +42,30 @@ function MVPTabBar({ current, onChange }) {
   )
 }
 
-function SignOutButton() {
+function SignOutFooter() {
   return (
-    <button
-      onClick={() => supabase.auth.signOut()}
-      title="Se déconnecter"
-      aria-label="Se déconnecter"
-      style={{
-        position: 'absolute', top: 12, right: 14, zIndex: 25,
-        width: 30, height: 30, borderRadius: 999,
-        background: '#fff', border: '1.5px solid #1f1a14',
-        boxShadow: '0 2px 0 #1f1a14',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', padding: 0,
-      }}
-    >
-      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#1f1a14" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        <polyline points="16 17 21 12 16 7" />
-        <line x1="21" y1="12" x2="9" y2="12" />
-      </svg>
-    </button>
+    <div style={{
+      display: 'flex', justifyContent: 'center',
+      padding: '32px 0 8px',
+    }}>
+      <button
+        onClick={() => supabase.auth.signOut()}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: 'transparent', border: 'none',
+          color: '#7a6b55', fontSize: 13, fontWeight: 600,
+          cursor: 'pointer', padding: '8px 12px',
+          fontFamily: 'inherit',
+        }}
+      >
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+        Se déconnecter
+      </button>
+    </div>
   )
 }
 
@@ -73,29 +76,23 @@ function AppShell() {
   })()
   const [tab, setTab] = useState(initialTab)
   const [moment, setMoment] = useState('midi')
-  const scrollRef = useRef(null)
 
   useEffect(() => {
     try { localStorage.setItem('mvp_tab', tab) } catch {}
   }, [tab])
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = 0
+    window.scrollTo(0, 0)
   }, [tab])
 
   return (
-    <div className="wrap">
-      <div className="phone">
-        <div className="notch" />
-        <StatusBar />
-        <SignOutButton />
-        <div ref={scrollRef} className="scroll">
-          {tab === 'aliments' && <MVPAlimentsScreen moment={moment} setMoment={setMoment} />}
-          {tab === 'restos' && <MVPRestosScreen />}
-        </div>
-        <MVPTabBar current={tab} onChange={setTab} />
+    <div className="phone">
+      <div className="scroll">
+        {tab === 'aliments' && <MVPAlimentsScreen moment={moment} setMoment={setMoment} />}
+        {tab === 'restos' && <MVPRestosScreen />}
+        <SignOutFooter />
       </div>
-      <div className="caption">MVP · 2 features · Aliments + Restos</div>
+      <MVPTabBar current={tab} onChange={setTab} />
     </div>
   )
 }
@@ -117,13 +114,7 @@ export default function App() {
 
   if (loadingSession) {
     // Avoid flashing the login screen while we resolve the cached session
-    return (
-      <div className="wrap">
-        <div className="phone">
-          <div className="notch" />
-        </div>
-      </div>
-    )
+    return <div className="phone" />
   }
 
   if (!session) return <Login />

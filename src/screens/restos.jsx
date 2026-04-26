@@ -200,13 +200,13 @@ function RestoModal({ resto, location, onClose, onAddMeal }) {
   if (!resto) return null
   return (
     <div onClick={onClose} style={{
-      position: 'absolute', inset: 0, zIndex: 30,
+      position: 'fixed', inset: 0, zIndex: 30,
       background: 'rgba(31,26,20,0.55)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       padding: '40px 14px 90px',
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        width: '100%', maxHeight: '100%', overflowY: 'auto',
+        width: '100%', maxWidth: 430, maxHeight: '100%', overflowY: 'auto',
         background: '#f5f0e6', borderRadius: 22, border: '2px solid #1f1a14',
         boxShadow: '0 8px 0 #1f1a14',
         position: 'relative',

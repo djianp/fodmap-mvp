@@ -25,14 +25,13 @@ export function Login() {
   }
 
   return (
-    <div className="wrap">
-      <div className="phone">
-        <div className="notch" />
-        <div className="scroll" style={{
-          display: 'flex', flexDirection: 'column',
-          justifyContent: 'center', alignItems: 'center',
-          padding: '72px 32px 100px', gap: 24,
-        }}>
+    <div className="phone">
+      <div className="scroll" style={{
+        minHeight: '100vh',
+        display: 'flex', flexDirection: 'column',
+        justifyContent: 'center', alignItems: 'center',
+        padding: '72px 32px 100px', gap: 24,
+      }}>
           <BlobLogo size={64} />
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 700, fontSize: 28, letterSpacing: '-0.8px', marginBottom: 6 }}>FODMAP MVP</div>
@@ -95,9 +94,7 @@ export function Login() {
           <div style={{ fontSize: 11, color: '#a39a8d', textAlign: 'center', lineHeight: 1.5, marginTop: 12 }}>
             Tu recevras un lien à usage unique.<br />Pas de mot de passe à retenir.
           </div>
-        </div>
       </div>
-      <div className="caption">Connexion par lien magique</div>
     </div>
   )
 }

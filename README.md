@@ -115,8 +115,11 @@ create table public.restos (
   nom text not null,
   adresse text not null,
   phone text default '',
-  distance_bureau numeric default 0,
-  distance_domicile numeric default 0,
+  place_id text,
+  lat numeric,
+  lng numeric,
+  walk_min_bureau integer,
+  walk_min_domicile integer,
   rating numeric not null check (rating >= 0 and rating <= 5),
   takeaway boolean not null default false,
   created_at timestamptz default now()
@@ -153,7 +156,9 @@ Then configure auth URLs at **Authentication → URL Configuration**:
   - `http://localhost:5173/**`
   - `https://fodmap-mvp.vercel.app/**`
 
-On a new user's first login, the 8 restaurants from `src/data/restos.js` are bulk-inserted into their account by the `seedRestos()` routine in `src/lib/user-data.js`.
+On a new user's first login, the seed restaurants from `src/data/restos.js` are bulk-inserted into their account by the `seedRestos()` routine in `src/lib/user-data.js`. Each seed entry includes its Google `place_id`, lat/lng, and pre-computed walking minutes from the office and home so the map view works immediately.
+
+A separate env var, `VITE_GOOGLE_MAPS_API_KEY`, is required for the map view, the Places-Autocomplete-driven add-resto form, and the walking-time computation. See `CLAUDE.md` for the required API restrictions.
 
 ---
 

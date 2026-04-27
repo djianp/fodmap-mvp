@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BlobLogo, Chip } from '../components/ui.jsx'
+import { GoogleMap } from '../components/google-map.jsx'
 import { useRestos } from '../lib/user-data.js'
+import { placeUrlFor } from '../lib/google-maps.js'
 import { AddRestoForm, AddMealForm } from './resto-forms.jsx'
 
 function Stars({ value, size = 11 }) {
@@ -37,7 +39,8 @@ function Select({ value, options, onChange }) {
 }
 
 function RestoCard({ r, location, onAddMeal }) {
-  const dist = location === 'bureau' ? r.distance_bureau : r.distance_domicile
+  const walkMin = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
+  const mapsUrl = placeUrlFor(r.place_id, `${r.nom} ${r.adresse}`)
   return (
     <div style={{
       background: '#fff', border: '2px solid #1f1a14', borderRadius: 18,
@@ -55,11 +58,17 @@ function RestoCard({ r, location, onAddMeal }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ padding: '4px 9px', borderRadius: 999,
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+            padding: '4px 9px', borderRadius: 999,
             background: '#e9d7b6', border: '1.5px solid #1f1a14',
-            fontSize: 10, fontWeight: 600, color: '#2d1e0f', whiteSpace: 'nowrap' }}>
-            {Number(dist).toFixed(1)} km · {location === 'bureau' ? 'bureau' : 'domicile'}
-          </span>
+            fontSize: 10, fontWeight: 600, color: '#2d1e0f', whiteSpace: 'nowrap',
+            textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
+          }}>
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
+              <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"/>
+            </svg>
+            {walkMin != null ? `${walkMin} min` : '—'}
+          </a>
           {r.takeaway && <span style={{ padding: '4px 9px', borderRadius: 999,
             background: '#b8d398', border: '1.5px solid #1f1a14',
             fontSize: 10, fontWeight: 600, color: '#1f1a14', whiteSpace: 'nowrap' }}>
@@ -251,6 +260,11 @@ export function MVPRestosScreen() {
     return list
   }, [takeaway, proteine, restos])
 
+  const mapRestos = useMemo(() => filtered.filter(r => {
+    const w = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
+    return w != null && w <= 30
+  }), [filtered, location])
+
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -314,7 +328,7 @@ export function MVPRestosScreen() {
           Chargement des restos…
         </div>
       ) : view === 'map' ? (
-        <MapView restos={filtered} location={location} onPinClick={setSelected} />
+        <GoogleMap restos={mapRestos} location={location} onPinClick={setSelected} fallback={MapView} />
       ) : (
         <>
           {filtered.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} />)}

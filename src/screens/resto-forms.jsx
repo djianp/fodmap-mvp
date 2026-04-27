@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { addResto, addMeal } from '../lib/user-data.js'
+import { getWalkTimes } from '../lib/google-maps.js'
+import { PlaceAutocomplete } from '../components/place-autocomplete.jsx'
 
 function Field({ label, children, hint }) {
   return (
@@ -69,7 +71,10 @@ function FormShell({ title, onClose, onSubmit, submitLabel, disabled, error, chi
     return () => window.removeEventListener('keydown', esc)
   }, [onClose])
   return (
-    <div onClick={onClose} style={{
+    <div onClick={(e) => {
+      if (e.target.closest('gmp-place-autocomplete, .pac-container')) return
+      onClose()
+    }} style={{
       position: 'fixed', inset: 0, zIndex: 40,
       background: 'rgba(31,26,20,0.55)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
@@ -127,15 +132,30 @@ function FormShell({ title, onClose, onSubmit, submitLabel, disabled, error, chi
 }
 
 export function AddRestoForm({ onClose, onSaved }) {
-  const [form, setForm] = useState({
-    nom: '', adresse: '', phone: '',
-    distance_bureau: '', distance_domicile: '',
-    rating: 4, takeaway: false,
-  })
+  const [place, setPlace] = useState(null)
+  const [walkTimes, setWalkTimes] = useState(null)
+  const [walkLoading, setWalkLoading] = useState(false)
+  const [walkError, setWalkError] = useState(null)
+  const [rating, setRating] = useState(4)
+  const [takeaway, setTakeaway] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
-  const update = (k, v) => setForm(s => ({ ...s, [k]: v }))
-  const valid = form.nom.trim() && form.adresse.trim() && form.rating
+
+  const onPlaceSelected = useCallback(async (p) => {
+    setPlace(p)
+    setWalkLoading(true)
+    setWalkError(null)
+    try {
+      const times = await getWalkTimes({ lat: p.lat, lng: p.lng })
+      setWalkTimes(times)
+    } catch (err) {
+      setWalkError(err.message || String(err))
+    } finally {
+      setWalkLoading(false)
+    }
+  }, [])
+
+  const valid = place && rating
 
   const submit = async () => {
     if (!valid || submitting) return
@@ -143,13 +163,16 @@ export function AddRestoForm({ onClose, onSaved }) {
     setError(null)
     try {
       const saved = await addResto({
-        nom: form.nom.trim(),
-        adresse: form.adresse.trim(),
-        phone: form.phone.trim() || '',
-        distance_bureau: parseFloat(form.distance_bureau) || 0,
-        distance_domicile: parseFloat(form.distance_domicile) || 0,
-        rating: parseFloat(form.rating),
-        takeaway: !!form.takeaway,
+        nom: place.nom,
+        adresse: place.adresse,
+        phone: place.phone || '',
+        place_id: place.place_id,
+        lat: place.lat,
+        lng: place.lng,
+        walk_min_bureau: walkTimes?.walk_min_bureau ?? null,
+        walk_min_domicile: walkTimes?.walk_min_domicile ?? null,
+        rating: parseFloat(rating),
+        takeaway: !!takeaway,
       })
       onSaved(saved)
     } catch (err) {
@@ -162,42 +185,69 @@ export function AddRestoForm({ onClose, onSaved }) {
     <FormShell title="Nouveau restaurant" onClose={onClose} onSubmit={submit}
       submitLabel={submitting ? 'Enregistrement…' : 'Ajouter'}
       disabled={!valid || submitting} error={error}>
-      <Field label="Nom *">
-        <input value={form.nom} onChange={e => update('nom', e.target.value)}
-          placeholder="Ex. Le Petit Marguery" style={inputStyle} autoFocus />
+      <Field label="Restaurant *" hint="Cherche un restaurant sur Google Maps">
+        {place ? (
+          <div style={{
+            padding: 12, border: '1.5px solid #1f1a14', borderRadius: 10,
+            background: '#fff', boxShadow: '0 2px 0 #1f1a14',
+          }}>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>{place.nom}</div>
+            <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 4 }}>{place.adresse}</div>
+            {place.phone && (
+              <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 2 }}>{place.phone}</div>
+            )}
+            <button type="button" onClick={() => {
+              setPlace(null); setWalkTimes(null); setWalkError(null)
+            }} style={{
+              marginTop: 8, fontSize: 11, fontWeight: 600,
+              background: 'none', border: 'none', color: '#e67f52',
+              cursor: 'pointer', padding: 0, textDecoration: 'underline',
+              fontFamily: 'inherit',
+            }}>Changer de restaurant</button>
+          </div>
+        ) : (
+          <PlaceAutocomplete onPlaceSelected={onPlaceSelected} />
+        )}
       </Field>
-      <Field label="Adresse *">
-        <input value={form.adresse} onChange={e => update('adresse', e.target.value)}
-          placeholder="Ex. 9 bd de Port-Royal, 75013" style={inputStyle} />
-      </Field>
-      <Field label="Téléphone" hint="Pour le bouton « Appeler »">
-        <input value={form.phone} onChange={e => update('phone', e.target.value)}
-          placeholder="+33 1 43 XX XX XX" style={inputStyle} type="tel" />
-      </Field>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <div style={{ flex: 1 }}>
-          <Field label="Distance bureau (km)">
-            <input value={form.distance_bureau} onChange={e => update('distance_bureau', e.target.value)}
-              type="number" step="0.1" min="0" placeholder="1.2" style={inputStyle} />
-          </Field>
-        </div>
-        <div style={{ flex: 1 }}>
-          <Field label="Distance domicile (km)">
-            <input value={form.distance_domicile} onChange={e => update('distance_domicile', e.target.value)}
-              type="number" step="0.1" min="0" placeholder="0.8" style={inputStyle} />
-          </Field>
-        </div>
-      </div>
+
+      {place && (
+        <Field label="Temps de marche">
+          {walkLoading ? (
+            <div style={{ fontSize: 12, color: '#7a6b55', fontStyle: 'italic' }}>
+              Calcul…
+            </div>
+          ) : walkError ? (
+            <div style={{ fontSize: 12, color: '#c9543e' }}>
+              Impossible de calculer : {walkError}
+            </div>
+          ) : walkTimes ? (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ padding: '4px 10px', borderRadius: 999,
+                background: '#e9d7b6', border: '1.5px solid #1f1a14',
+                fontSize: 11, fontWeight: 600 }}>
+                {walkTimes.walk_min_bureau} min · bureau
+              </span>
+              <span style={{ padding: '4px 10px', borderRadius: 999,
+                background: '#e9d7b6', border: '1.5px solid #1f1a14',
+                fontSize: 11, fontWeight: 600 }}>
+                {walkTimes.walk_min_domicile} min · domicile
+              </span>
+            </div>
+          ) : null}
+        </Field>
+      )}
+
       <Field label="Note générale *">
-        <StarInput value={form.rating} onChange={v => update('rating', v)} />
+        <StarInput value={rating} onChange={setRating} />
       </Field>
+
       <Field label="Options">
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
           padding: '10px 12px', border: '1.5px solid #1f1a14', borderRadius: 10,
-          background: form.takeaway ? '#b8d398' : '#fff',
+          background: takeaway ? '#b8d398' : '#fff',
           boxShadow: '0 2px 0 #1f1a14' }}>
-          <input type="checkbox" checked={form.takeaway}
-            onChange={e => update('takeaway', e.target.checked)}
+          <input type="checkbox" checked={takeaway}
+            onChange={e => setTakeaway(e.target.checked)}
             style={{ width: 18, height: 18, accentColor: '#1f1a14', margin: 0 }} />
           <span style={{ fontSize: 13, fontWeight: 600 }}>Propose de la vente à emporter</span>
         </label>

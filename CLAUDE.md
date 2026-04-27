@@ -46,7 +46,7 @@ For deeper architecture and rationale, read `FOR PIERRE.md`. For setup commands 
 - **`src/lib/user-data.js` is the only file that calls Supabase for restos/meals.** Everything else imports from it.
 - `useRestos()` is the React hook for reading data; it returns `{ restos, loading, error, proteines, refresh }`.
 - `addResto()` / `addMeal()` are `async` functions that resolve `auth.uid()` from the active session and rely on RLS for authorization.
-- **First-login seed**: on a new user's first visit (empty `restos` table), `useRestos` automatically inserts the 8 base restaurants from `src/data/restos.js`. This runs at most once per user, gated by `restos.length === 0`.
+- **First-login seed**: on a new user's first visit (empty `restos` table), `useRestos` automatically inserts the seed restaurants from `src/data/restos.js`. This runs at most once per user, gated by `restos.length === 0`. Each seed entry carries the full Google Places metadata (`place_id`, `lat`, `lng`, `walk_min_bureau`, `walk_min_domicile`) so the new map and walking-time UI work for new users immediately.
 - **Schema changes go through Supabase's SQL Editor**, not via repo-tracked migrations. Update `README.md`'s schema block when you change anything so the project stays reproducible.
 
 ## Environment variables
@@ -55,6 +55,7 @@ Required client-side env vars (both `VITE_`-prefixed so Vite exposes them in the
 
 - `VITE_SUPABASE_URL` — `https://<project-ref>.supabase.co`
 - `VITE_SUPABASE_PUBLISHABLE_KEY` — Supabase's "publishable" key (formerly called `anon`)
+- `VITE_GOOGLE_MAPS_API_KEY` — Google Cloud key for **Maps JavaScript API**, **Places API (New)**, and **Distance Matrix API**. Must be HTTP-referrer-restricted to `localhost:5173/*`, `fodmap-mvp.vercel.app/*`, and `*.vercel.app/*` (preview deploys), and API-restricted to those three services.
 
 Locally: `.env.local` at the project root (gitignored via `*.local`). In production: Vercel **Project Settings → Environment Variables**, set on Production + Preview + Development.
 
@@ -68,6 +69,13 @@ Locally: `.env.local` at the project root (gitignored via `*.local`). In product
 - **Don't add `react-router`** unless explicitly asked. Tabs are intentionally non-routed — the state lives in memory and `localStorage`. Adding URL routing would mean updating bookmarks, share links, the auth-redirect flow, etc.
 - **Don't add documentation files (`*.md`, `README.md` updates) unless asked.** Exception: this `CLAUDE.md` and `FOR PIERRE.md` exist by user request.
 - **Don't pre-emptively delete the legacy prototype files** in the parent `untitled folder/` (`assets/`, `data/`, `mvp/`, `v2/`, `index.html`). They're unused but kept as a reference snapshot. Wait for explicit cleanup authorization.
+
+## Google Maps integration
+
+- **One API key, three services**: Maps JavaScript (the map view), Places API New (autocomplete in the `+ Resto` form), Distance Matrix (walking time bureau/domicile).
+- **`src/lib/google-maps.js`** is the single point of contact for the SDK — uses `setOptions()` + `importLibrary()` from `@googlemaps/js-api-loader` v2+ (the legacy `Loader` class is gone). A module-level `loadPromise` is hoisted so the map and autocomplete share one SDK fetch.
+- **Office/home addresses** are constants in `src/lib/places-config.js`. They're runtime-geocoded once per session via Places `searchByText` (`getOfficeLatLng()` / `getHomeLatLng()`), cached at module scope.
+- **Map filtering**: the `Carte` view only shows restos within 30 walking minutes of the active anchor (Bureau or Domicile). The list view shows everything.
 
 ## Cross-references
 

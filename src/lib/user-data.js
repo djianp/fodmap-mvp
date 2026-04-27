@@ -12,14 +12,17 @@ async function fetchRestos() {
 }
 
 async function seedRestos(userId) {
-  // Bulk-insert the 8 seed restaurants
+  // Bulk-insert the seed restaurants
   const restosPayload = RESTOS.map(r => ({
     user_id: userId,
     nom: r.nom,
     adresse: r.adresse,
     phone: r.phone,
-    distance_bureau: r.distance_bureau,
-    distance_domicile: r.distance_domicile,
+    place_id: r.place_id,
+    lat: r.lat,
+    lng: r.lng,
+    walk_min_bureau: r.walk_min_bureau,
+    walk_min_domicile: r.walk_min_domicile,
     rating: r.rating,
     takeaway: r.takeaway,
   }))
@@ -106,8 +109,11 @@ export async function addResto(resto) {
       nom: resto.nom,
       adresse: resto.adresse,
       phone: resto.phone || '',
-      distance_bureau: resto.distance_bureau || 0,
-      distance_domicile: resto.distance_domicile || 0,
+      place_id: resto.place_id,
+      lat: resto.lat,
+      lng: resto.lng,
+      walk_min_bureau: resto.walk_min_bureau ?? null,
+      walk_min_domicile: resto.walk_min_domicile ?? null,
       rating: resto.rating,
       takeaway: !!resto.takeaway,
     })

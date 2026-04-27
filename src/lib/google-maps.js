@@ -39,10 +39,12 @@ export async function getWalkTimes(destination) {
   }
 }
 
-export function placeUrlFor(placeId, fallbackQuery) {
-  if (placeId) return `https://www.google.com/maps/place/?q=place_id:${placeId}`
-  if (fallbackQuery) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallbackQuery)}`
-  return null
+export function placeUrlFor(placeId, query) {
+  const q = encodeURIComponent(query || 'restaurant')
+  if (placeId) {
+    return `https://www.google.com/maps/search/?api=1&query=${q}&query_place_id=${placeId}`
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${q}`
 }
 
 let officeLatLng = null

@@ -90,7 +90,7 @@ fodmap/
     │   └── ui.jsx          Shared UI primitives (Chip, Verdict, FoodRow…)
     ├── data/
     │   ├── foods.js        ~40 foods (static, never user-mutated)
-    │   └── restos.js       8 seed restaurants used as first-login data
+    │   └── restos.js       Seed restaurants used as first-login data
     ├── lib/
     │   ├── supabase.js     Supabase client (reads VITE_* env vars)
     │   ├── user-data.js    useRestos() hook + addResto / addMeal / seed

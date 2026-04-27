@@ -92,7 +92,7 @@ The project lives in `fodmap/`. Every file fits in your head.
 
 - **`screens/login.jsx`** — the email-input → "check your mail" flow. Two states. ~70 lines.
 
-That's it. **Fourteen source files**, ~1,800 total lines.
+That's it. **Seventeen source files**, ~2,000 total lines.
 
 ---
 
@@ -157,7 +157,7 @@ The honest answer: hosting choice for a static site barely matters. Don't overth
 Once you decided you wanted Places autocomplete in the "+ Resto" form, the rest of the map stack cascaded:
 
 - **One API key for the whole feature surface.** Autocomplete (Places API New), the map view itself (Maps JavaScript API), and walking-time computation (Distance Matrix API) all share a single Google Cloud key. Mapbox is a fine *map* but doesn't offer competing first-party Places autocomplete; you'd end up wiring a separate provider on the side. Same for Leaflet (which is just a renderer — no data layer at all).
-- **`place_id` is a stable, portable identifier.** Anywhere on the planet, `https://www.google.com/maps/place/?q=place_id:ChIJ...` deep-links to the right place — including auto-opening the Google Maps app on iOS/Android. That's why the distance pill on each resto card is just an `<a>` tag wrapping the place_id; no JS, no SDK call, instant deep-link. Mapbox's place IDs only resolve inside Mapbox's own ecosystem.
+- **`place_id` is a stable, portable identifier.** Anywhere on the planet, `https://www.google.com/maps/search/?api=1&query=NAME&query_place_id=ChIJ...` deep-links to the right place — including auto-opening the Google Maps app on iOS/Android. That's why the distance pill on each resto card is just an `<a>` tag wrapping the place_id; no JS, no SDK call, instant deep-link. (We initially shipped the older `?q=place_id:` form which the iOS Maps app treats as a literal text search — don't make that mistake.) Mapbox's place IDs only resolve inside Mapbox's own ecosystem.
 - **Walking times come from real street routing.** Google's Distance Matrix walks you through actual streets, accounting for one-way restrictions, pedestrian zones, and inaccessible blocks. We considered a naive Haversine straight-line distance (zero API cost) but it would have given misleading "0.5 km" numbers when the actual walk is 25 minutes through a mall and a 1-floor staircase. Real walking time matches your lived experience of the city.
 - **Cost is essentially zero** for a single-user app: the $200/mo free credit covers thousands of map loads, autocomplete sessions, and Distance Matrix calls. We'll burn a few cents' worth per year.
 
@@ -330,9 +330,9 @@ Some sharp edges that didn't bite us yet, but could:
 
 `saumon.png` is 875 KB. `riz-noir.png` is 1 MB. They render at 48-96 pixels in the UI. **>99% of the bytes are wasted on every page load.** Phone users on cellular pay for that wastage in time and data. Fix: `sips -Z 200 *.png` (one-liner, ~25 KB output) or install `vite-plugin-image-optimizer` for an automated build step.
 
-### The 8 seed restos are coupled to one user
+### The seed restos are a one-shot first-login gift
 
-If you ever invite a friend to use the app, they'd log in and `useRestos` would call `seedRestos()` to give them the same 8 base Paris restos. That's fine for the friend. But if you ever change the seed (add a 9th, edit one), existing users won't get the change. The seed is a **one-shot first-login gift**, not a synchronized canonical list.
+If you ever invite a friend to use the app, they'd log in and `useRestos` would call `seedRestos()` to give them whatever entries are currently in `src/data/restos.js` (just Bistrot Paul-Bert at the moment). That's fine for the friend. But if you ever edit the seed file later, existing users won't get the change — `seedRestos` only runs the *first* time their `restos` table is empty. The seed is a **one-shot first-login gift**, not a synchronized canonical list.
 
 For a multi-user app, you'd separate "your restos" from "shared/featured restos that are read-only and curated." That's not the app you're building. If you ever want to, the schema would need a new table.
 

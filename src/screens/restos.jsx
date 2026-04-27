@@ -256,14 +256,13 @@ export function MVPRestosScreen() {
         .map(r => ({ ...r, meals: (r.meals || []).filter(m => m.proteine === proteine) }))
         .filter(r => r.meals.length > 0)
     }
+    list = list.filter(r => {
+      const w = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
+      return w != null && w <= 30
+    })
     list.sort((a, b) => Number(b.rating) - Number(a.rating))
     return list
-  }, [takeaway, proteine, restos])
-
-  const mapRestos = useMemo(() => filtered.filter(r => {
-    const w = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
-    return w != null && w <= 30
-  }), [filtered, location])
+  }, [takeaway, proteine, location, restos])
 
   return (
     <>
@@ -328,7 +327,7 @@ export function MVPRestosScreen() {
           Chargement des restos…
         </div>
       ) : view === 'map' ? (
-        <GoogleMap restos={mapRestos} location={location} onPinClick={setSelected} fallback={MapView} />
+        <GoogleMap restos={filtered} location={location} onPinClick={setSelected} fallback={MapView} />
       ) : (
         <>
           {filtered.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} />)}

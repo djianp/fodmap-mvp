@@ -52,10 +52,12 @@ function RestoCard({ r, location, onAddMeal }) {
             <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.3px', lineHeight: 1.2 }}>{r.nom}</div>
             <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 3 }}>{r.adresse}</div>
           </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#1f1a14', letterSpacing: '-0.2px' }}>{Number(r.rating).toFixed(1)}</div>
-            <Stars value={Number(r.rating)} size={10} />
-          </div>
+          {r.rating != null && (
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#1f1a14', letterSpacing: '-0.2px' }}>{Number(r.rating).toFixed(1)}</div>
+              <Stars value={Number(r.rating)} size={10} />
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
@@ -246,6 +248,8 @@ export function MVPRestosScreen() {
   const [selected, setSelected] = useState(null)
   const [showAddResto, setShowAddResto] = useState(false)
   const [addMealFor, setAddMealFor] = useState(null)
+  const [q, setQ] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const filtered = useMemo(() => {
     let list = restos.slice()
@@ -260,28 +264,77 @@ export function MVPRestosScreen() {
       const w = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
       return w != null && w <= 30
     })
-    list.sort((a, b) => Number(b.rating) - Number(a.rating))
+    if (q.trim()) {
+      const norm = s => s.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
+      const nq = norm(q.trim())
+      list = list.filter(r => norm(r.nom).includes(nq))
+    }
+    list.sort((a, b) => {
+      const ra = a.rating == null ? -1 : Number(a.rating)
+      const rb = b.rating == null ? -1 : Number(b.rating)
+      if (rb !== ra) return rb - ra
+      return a.nom.localeCompare(b.nom, 'fr')
+    })
     return list
-  }, [takeaway, proteine, location, restos])
+  }, [takeaway, proteine, location, q, restos])
 
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
         <BlobLogo size={30} />
         <div style={{ fontWeight: 700, fontSize: 22, letterSpacing: '-0.6px' }}>Restos</div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4,
-          background: '#fff', border: '1.5px solid #1f1a14', borderRadius: 999,
-          boxShadow: '0 2px 0 #1f1a14', padding: 3 }}>
-          {[['list', 'Liste'], ['map', 'Carte']].map(([v, lbl]) =>
-            <button key={v} onClick={() => setView(v)} style={{
-              padding: '4px 12px', borderRadius: 999, border: 'none',
-              background: view === v ? '#1f1a14' : 'transparent',
-              color: view === v ? '#f5f0e6' : '#1f1a14',
-              fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            }}>{lbl}</button>
-          )}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+          <button
+            onClick={() => {
+              const next = !searchOpen
+              setSearchOpen(next)
+              if (!next) setQ('')
+            }}
+            aria-label="Rechercher"
+            title="Rechercher un resto"
+            style={{
+              width: 32, height: 32, borderRadius: 999,
+              background: searchOpen ? '#1f1a14' : '#fff',
+              color: searchOpen ? '#f5f0e6' : '#1f1a14',
+              border: '1.5px solid #1f1a14', boxShadow: '0 2px 0 #1f1a14',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', padding: 0, fontFamily: 'inherit',
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.5" y2="16.5" />
+            </svg>
+          </button>
+          <div style={{ display: 'flex', gap: 4,
+            background: '#fff', border: '1.5px solid #1f1a14', borderRadius: 999,
+            boxShadow: '0 2px 0 #1f1a14', padding: 3 }}>
+            {[['list', 'Liste'], ['map', 'Carte']].map(([v, lbl]) =>
+              <button key={v} onClick={() => setView(v)} style={{
+                padding: '4px 12px', borderRadius: 999, border: 'none',
+                background: view === v ? '#1f1a14' : 'transparent',
+                color: view === v ? '#f5f0e6' : '#1f1a14',
+                fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              }}>{lbl}</button>
+            )}
+          </div>
         </div>
       </div>
+      {searchOpen && (
+        <input
+          autoFocus
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          placeholder="Rechercher un resto…"
+          style={{
+            width: '100%', padding: '10px 12px', borderRadius: 10,
+            border: '1.5px solid #1f1a14', background: '#fff',
+            fontSize: 14, color: '#1f1a14', fontFamily: 'inherit',
+            boxShadow: '0 2px 0 #1f1a14', outline: 'none', boxSizing: 'border-box',
+            marginBottom: 10,
+          }}
+        />
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 12, color: '#7a6b55' }}>
           {loading ? 'Chargement…' : `${filtered.length} approuvés · triés par note`}

@@ -136,7 +136,7 @@ export function AddRestoForm({ onClose, onSaved }) {
   const [walkTimes, setWalkTimes] = useState(null)
   const [walkLoading, setWalkLoading] = useState(false)
   const [walkError, setWalkError] = useState(null)
-  const [rating, setRating] = useState(4)
+  const [rating, setRating] = useState(null)
   const [takeaway, setTakeaway] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -155,7 +155,7 @@ export function AddRestoForm({ onClose, onSaved }) {
     }
   }, [])
 
-  const valid = place && rating
+  const valid = place
 
   const submit = async () => {
     if (!valid || submitting) return
@@ -171,7 +171,7 @@ export function AddRestoForm({ onClose, onSaved }) {
         lng: place.lng,
         walk_min_bureau: walkTimes?.walk_min_bureau ?? null,
         walk_min_domicile: walkTimes?.walk_min_domicile ?? null,
-        rating: parseFloat(rating),
+        rating: rating ? parseFloat(rating) : null,
         takeaway: !!takeaway,
       })
       onSaved(saved)
@@ -237,7 +237,7 @@ export function AddRestoForm({ onClose, onSaved }) {
         </Field>
       )}
 
-      <Field label="Note générale *">
+      <Field label="Note générale" hint="Optionnel — laisse vide pour ne pas noter">
         <StarInput value={rating} onChange={setRating} />
       </Field>
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from './supabase.js'
 import { RESTOS, PROTEINES } from '../data/restos.js'
+import { FOODS } from '../data/foods.js'
 
 async function fetchRestos() {
   const { data, error } = await supabase
@@ -135,4 +136,118 @@ export async function addMeal(restoId, meal) {
     comment: meal.comment || '',
   })
   if (error) throw error
+}
+
+// ──────────── Foods ────────────
+
+async function fetchFoods() {
+  const { data, error } = await supabase
+    .from('foods')
+    .select('*')
+    .order('cat')
+  if (error) throw error
+  return data || []
+}
+
+async function seedFoods(userId) {
+  const payload = FOODS.map(f => ({
+    id: f.id,
+    user_id: userId,
+    nom: f.nom,
+    cat: f.cat,
+    midi: f.midi,
+    soir: f.soir,
+    note: f.note || null,
+    fodmap: f.fodmap || null,
+    contrainte: f.contrainte || null,
+    details: null,
+    tags: f.tags || [],
+  }))
+  const { error } = await supabase.from('foods').insert(payload)
+  if (error) throw error
+}
+
+export function useFoods() {
+  const [foods, setFoods] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const seededRef = useRef(false)
+
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      let data = await fetchFoods()
+      if (data.length === 0 && !seededRef.current) {
+        seededRef.current = true
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await seedFoods(user.id)
+          data = await fetchFoods()
+        }
+      }
+      setFoods(data)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  return { foods, loading, error, refresh: load }
+}
+
+function slugify(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/\p{M}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80)
+}
+
+export async function addFood(food) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const id = food.id || slugify(food.nom)
+  const { data, error } = await supabase.from('foods').insert({
+    id,
+    user_id: user.id,
+    nom: food.nom,
+    cat: food.cat,
+    midi: food.midi,
+    soir: food.soir,
+    note: food.note || null,
+    fodmap: food.fodmap || null,
+    contrainte: food.contrainte || null,
+    details: food.details || null,
+    tags: food.tags || [],
+  }).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateFood(id, food) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('foods')
+    .update({
+      nom: food.nom,
+      cat: food.cat,
+      midi: food.midi,
+      soir: food.soir,
+      note: food.note || null,
+      fodmap: food.fodmap || null,
+      contrainte: food.contrainte || null,
+      details: food.details || null,
+      tags: food.tags || [],
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
 }

@@ -136,6 +136,24 @@ create table public.meals (
   created_at timestamptz default now()
 );
 
+create table public.foods (
+  id text not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  nom text not null,
+  cat text not null check (cat in ('Féculents','Protéines','Légumes','Fruits','Condiments')),
+  midi text not null check (midi in ('green','amber','red')),
+  soir text not null check (soir in ('green','amber','red')),
+  note text,
+  fodmap text,
+  contrainte text,
+  details text,
+  tags text[] default '{}',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  primary key (user_id, id)
+);
+create unique index foods_user_nom on public.foods (user_id, lower(nom));
+
 create index idx_restos_user_id on public.restos(user_id);
 create index idx_meals_resto_id on public.meals(resto_id);
 create index idx_meals_user_id on public.meals(user_id);
@@ -147,6 +165,10 @@ create policy "owner rw restos" on public.restos
 alter table public.meals enable row level security;
 create policy "owner rw meals" on public.meals
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+alter table public.foods enable row level security;
+create policy "owner rw foods" on public.foods
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 ```
 
 Then configure auth URLs at **Authentication → URL Configuration**:
@@ -156,7 +178,10 @@ Then configure auth URLs at **Authentication → URL Configuration**:
   - `http://localhost:5173/**`
   - `https://fodmap-mvp.vercel.app/**`
 
-On a new user's first login, the seed restaurants from `src/data/restos.js` are bulk-inserted into their account by the `seedRestos()` routine in `src/lib/user-data.js`. Each seed entry includes its Google `place_id`, lat/lng, and pre-computed walking minutes from the office and home so the map view works immediately.
+On a new user's first login, two seed sets are bulk-inserted into their account by routines in `src/lib/user-data.js`:
+
+- `seedRestos()` — Paris restaurants from `src/data/restos.js`, including Google `place_id`, lat/lng, and pre-computed walking minutes so the map works immediately.
+- `seedFoods()` — the curated food entries from `src/data/foods.js`, fully editable and extendable from the Aliments tab thereafter.
 
 A separate env var, `VITE_GOOGLE_MAPS_API_KEY`, is required for the map view, the Places-Autocomplete-driven add-resto form, and the walking-time computation. See `CLAUDE.md` for the required API restrictions.
 

@@ -70,7 +70,16 @@ export function FoodRow({ food, moment = "soir", onClick }) {
     }}>
       <Thumb food={food} size={48} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.2, color: "#1f1a14", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{food.nom}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.2, color: "#1f1a14", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>{food.nom}</div>
+          {food.details && (
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#7a6b55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-label="Notes personnelles">
+              <circle cx="12" cy="12" r="9" />
+              <line x1="12" y1="11" x2="12" y2="16" />
+              <circle cx="12" cy="8" r="0.5" fill="#7a6b55" />
+            </svg>
+          )}
+        </div>
         <div style={{ fontSize: 11, color: "#7a6b55", fontWeight: 500, marginTop: 2 }}>{metaFor(food)}</div>
       </div>
       <Verdict value={verdict} />

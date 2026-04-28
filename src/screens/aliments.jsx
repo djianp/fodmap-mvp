@@ -1,19 +1,127 @@
-import { useMemo, useState } from 'react'
-import { BlobLogo, Chip, FoodRow } from '../components/ui.jsx'
-import { FOODS } from '../data/foods.js'
-import { CATEGORIES, search } from '../lib/foods-meta.js'
+import { useEffect, useMemo, useState } from 'react'
+import { BlobLogo, Chip, FoodRow, Verdict, Thumb } from '../components/ui.jsx'
+import { useFoods } from '../lib/user-data.js'
+import { CATEGORIES } from '../lib/foods-meta.js'
+import { AlimentForm } from './aliment-forms.jsx'
 
 const verdictOrder = { green: 0, amber: 1, red: 2 }
 
+function AlimentDetailModal({ food, onClose, onEdit }) {
+  useEffect(() => {
+    if (!food) return
+    const esc = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
+  }, [onClose, food])
+  if (!food) return null
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 30,
+      background: 'rgba(31,26,20,0.55)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      padding: '40px 14px 90px',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '100%', maxWidth: 430, maxHeight: '100%', overflowY: 'auto',
+        background: '#f5f0e6', borderRadius: 22, border: '2px solid #1f1a14',
+        boxShadow: '0 8px 0 #1f1a14',
+        position: 'relative',
+        animation: 'slideUp 0.22s ease-out',
+        padding: 18,
+      }}>
+        <button onClick={onClose} aria-label="Fermer" style={{
+          position: 'absolute', top: 10, right: 10, zIndex: 2,
+          width: 32, height: 32, borderRadius: 999, border: '2px solid #1f1a14',
+          background: '#fff', boxShadow: '0 2px 0 #1f1a14', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
+        }}>×</button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, paddingRight: 36 }}>
+          <Thumb food={food} size={48} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.4px' }}>{food.nom}</div>
+            <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 2 }}>
+              {food.cat}{food.note ? ` · ${food.note}` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Midi</div>
+            <Verdict value={food.midi} size="lg" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Soir</div>
+            <Verdict value={food.soir} size="lg" />
+          </div>
+        </div>
+
+        {food.fodmap && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>FODMAP</div>
+            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45 }}>{food.fodmap}</div>
+          </div>
+        )}
+
+        {food.contrainte && (
+          <div style={{ marginBottom: 12, padding: '10px 12px', background: '#f0a390', border: '1.5px solid #1f1a14', borderRadius: 10 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Contrainte</div>
+            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45 }}>{food.contrainte}</div>
+          </div>
+        )}
+
+        {food.details && (
+          <div style={{ marginBottom: 12, padding: '10px 12px', background: '#f5e3b8', border: '1.5px solid #1f1a14', borderRadius: 10 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Notes personnelles</div>
+            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>{food.details}</div>
+          </div>
+        )}
+
+        {food.tags && food.tags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+            {food.tags.map(t => (
+              <span key={t} style={{ padding: '3px 8px', borderRadius: 999, background: '#e9d7b6', border: '1px solid #1f1a14', fontSize: 10, fontWeight: 600 }}>
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div style={{ marginTop: 4 }}>
+          <button onClick={onEdit} style={{
+            width: '100%',
+            padding: '10px 16px', borderRadius: 999,
+            background: '#1f1a14', color: '#f5f0e6',
+            border: '2px solid #1f1a14', boxShadow: '0 3px 0 #1f1a14',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+          }}>Modifier</button>
+        </div>
+      </div>
+      <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+    </div>
+  )
+}
+
 export function MVPAlimentsScreen({ moment, setMoment }) {
+  const { foods, loading, error, refresh } = useFoods()
   const [q, setQ] = useState('')
   const [catFilter, setCatFilter] = useState('Tous')
+  const [selected, setSelected] = useState(null)
+  const [showAdd, setShowAdd] = useState(false)
+  const [editingFood, setEditingFood] = useState(null)
 
   const filtered = useMemo(() => {
-    let list = q ? search(q) : FOODS
+    let list = foods
+    if (q.trim()) {
+      const norm = s => s.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
+      const nq = norm(q.trim())
+      list = list.filter(f => norm(f.nom).includes(nq))
+    }
     if (catFilter !== 'Tous') list = list.filter(f => f.cat === catFilter)
     return list
-  }, [q, catFilter])
+  }, [q, catFilter, foods])
 
   const groups = {}
   filtered.forEach(f => { (groups[f.cat] ||= []).push(f) })
@@ -22,11 +130,24 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
   })
   const orderedCats = CATEGORIES.filter(c => groups[c] && groups[c].length)
 
+  const selectedLatest = selected ? foods.find(f => f.id === selected.id) || selected : null
+
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <BlobLogo size={30} />
         <div style={{ fontWeight: 700, fontSize: 22, letterSpacing: '-0.6px' }}>Aliments</div>
+        <button onClick={() => setShowAdd(true)} disabled={loading} style={{
+          marginLeft: 'auto',
+          padding: '6px 12px', borderRadius: 999,
+          background: loading ? '#d9c3a0' : '#1f1a14',
+          color: loading ? '#7a6b55' : '#f5f0e6',
+          border: '2px solid #1f1a14', boxShadow: loading ? 'none' : '0 2px 0 #1f1a14',
+          fontSize: 11, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+          display: 'inline-flex', alignItems: 'center', gap: 4, letterSpacing: 0.3,
+        }}>
+          <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> Aliment
+        </button>
       </div>
 
       <div style={{
@@ -56,18 +177,52 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
         )}
       </div>
 
-      {orderedCats.map(cat => (
-        <div key={cat} style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase',
-            fontWeight: 700, color: '#7a6b55', marginBottom: 8 }}>{cat} · {groups[cat].length}</div>
-          {groups[cat].map(f => <FoodRow key={f.id} food={f} moment={moment} onClick={() => {}} />)}
+      {error && (
+        <div style={{ padding: 14, background: '#f0a390', border: '2px solid #1f1a14',
+          borderRadius: 12, fontSize: 12, color: '#1f1a14', marginBottom: 14 }}>
+          Erreur de chargement : {error.message || String(error)}
         </div>
-      ))}
+      )}
 
-      {filtered.length === 0 && (
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#7a6b55', fontSize: 13 }}>
+          Chargement des aliments…
+        </div>
+      ) : (
+        orderedCats.map(cat => (
+          <div key={cat} style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase',
+              fontWeight: 700, color: '#7a6b55', marginBottom: 8 }}>{cat} · {groups[cat].length}</div>
+            {groups[cat].map(f => <FoodRow key={f.id} food={f} moment={moment} onClick={() => setSelected(f)} />)}
+          </div>
+        ))
+      )}
+
+      {!loading && filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7a6b55' }}>
           Aucun aliment trouvé.
         </div>
+      )}
+
+      <AlimentDetailModal
+        food={selectedLatest}
+        onClose={() => setSelected(null)}
+        onEdit={() => { setEditingFood(selectedLatest); setSelected(null) }}
+      />
+
+      {showAdd && (
+        <AlimentForm
+          onClose={() => setShowAdd(false)}
+          onSaved={() => { setShowAdd(false); refresh() }}
+        />
+      )}
+
+      {editingFood && (
+        <AlimentForm
+          food={editingFood}
+          onClose={() => setEditingFood(null)}
+          onSaved={() => { setEditingFood(null); refresh() }}
+        />
       )}
     </>
   )

@@ -3,7 +3,7 @@ import { addResto, addMeal } from '../lib/user-data.js'
 import { getWalkTimes } from '../lib/google-maps.js'
 import { PlaceAutocomplete } from '../components/place-autocomplete.jsx'
 
-function Field({ label, children, hint }) {
+export function Field({ label, children, hint }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: 'block', fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
@@ -14,7 +14,7 @@ function Field({ label, children, hint }) {
   )
 }
 
-const inputStyle = {
+export const inputStyle = {
   width: '100%', padding: '10px 12px', borderRadius: 10,
   border: '1.5px solid #1f1a14', background: '#fff',
   fontSize: 14, color: '#1f1a14', fontFamily: 'inherit',
@@ -64,7 +64,7 @@ function StarInput({ value, onChange }) {
   )
 }
 
-function FormShell({ title, onClose, onSubmit, submitLabel, disabled, error, children }) {
+export function FormShell({ title, onClose, onSubmit, submitLabel, disabled, error, children }) {
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', esc)

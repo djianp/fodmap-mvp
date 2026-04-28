@@ -290,9 +290,9 @@ export function AddMealForm({ resto, proteines, onClose, onSaved }) {
     <FormShell title={`Nouveau plat · ${resto.nom}`} onClose={onClose} onSubmit={submit}
       submitLabel={submitting ? 'Enregistrement…' : 'Ajouter'}
       disabled={!valid || submitting} error={error}>
-      <Field label="Nom du plat *" hint="Terminer par le prix entre parenthèses, ex. (22€)">
+      <Field label="Nom du plat *" hint="Terminer par le prix entre parenthèses, ex: (22€)">
         <input value={form.nom} onChange={e => update('nom', e.target.value)}
-          placeholder="Ex. Dorade grillée, riz blanc (24€)" style={inputStyle} autoFocus />
+          placeholder="Ex: Dorade grillée, riz blanc (24€)" style={inputStyle} autoFocus />
       </Field>
       <Field label="Protéine *">
         <select value={form.proteine} onChange={e => update('proteine', e.target.value)}
@@ -306,7 +306,7 @@ export function AddMealForm({ resto, proteines, onClose, onSaved }) {
         {form.proteine === '__new' && (
           <input value={form.proteine_custom}
             onChange={e => update('proteine_custom', e.target.value)}
-            placeholder="Ex. dorade, cabillaud, tofu…"
+            placeholder="Ex: dorade, cabillaud, tofu…"
             style={{ ...inputStyle, marginTop: 8 }} />
         )}
       </Field>
@@ -315,7 +315,7 @@ export function AddMealForm({ resto, proteines, onClose, onSaved }) {
       </Field>
       <Field label="Commentaire" hint="Ce qu'il faut demander, ce qu'il faut éviter, etc.">
         <textarea value={form.comment} onChange={e => update('comment', e.target.value)}
-          placeholder="Ex. sauce à part, sans ail, bien cuit"
+          placeholder="Ex: sauce à part, sans ail, bien cuit"
           rows={3} style={{ ...inputStyle, resize: 'vertical', minHeight: 72, fontFamily: 'inherit' }} />
       </Field>
     </FormShell>

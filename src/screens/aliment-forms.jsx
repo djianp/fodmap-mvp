@@ -87,7 +87,7 @@ export function AlimentForm({ food, onClose, onSaved }) {
       error={error}
     >
       <Field label="Nom *">
-        <input value={form.nom} onChange={e => update('nom', e.target.value)} style={inputStyle} autoFocus={!isEdit} placeholder="Ex. Quinoa" />
+        <input value={form.nom} onChange={e => update('nom', e.target.value)} style={inputStyle} autoFocus={!isEdit} placeholder="Ex: Quinoa" />
       </Field>
       <Field label="Catégorie *">
         <select value={form.cat} onChange={e => update('cat', e.target.value)}
@@ -103,13 +103,13 @@ export function AlimentForm({ food, onClose, onSaved }) {
       <Field label="Verdict soir *">
         <VerdictPicker value={form.soir} onChange={v => update('soir', v)} />
       </Field>
-      <Field label="Note" hint="Score subjectif, ex. 8/10">
+      <Field label="Note" hint="Score subjectif, ex: 8/10">
         <input value={form.note} onChange={e => update('note', e.target.value)} style={inputStyle} placeholder="8/10" />
       </Field>
       <Field label="Rationale FODMAP" hint="Pourquoi c'est OK ou pas">
         <textarea value={form.fodmap} onChange={e => update('fodmap', e.target.value)} rows={3}
           style={{...inputStyle, resize: 'vertical', fontFamily: 'inherit', minHeight: 70}}
-          placeholder="Ex. Faible en fructose, riche en fibres solubles…" />
+          placeholder="Ex: Faible en fructose, riche en fibres solubles…" />
       </Field>
       <Field label="Contrainte" hint="Limite de portion ou avertissement">
         <input value={form.contrainte} onChange={e => update('contrainte', e.target.value)} style={inputStyle} placeholder="Ex: Max 75g" />

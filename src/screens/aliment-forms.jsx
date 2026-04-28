@@ -112,12 +112,12 @@ export function AlimentForm({ food, onClose, onSaved }) {
           placeholder="Ex. Faible en fructose, riche en fibres solubles…" />
       </Field>
       <Field label="Contrainte" hint="Limite de portion ou avertissement">
-        <input value={form.contrainte} onChange={e => update('contrainte', e.target.value)} style={inputStyle} placeholder="Max 75g" />
+        <input value={form.contrainte} onChange={e => update('contrainte', e.target.value)} style={inputStyle} placeholder="Ex: Max 75g" />
       </Field>
       <Field label="Notes personnelles" hint="Recettes, observations, ressentis. Affiche l'icône ⓘ sur la liste.">
         <textarea value={form.details} onChange={e => update('details', e.target.value)} rows={4}
           style={{...inputStyle, resize: 'vertical', fontFamily: 'inherit', minHeight: 90}}
-          placeholder="Ex. Bien toléré le matin avec œufs, à éviter le soir…" />
+          placeholder="Ex: Bien toléré le matin avec œufs, à éviter le soir…" />
       </Field>
     </FormShell>
   )

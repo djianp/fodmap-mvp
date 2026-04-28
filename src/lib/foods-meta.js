@@ -39,9 +39,7 @@ export function tileFor(id) {
 export const VERDICT_TEXT = { green: "OK", amber: "LIMITE", red: "NON" }
 
 export function metaFor(f) {
-  const parts = [f.cat]
-  if (f.note) parts.push(f.note)
-  return parts.join(" · ")
+  return f.note || ""
 }
 
 export function whyFor(f) {

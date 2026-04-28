@@ -83,7 +83,9 @@ export function FoodRow({ food, moment = "soir", onClick }) {
         {food.contrainte && (
           <div style={{ fontSize: 11, color: "#7a6b55", fontStyle: "italic", marginTop: 2, lineHeight: 1.3 }}>{food.contrainte}</div>
         )}
-        <div style={{ fontSize: 11, color: "#7a6b55", fontWeight: 500, marginTop: 2 }}>{metaFor(food)}</div>
+        {metaFor(food) && (
+          <div style={{ fontSize: 11, color: "#7a6b55", fontWeight: 500, marginTop: 2 }}>{metaFor(food)}</div>
+        )}
       </div>
       <Verdict value={verdict} />
     </button>

@@ -10,7 +10,7 @@ Items are tiered by *readiness to build*, not importance. Pick whatever fits the
 
 | Feature | Tier | Effort | Comment |
 | --- | --- | --- | --- |
-| LLM chat for Aliments | 1 — Major | ~3d (v1) / ~1d (v0) | Biggest scope. v0 chat-only ships first to validate verdict quality before persistence work. |
+| LLM chat for Aliments | 1 — Major | ~1d | Aliments CRUD already shipped (Supabase `foods` table, `useFoods`, `AlimentForm`). Only the Vercel function + Anthropic call + diet-config remain. |
 | Optimize food photo sizes | 2 — Quick win | <1h | `saumon.png` (875 KB) + `riz-noir.png` (1 MB) render at 48–96px. >99% of bytes wasted per page load. |
 | Add `.env.example` | 2 — Quick win | ~5min | Needed for second-device clones. Lists required env-var keys without secrets. |
 | Fix `user-data.js` lint warnings | 2 — Quick win | ~30min | Pre-existing 2 errors. Hides any new lint regressions in the noise. |
@@ -20,8 +20,7 @@ Items are tiered by *readiness to build*, not importance. Pick whatever fits the
 | Multi-column desktop resto list | 3 — Polish | ~1d | Defer until you have >10 restos and the single column actually feels cramped. |
 | Resto card thumbnail photos | 3 — Polish | ~½d | Skipped in Maps v1. Google Places photo URLs rotate — needs proxy/cache strategy. |
 | Multi-turn LLM chat | 4 — v2 | ~1d | Only after v1 chat ships and verdict quality is verified. |
-| Edit LLM verdicts after save | 4 — v2 | ~½d | Fix-up flow for when the LLM gets a verdict wrong. |
-| Settings UI for diet constraints | 4 — v2 | ~1–2d | Currently `diet-config.js` is code-only; this surfaces it for editing in-app. |
+| Settings UI for diet constraints | 4 — v2 | ~1–2d | Currently `diet-config.js` will be code-only; this surfaces it for editing in-app. |
 | Rename `4. untitled folder` → `4. fodmap` | 5 — Operational | ~10min | Pure rename. Git/GitHub/Vercel/Supabase are all path-independent; only Claude memory dir needs a parallel rename. |
 
 ---
@@ -30,83 +29,49 @@ Items are tiered by *readiness to build*, not importance. Pick whatever fits the
 
 ### LLM chat for Aliments
 
-**Goal**: a `+ Aliment` button on the Aliments tab opens a modal. User types a question ("is quinoa ok for my diet at midi/soir?"). An LLM returns a structured verdict (green/amber/red per meal-time + rationale + category). User confirms → result is saved to the Aliments tab so it shows up next to the curated 39 base foods.
+**Goal**: in the `+ Aliment` form (or a "Demander à l'IA" button), the user types a question ("is quinoa ok for my diet at midi/soir?"). An LLM returns structured fields (verdicts, FODMAP rationale, contrainte, category) that pre-fill the form. User reviews + saves via the existing flow.
 
-**Status**: Scoped via brainstorm, not built. ~3 days of focused work, similar scale to the Google Maps integration.
+**Status**: Aliments CRUD already shipped — the `foods` table, `useFoods()`, `AlimentForm` modal, and edit/delete flow are all in production. **Only the LLM piece remains: ~1 day of work.**
 
-**Architecture**:
+**What's already in place** (from the Aliments CRUD ship):
+- `foods` Supabase table with RLS, CHECK constraints on `cat` / `midi` / `soir`, ready to receive new rows.
+- `useFoods()` hook + `addFood()` / `updateFood()` / `deleteFood()` in `src/lib/user-data.js`.
+- `AlimentForm` modal at `src/screens/aliment-forms.jsx` — pre-filling its state from an external source (e.g., LLM response) is straightforward.
+- All necessary form fields with appropriate input types and validation.
 
-```
-React app  ──►  Vercel Function (/api/food-verdict)  ──►  Anthropic Claude
-   │                       (auth-gated)                          │
-   │                                                              │
-   ▼                                                              ▼
-Supabase JWT                                       Forced tool-use returns JSON
-   │                                                              │
-   └─────────────► Save to Supabase user_foods table ◄─────────────┘
-```
+**What's left to build**:
 
-- **LLM**: Claude Haiku 4.5 via `@anthropic-ai/sdk`. ~$0.002 per query. Free credit covers years of use.
-- **API endpoint**: new Vercel Function at `api/food-verdict.js`. Vite SPAs auto-detect a top-level `api/` directory; no Next.js needed. Local dev: `vercel dev` (replaces `npm run dev`).
-- **Forced structured output**: `tool_choice: { type: "tool", name: "record_verdict" }` with `input_schema` mirroring the existing `foods.js` shape. The LLM is constrained to fill the schema, not return free-text.
-- **Storage**: hybrid. Keep `src/data/foods.js` as the curated 39-food base. Add a Supabase `user_foods` table for chat-derived entries. A new `useFoods()` hook merges `[...FOODS, ...userFoods]` — sort/group/search code in `aliments.jsx` reads the merged list unchanged.
-- **UX**: modal-based, single-shot (not streaming, not multi-turn). Reuses the existing `FormShell` pattern from `src/screens/resto-forms.jsx`.
+1. **`api/food-verdict.js`** (Vercel Serverless Function, ~80 lines):
+   - Verify Supabase JWT (read `Authorization: Bearer <jwt>`, call `supabase.auth.getUser(jwt)` server-side, return 401 if absent).
+   - Per-user rate limit (in-memory `Map`, ~10/min) — runaway-loop insurance.
+   - Cache: short-circuit if a food with this name already exists in the user's `foods` table (return that row instead of calling the LLM).
+   - Call Claude Haiku 4.5 via `@anthropic-ai/sdk` with **forced tool-use** (`tool_choice: { type: "tool", name: "record_verdict" }`) and an `input_schema` mirroring the food fields.
+   - Return JSON.
 
-**Schema migration** (Supabase SQL Editor):
+2. **`src/lib/diet-config.js`** — your FODMAP/SIBO constraints, the verdict rubric (green/amber/red thresholds), and a system-prompt builder. One file to retune the LLM's calibration.
 
-```sql
-CREATE TABLE public.user_foods (
-  id text PRIMARY KEY,                                                 -- kebab-case slug of nom
-  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  nom text NOT NULL,
-  cat text NOT NULL CHECK (cat IN ('Féculents','Protéines','Légumes','Fruits','Condiments')),
-  midi text NOT NULL CHECK (midi IN ('green','amber','red')),
-  soir text NOT NULL CHECK (soir IN ('green','amber','red')),
-  note text,
-  fodmap text,
-  contrainte text,
-  tags text[] DEFAULT '{}',
-  created_at timestamptz DEFAULT now()
-);
-CREATE UNIQUE INDEX user_foods_user_nom ON user_foods (user_id, lower(nom));
-CREATE INDEX user_foods_user_id ON user_foods (user_id);
-ALTER TABLE user_foods ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "owner rw user_foods" ON user_foods
-  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-```
+3. **UI hook in `AlimentForm`**: a "Demander à l'IA" button that opens a small textarea, hits `/api/food-verdict`, and pre-fills the form fields with the response. User reviews and clicks "Ajouter" / "Sauver" through the existing flow.
 
-The `CHECK` constraints are load-bearing — `aliments.jsx` groups by the 5 `CATEGORIES` and silently drops anything else. The `UNIQUE` on `(user_id, lower(nom))` dedupes case-insensitively at the DB level.
+4. **`ANTHROPIC_API_KEY`** env var (server-side only — no `VITE_` prefix; never inline into the bundle). Set in `.env.local` for local dev and in Vercel project settings for production.
 
-**Files to create**:
-- `api/food-verdict.js` — verifies the Supabase JWT, normalizes-and-caches the food name (short-circuits if already in `FOODS` or `user_foods`), calls Claude with system prompt + `record_verdict` tool, returns JSON. ~80 lines.
-- `src/lib/diet-config.js` — constants describing the user's FODMAP/SIBO constraints + verdict rubric. Edit this one file to retune the LLM's calibration.
-- `src/lib/user-foods.js` — `useFoods()` hook (merges static + remote), `addUserFood()` insert helper.
-- `src/screens/aliment-form.jsx` — modal using `FormShell`. Textarea question → "Demander" → preview verdict + rationale + structured fields → "Sauver" or "Modifier la question".
+5. **`package.json`** — add `@anthropic-ai/sdk`.
 
-**Files to modify**:
-- `src/screens/aliments.jsx` — swap `import { FOODS }` for `useFoods()`. Add `+ Aliment` button next to the search input.
-- `package.json` — add `@anthropic-ai/sdk`.
-- `.env.local` + Vercel env vars — add `ANTHROPIC_API_KEY` **server-side only**. No `VITE_` prefix; never inline into the bundle.
-- `README.md`, `CLAUDE.md` — schema and env-var docs.
+6. **Local dev**: switch from `npm run dev` to `vercel dev` so the `api/` directory is served alongside the Vite app. Vite SPAs auto-detect a top-level `api/` directory in Vercel's runtime.
 
-**Critical gotchas (do not repeat these mistakes)**:
+**Critical gotchas**:
 
-1. **Auth-gating is non-negotiable.** Without verifying the Supabase JWT in the Vercel Function, the endpoint is an open Anthropic proxy that anyone scraping the network tab can use to burn your credits. Read `Authorization: Bearer <jwt>`, call `supabase.auth.getUser(jwt)` server-side, return 401 if absent.
-2. **Per-user rate limit** (in-memory `Map` keyed by `user_id`, ~10/min) — cheap insurance against a runaway loop.
-3. **Don't copy ****`useRestos`****'s seed pattern** into `useFoods`. The static 39 foods always make the merged list non-empty, so a count-gated seed would never fire. Just skip seeding entirely; the static set is the seed.
-4. **Mobile keyboard inside the modal** is the most likely UX papercut. Use `min-height: 100dvh` (not `100vh`) on the modal. iOS Safari's visual viewport shrinks under the keyboard; `dvh` accounts for it, `vh` doesn't.
-5. **Don't include few-shot examples** in the system prompt — token-bloat anti-pattern that biases toward surface-form mimicry. A tight rubric (FODMAP thresholds + SIBO triggers + green/amber/red definitions) outperforms 5-food few-shots.
-6. **Don't stream the response.** A 2-3s response that the user wants to see in full before saving doesn't benefit from streaming, and SSE through Vercel adds non-trivial complexity.
-
-**v0 reduction (\~1 day)**: skip the `user_foods` table entirely. Render the LLM response inline as ephemeral one-shot — no save, no Supabase changes. Validates LLM verdict quality + the modal flow before committing to persistence. Layer on persistence as v1 if quality holds.
+1. **Auth gating is non-negotiable.** Without verifying the Supabase JWT in the Vercel Function, the endpoint becomes an open Anthropic proxy that anyone scraping the network tab can use to burn your credits.
+2. **Per-user rate limit** (~10/min) — cheap insurance against a runaway loop in dev.
+3. **Don't include few-shot examples** in the system prompt — token-bloat anti-pattern that biases the LLM toward surface-form mimicry. A tight rubric (FODMAP thresholds + SIBO triggers + green/amber/red definitions) outperforms 5-food few-shots.
+4. **Don't stream the response.** A 2-3s response that the user wants to see in full before saving doesn't benefit from streaming; SSE through Vercel adds non-trivial complexity.
+5. **Mobile keyboard inside the modal** — already a known issue across forms. The 100dvh tweak in Tier 2 (Quick wins) addresses this once and applies to every modal.
 
 **Verification**:
 
 1. `curl -X POST localhost:3000/api/food-verdict` without a JWT → returns 401.
-2. Try inserting a row with `cat = 'Boissons'` directly in Supabase → CHECK constraint rejects it.
-3. End-to-end on `vercel dev`: open Aliments tab, click `+ Aliment`, ask "quinoa", verdict appears in 2-3s, save, the entry shows in the list grouped under "Féculents".
-4. Ask "quinoa" again → instant response (cache hit, 0 tokens consumed).
-5. Real iPhone: keyboard opens cleanly, response visible above the keyboard, Save button reachable without scrolling weirdness.
+2. End-to-end on `vercel dev`: open Aliments, click "Demander à l'IA", ask "quinoa", verdict appears in 2-3s, form fields populate, save, appears in list under "Féculents".
+3. Ask "quinoa" again → instant response (cache hit, 0 tokens).
+4. Real iPhone: keyboard opens cleanly, response visible, Save button reachable.
 
 ---
 
@@ -183,10 +148,6 @@ Skipped in the Google Maps integration v1. Each Google Place response can return
 Once the v1 single-shot Aliments chat is shipped and the verdict quality is verified, allow follow-up questions ("but can I have it with eggs?", "what if I split the portion?").
 
 Adds: chat-history state, message bubbles, conversation context passed to the API. ~1 extra day on top of v1.
-
-### Edit LLM verdicts after save
-
-Currently the LLM verdict is one-shot. If it's wrong, you'd have to delete and re-add. v2: an "Edit" button on user-added Aliments cards opens a modal with the current verdict pre-filled.
 
 ### Settings UI for diet constraints
 

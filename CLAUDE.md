@@ -43,10 +43,10 @@ For deeper architecture and rationale, read `FOR PIERRE.md`. For setup commands 
 
 ## Data layer
 
-- **`src/lib/user-data.js` is the only file that calls Supabase for restos/meals.** Everything else imports from it.
-- `useRestos()` is the React hook for reading data; it returns `{ restos, loading, error, proteines, refresh }`.
-- `addResto()` / `addMeal()` are `async` functions that resolve `auth.uid()` from the active session and rely on RLS for authorization.
-- **First-login seed**: on a new user's first visit (empty `restos` table), `useRestos` automatically inserts the seed restaurants from `src/data/restos.js`. This runs at most once per user, gated by `restos.length === 0`. Each seed entry carries the full Google Places metadata (`place_id`, `lat`, `lng`, `walk_min_bureau`, `walk_min_domicile`) so the new map and walking-time UI work for new users immediately.
+- **`src/lib/user-data.js` is the only file that calls Supabase for restos/meals/foods.** Everything else imports from it.
+- `useRestos()` and `useFoods()` are the React hooks for reading data. `useRestos` returns `{ restos, loading, error, proteines, refresh }`; `useFoods` returns `{ foods, loading, error, refresh }`.
+- `addResto()`, `addMeal()`, `addFood()`, `updateFood()`, `deleteFood()` are `async` functions that resolve `auth.uid()` from the active session and rely on RLS for authorization.
+- **First-login seed**: on a new user's first visit, both `useRestos` and `useFoods` auto-seed when their respective tables are empty. `seedRestos()` inserts the entries from `src/data/restos.js` (with full Google Places metadata so the map works immediately); `seedFoods()` inserts the entries from `src/data/foods.js` (the curated 39 foods). Each runs at most once per user, gated by `data.length === 0`.
 - **Schema changes go through Supabase's SQL Editor**, not via repo-tracked migrations. Update `README.md`'s schema block when you change anything so the project stays reproducible.
 
 ## Environment variables

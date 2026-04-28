@@ -8,7 +8,7 @@ This document is a cheat-sheet for **future you** (and present you, when you com
 
 A two-tab mobile-first app called **fodmap-mvp**:
 
-- **Aliments** — searchable list of ~40 foods, filterable by category and meal-of-day, color-coded green/amber/red for SIBO compatibility.
+- **Aliments** — searchable, editable list of foods (39 to start, growing — you can add, edit, and delete), filterable by category and meal-of-day, color-coded green/amber/red for SIBO compatibility. Each food has a detail page with FODMAP rationale, contrainte (max quantity etc.), and your personal notes.
 - **Restos** — your personal directory of Paris restaurants you've vetted, each with the meals you've ordered, what to ask the waiter to modify, and your half-star ratings out of 5.
 
 It runs at **https://fodmap-mvp.vercel.app**, accessible from any web-connected device. You log in with a magic link sent to your email. Your data — the custom restos you add, the meals, the ratings — lives in a Postgres database in Paris and follows you to every device. There are no usernames, no passwords, no apps to install. It's a website that feels like an app.
@@ -61,11 +61,11 @@ The project lives in `fodmap/`. Every file fits in your head.
 
 - **`user-data.js`** — *the most interesting file in the project*. It's where the magic-link reality meets the application logic.
 
-  - `useRestos()` is a **React hook**. When a screen calls it, the hook fetches all restos and embedded meals from Supabase, derives a list of unique proteins, returns `{ restos, loading, error, proteines, refresh }`, and re-fetches whenever something changes.
-  - `addResto()`, `addMeal()` are async functions. They look up your current user via `supabase.auth.getUser()`, then `INSERT` into the database. RLS guarantees they can only succeed if the inserted row's `user_id` matches your JWT's `sub` claim.
-  - `seedRestos()` is a one-shot routine that inserts the seed Paris restaurants for new users. It runs the first time `useRestos` finds an empty table.
+  - `useRestos()` and `useFoods()` are **React hooks**. They fetch your restos (with embedded meals) and your foods from Supabase, return `{ items, loading, error, refresh }` (plus a derived `proteines` list for `useRestos`), and re-fetch on demand.
+  - `addResto()`, `addMeal()`, `addFood()`, `updateFood()`, `deleteFood()` are async functions. They look up your current user via `supabase.auth.getUser()`, then `INSERT`/`UPDATE`/`DELETE` rows. RLS guarantees they can only succeed if the row's `user_id` matches your JWT's `sub` claim.
+  - `seedRestos()` and `seedFoods()` are one-shot routines that bulk-insert the curated seed sets for new users. Each runs the first time the corresponding table is empty for that user.
 
-- **`foods-meta.js`** — pure utilities for the Aliments screen: photo URL lookup, deterministic fallback colors (`tileFor`), category list, search function. No state, no I/O — just helpers that work on the static `FOODS` array from `src/data/foods.js`.
+- **`foods-meta.js`** — pure utilities for the Aliments screen: photo URL lookup (`PHOTOS` map), deterministic fallback colors (`tileFor`), category list, verdict-text map. No state, no I/O — helpers that work on any food object regardless of where it came from.
 
 - **`google-maps.js`** — the single point of contact for Google's SDK. Hoists a module-level `loadPromise` so the map view and the Places autocomplete share one SDK fetch. Exports `loadMaps()`, `getWalkTimes(destination)` (Distance Matrix wrapper, returns walk minutes from office and home), `placeUrlFor(placeId)` (the deep-link to Google Maps), and `getOfficeLatLng()` / `getHomeLatLng()` (cached geocodes of the addresses in `places-config.js`).
 
@@ -73,7 +73,7 @@ The project lives in `fodmap/`. Every file fits in your head.
 
 ### The static data (`src/data/`)
 
-- **`foods.js`** — ~40 hand-coded food entries. Each one is `{ id, nom, cat, midi, soir, note, fodmap, contrainte, tags }`. Lives in code because it never changes per-user; everyone gets the same 40 foods.
+- **`foods.js`** — the curated seed foods (~40 entries). Each one is `{ id, nom, cat, midi, soir, note, fodmap, contrainte, tags }`. Bulk-inserted into the Supabase `foods` table the first time you log in via `seedFoods()`. After seeding it's decorative — same one-shot-then-frozen pattern as `restos.js`. Edits in the running app go to Supabase, not back to this file.
 - **`restos.js`** — the seed Paris restos that get inserted into Supabase the first time you log in. After seeding, this file is essentially decorative — you can edit it but it won't change anything that's already in the database. Updates would only affect *new* users (and you only have one user: yourself). Each seed entry now includes its Google `place_id`, lat/lng, and pre-computed walking minutes from office and home.
 
 ### The presentation layer (`src/components/`, `src/screens/`)
@@ -84,15 +84,17 @@ The project lives in `fodmap/`. Every file fits in your head.
 
 - **`components/place-autocomplete.jsx`** — wraps Google's new `PlaceAutocompleteElement` web component for the `+ Resto` form. Listens for `gmp-select`, calls `fetchFields` to pull name / address / phone / lat-lng / place_id, and hands them back via the `onPlaceSelected` prop.
 
-- **`screens/aliments.jsx`** — the food browser. Takes `FOODS`, applies search + category filter, groups by category, sorts by verdict within each group. Uses only `useState` and `useMemo`.
+- **`screens/aliments.jsx`** — the food browser. Calls `useFoods()`, applies search (diacritic-insensitive) + category filter, groups by category, sorts by verdict within each group. Includes the `+ Aliment` button (opens form modal), tap-to-detail flow (opens an inline `AlimentDetailModal` with Modifier + Supprimer buttons), and the detail modal component itself.
 
 - **`screens/restos.jsx`** — the restaurant browser. This is the most complex screen. It calls `useRestos()`, layers four filters (location, takeaway, protéine, view-mode), then renders either a list of `RestoCard` components or a `GoogleMap` with clickable pins. The map filters out restos more than 30 walking-minutes from the active anchor; the list shows everything. Tapping a pin opens a `RestoModal`. There are also "+ Resto" and "+ plat" buttons that open modal forms.
 
-- **`screens/resto-forms.jsx`** — the two add-things forms (`AddRestoForm`, `AddMealForm`), plus the shared `FormShell` (modal chrome) and `StarInput` (the half-star rating input). `AddRestoForm` is now Places-Autocomplete-driven: type a name, pick from the dropdown, the form auto-fills name/address/phone/lat/lng/place_id and eagerly fetches walking times via Distance Matrix. Forms call `addResto`/`addMeal` from `user-data.js`, which talks to Supabase.
+- **`screens/resto-forms.jsx`** — the two resto-related forms (`AddRestoForm`, `AddMealForm`), plus the shared `FormShell` (modal chrome), `Field` (label + hint), `inputStyle` (text-input style), and `StarInput` (half-star rating). `AddRestoForm` is Places-Autocomplete-driven: type a name, pick from the dropdown, the form auto-fills name/address/phone/lat/lng/place_id and eagerly fetches walking times via Distance Matrix. The shared shell pieces are exported so `aliment-forms.jsx` reuses them.
+
+- **`screens/aliment-forms.jsx`** — `AlimentForm`, used both for adding a new food (no `food` prop) and editing an existing one (`food` pre-fills). Custom inline `VerdictPicker` (three pills: OK / LIMITE / NON) for the midi and soir verdicts. Reuses the modal chrome from `resto-forms.jsx`.
 
 - **`screens/login.jsx`** — the email-input → "check your mail" flow. Two states. ~70 lines.
 
-That's it. **Seventeen source files**, ~2,000 total lines.
+That's it. **Eighteen source files**, ~2,200 total lines.
 
 ---
 
@@ -104,7 +106,7 @@ We picked things deliberately. Here's the rationale for each.
 
 - **Vite is the fastest dev experience in 2026.** Open `npm run dev`, hit save on a JSX file, the change appears in the browser in <50ms. No bundler watch step. It uses native browser ESM in development, which is why startup is ~800ms instead of the 10-20s you'd get from webpack or older CRA.
 - **No Next.js because we don't need server-side rendering.** This app has no SEO concerns (it's gated behind login), no public pages, no rendering-on-demand. Every byte goes from CDN to browser as static files. SSR would add complexity we'd never use.
-- **React 19 because that's what ****`npm create vite`**** shipped today.** React 18 → 19 is a near-drop-in upgrade for our usage. The version pin happened naturally because we let the scaffold pick.
+- **React 19 because that's what \****`npm create vite`**\*\* shipped today.** React 18 → 19 is a near-drop-in upgrade for our usage. The version pin happened naturally because we let the scaffold pick.
 
 If you ever want to add proper routing (separate URLs for Aliments vs Restos vs a future Profile page), drop in `react-router` as a six-line change. If you want server-side data fetching for SEO, you'd migrate to Next or Remix — but that day isn't today.
 
@@ -131,7 +133,7 @@ That sentence is true but abstract. Concretely, Vercel did **eight specific thin
 5. **Promoted the new bundle atomically.** When a build finishes, Vercel doesn't replace files one-by-one (which would create a half-state where some users see old files and some see new). It atomically swaps *the whole deployment* — a single pointer flip. Every user globally gets either the old version or the new version, never a mix.
 6. **Kept every previous deploy alive forever.** You can roll back to any past deploy with one click. They don't garbage-collect old deploys on your plan. *This is what makes "ship and pray" actually safe.* No `git revert`, no panic.
 7. **Blocked an unsigned commit.** Remember "deployment blocked because the commit email couldn't be matched"? That's CI security — Vercel refusing to ship code from an unverified author. Annoying when you trip on it; valuable in the abstract.
-8. **Triggered bot mitigation when *****I***** hammered it.** The "Vercel Security Checkpoint" page my polling loop got is their DDoS protection. Real users never see it; automated traffic does. The fact that you, as a real user, never saw the challenge is exactly what's supposed to happen.
+8. **Triggered bot mitigation when \*I\* hammered it.** The "Vercel Security Checkpoint" page my polling loop got is their DDoS protection. Real users never see it; automated traffic does. The fact that you, as a real user, never saw the challenge is exactly what's supposed to happen.
 
 **The four-word version**: code-to-URL in one step.
 
@@ -157,7 +159,7 @@ The honest answer: hosting choice for a static site barely matters. Don't overth
 Once you decided you wanted Places autocomplete in the "+ Resto" form, the rest of the map stack cascaded:
 
 - **One API key for the whole feature surface.** Autocomplete (Places API New), the map view itself (Maps JavaScript API), and walking-time computation (Distance Matrix API) all share a single Google Cloud key. Mapbox is a fine *map* but doesn't offer competing first-party Places autocomplete; you'd end up wiring a separate provider on the side. Same for Leaflet (which is just a renderer — no data layer at all).
-- **`place_id` is a stable, portable identifier.** Anywhere on the planet, `https://www.google.com/maps/search/?api=1&query=NAME&query_place_id=ChIJ...` deep-links to the right place — including auto-opening the Google Maps app on iOS/Android. That's why the distance pill on each resto card is just an `<a>` tag wrapping the place_id; no JS, no SDK call, instant deep-link. (We initially shipped the older `?q=place_id:` form which the iOS Maps app treats as a literal text search — don't make that mistake.) Mapbox's place IDs only resolve inside Mapbox's own ecosystem.
+- **`place_id`**** is a stable, portable identifier.** Anywhere on the planet, `https://www.google.com/maps/search/?api=1&query=NAME&query_place_id=ChIJ``...` deep-links to the right place — including auto-opening the Google Maps app on iOS/Android. That's why the distance pill on each resto card is just an `<a>` tag wrapping the place_id; no JS, no SDK call, instant deep-link. (We initially shipped the older `?q=place_id:` form which the iOS Maps app treats as a literal text search — don't make that mistake.) Mapbox's place IDs only resolve inside Mapbox's own ecosystem.
 - **Walking times come from real street routing.** Google's Distance Matrix walks you through actual streets, accounting for one-way restrictions, pedestrian zones, and inaccessible blocks. We considered a naive Haversine straight-line distance (zero API cost) but it would have given misleading "0.5 km" numbers when the actual walk is 25 minutes through a mall and a 1-floor staircase. Real walking time matches your lived experience of the city.
 - **Cost is essentially zero** for a single-user app: the $200/mo free credit covers thousands of map loads, autocomplete sessions, and Distance Matrix calls. We'll burn a few cents' worth per year.
 
@@ -222,7 +224,7 @@ list.sort((a, b) => Number(b.rating) - Number(a.rating))
 
 ### Bug 3: Vercel deploy blocked by author email mismatch
 
-I committed with `djianp@gmail.com` (your handle, which I incorrectly assumed was your email). Vercel's deploy security required the commit author email to match a verified email on a GitHub account. The deploy blocked with: *"The deployment was blocked because the commit email **djianp@gmail.com** could not be matched to a GitHub account."*
+I committed with `djianp@gmail.com` (your handle, which I incorrectly assumed was your email). Vercel's deploy security required the commit author email to match a verified email on a GitHub account. The deploy blocked with: *"The deployment was blocked because the commit email ****djianp@gmail.com**** could not be matched to a GitHub account."*
 
 Embarrassingly, I'd been making the same mistake for *three previous commits* before this. Those previous commits deployed (Vercel had been more lenient for the Hobby plan or had recently flipped a setting). Then suddenly this one didn't, and I dismissed the warning as cosmetic. It wasn't.
 
@@ -259,7 +261,7 @@ After `npm run dev` ran, a directory called `.vite/` appeared at the project roo
 
 **The fix:** add `.vite` to `.gitignore`. One line, one commit.
 
-> **Lesson:** **`?? <thing>`**** in ****`git status --short`**** is a quiet lie.** "Untracked" doesn't mean "harmless to ignore" — it means "git doesn't know about this yet, but the next `git add .` would commit it." Inspect untracked entries before bulk-adding. Better: keep your `.gitignore` ahead of your tooling by checking what your tools generate after first run.
+> **Lesson:** **`?? <thing>`**** in \****`git status --short`**\*\* is a quiet lie.** "Untracked" doesn't mean "harmless to ignore" — it means "git doesn't know about this yet, but the next `git add .` would commit it." Inspect untracked entries before bulk-adding. Better: keep your `.gitignore` ahead of your tooling by checking what your tools generate after first run.
 
 ### Bug 7: Async-everywhere data shape change
 
@@ -292,7 +294,7 @@ We moved through four phases:
 1. **Phase A**: Migrate the prototype to Vite + React. Result: identical-looking app, but on a real bundler.
 2. **Phase B**: Push to GitHub, deploy to Vercel. Result: a live URL on the internet.
 3. **Phase C**: Add Supabase (DB + auth + sync). Result: cross-device data.
-4. **Phase D**: Polish. Optional. We haven't done it.
+4. **Phase D**: Ongoing polish. Google Maps integration, Aliments CRUD with detail/edit/delete modals, alpha-tiebreak resto sort, search button, optional rating, contrainte display, walking-time pills, and more — all happened in Phase D and continue to. The forward-looking backlog is in `nextfeatures.md`.
 
 Each phase produced something **demoable in isolation**. After Phase B, you had a working live URL. If Phase C had failed catastrophically, you could revert and still have a working live URL with localStorage. **Each phase is reversible.**
 
@@ -330,11 +332,11 @@ Some sharp edges that didn't bite us yet, but could:
 
 `saumon.png` is 875 KB. `riz-noir.png` is 1 MB. They render at 48-96 pixels in the UI. **>99% of the bytes are wasted on every page load.** Phone users on cellular pay for that wastage in time and data. Fix: `sips -Z 200 *.png` (one-liner, ~25 KB output) or install `vite-plugin-image-optimizer` for an automated build step.
 
-### The seed restos are a one-shot first-login gift
+### Seeds (restos AND foods) are one-shot first-login gifts
 
-If you ever invite a friend to use the app, they'd log in and `useRestos` would call `seedRestos()` to give them whatever entries are currently in `src/data/restos.js` (just Bistrot Paul-Bert at the moment). That's fine for the friend. But if you ever edit the seed file later, existing users won't get the change — `seedRestos` only runs the *first* time their `restos` table is empty. The seed is a **one-shot first-login gift**, not a synchronized canonical list.
+If you ever invite a friend to use the app, they'd log in and the app would auto-seed *both* tables: `seedRestos()` from `src/data/restos.js` (Bistrot Paul-Bert) and `seedFoods()` from `src/data/foods.js` (the 39 curated foods). That's fine for a new user. But if you ever edit a seed file later, existing users won't get the change — each seed only runs the *first* time the corresponding table is empty for that user. The seeds are **one-shot first-login gifts**, not synchronized canonical lists.
 
-For a multi-user app, you'd separate "your restos" from "shared/featured restos that are read-only and curated." That's not the app you're building. If you ever want to, the schema would need a new table.
+For a multi-user app, you'd separate "your stuff" from "shared/featured stuff that's read-only and curated." That's not the app you're building. If you ever want to, the schema would need new tables.
 
 ### The redirect URL allowlist is fragile
 
@@ -385,8 +387,8 @@ In three months you'll forget half of this. Don't try to memorize. Instead:
 1. **Read this file again.** It's faster than re-deriving the architecture.
 2. **`npm run dev`** to start the local dev server. Visit `http://localhost:5173`.
 3. **`git log --oneline`** to remind yourself of the recent changes.
-4. **Open ****`src/App.jsx`** to see the entry point. The mental model: App → either Login or AppShell → AppShell renders one of two screens → screens use `useRestos()` for data and the components in `ui.jsx` for rendering.
-5. **Open the Supabase dashboard** to inspect the database directly. The `Table Editor` shows your `restos` and `meals` rows. You can edit/delete from there if the UI doesn't yet support it.
+4. **Open `src/App.jsx`** to see the entry point. The mental model: App → either Login or AppShell → AppShell renders one of two screens → screens use `useRestos()` and `useFoods()` for data and the components in `ui.jsx` for rendering.
+5. **Open the Supabase dashboard** to inspect the database directly. The `Table Editor` shows your `restos`, `meals`, and `foods` rows. You can edit/delete from there if the UI doesn't yet support it.
 6. **Note on the directory name**: it's `fodmap/`, even though early in development it was briefly called `sibo/`. The GitHub repo, Vercel project, and login-screen branding all settled on FODMAP, so the directory was renamed to match. If you see "SIBO" inside `src/data/foods.js`, that's the disease name being referenced in food descriptions — leave those alone.
 
 You built a real app. It's small, it's solid, and it covers a specific problem you actually have. That's the best kind of software to build.

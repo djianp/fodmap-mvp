@@ -251,3 +251,13 @@ export async function updateFood(id, food) {
   if (error) throw error
   return data
 }
+
+export async function deleteFood(id) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { error } = await supabase.from('foods')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+  if (error) throw error
+}

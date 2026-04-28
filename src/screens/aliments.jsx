@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BlobLogo, Chip, FoodRow, Verdict, Thumb } from '../components/ui.jsx'
-import { useFoods } from '../lib/user-data.js'
+import { useFoods, deleteFood } from '../lib/user-data.js'
 import { CATEGORIES } from '../lib/foods-meta.js'
 import { AlimentForm } from './aliment-forms.jsx'
 
 const verdictOrder = { green: 0, amber: 1, red: 2 }
 
-function AlimentDetailModal({ food, onClose, onEdit }) {
+function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
   useEffect(() => {
     if (!food) return
     const esc = (e) => { if (e.key === 'Escape') onClose() }
@@ -47,13 +47,13 @@ function AlimentDetailModal({ food, onClose, onEdit }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Midi</div>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 6 }}>Midi</div>
             <Verdict value={food.midi} size="lg" />
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Soir</div>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 6 }}>Soir</div>
             <Verdict value={food.soir} size="lg" />
           </div>
         </div>
@@ -79,24 +79,20 @@ function AlimentDetailModal({ food, onClose, onEdit }) {
           </div>
         )}
 
-        {food.tags && food.tags.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-            {food.tags.map(t => (
-              <span key={t} style={{ padding: '3px 8px', borderRadius: 999, background: '#e9d7b6', border: '1px solid #1f1a14', fontSize: 10, fontWeight: 600 }}>
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div style={{ marginTop: 4 }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
           <button onClick={onEdit} style={{
-            width: '100%',
+            flex: 1,
             padding: '10px 16px', borderRadius: 999,
             background: '#1f1a14', color: '#f5f0e6',
             border: '2px solid #1f1a14', boxShadow: '0 3px 0 #1f1a14',
             fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
           }}>Modifier</button>
+          <button onClick={() => onDelete(food)} style={{
+            padding: '10px 16px', borderRadius: 999,
+            background: '#fff', color: '#c9543e',
+            border: '2px solid #c9543e', boxShadow: '0 3px 0 #c9543e',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+          }}>Supprimer</button>
         </div>
       </div>
       <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
@@ -208,6 +204,16 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
         food={selectedLatest}
         onClose={() => setSelected(null)}
         onEdit={() => { setEditingFood(selectedLatest); setSelected(null) }}
+        onDelete={async (f) => {
+          if (!window.confirm(`Supprimer « ${f.nom} » ?`)) return
+          try {
+            await deleteFood(f.id)
+            setSelected(null)
+            refresh()
+          } catch (err) {
+            window.alert(err.message || String(err))
+          }
+        }}
       />
 
       {showAdd && (

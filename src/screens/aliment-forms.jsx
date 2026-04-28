@@ -44,7 +44,6 @@ export function AlimentForm({ food, onClose, onSaved }) {
     fodmap: food?.fodmap || '',
     contrainte: food?.contrainte || '',
     details: food?.details || '',
-    tags: (food?.tags || []).join(', '),
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -66,7 +65,7 @@ export function AlimentForm({ food, onClose, onSaved }) {
         fodmap: form.fodmap.trim() || null,
         contrainte: form.contrainte.trim() || null,
         details: form.details.trim() || null,
-        tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+        tags: food?.tags || [],
       }
       const saved = isEdit
         ? await updateFood(food.id, payload)
@@ -119,9 +118,6 @@ export function AlimentForm({ food, onClose, onSaved }) {
         <textarea value={form.details} onChange={e => update('details', e.target.value)} rows={4}
           style={{...inputStyle, resize: 'vertical', fontFamily: 'inherit', minHeight: 90}}
           placeholder="Ex. Bien toléré le matin avec œufs, à éviter le soir…" />
-      </Field>
-      <Field label="Tags" hint="Séparés par des virgules">
-        <input value={form.tags} onChange={e => update('tags', e.target.value)} style={inputStyle} placeholder="élite, sommeil" />
       </Field>
     </FormShell>
   )

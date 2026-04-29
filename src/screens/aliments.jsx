@@ -70,9 +70,9 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
         )}
 
         {food.contrainte && (
-          <div style={{ marginBottom: 12, padding: '10px 12px', background: '#f0a390', border: '1.5px solid #1f1a14', borderRadius: 10 }}>
+          <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Contrainte</div>
-            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45 }}>{food.contrainte}</div>
+            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45, fontWeight: 700 }}>{food.contrainte}</div>
           </div>
         )}
 

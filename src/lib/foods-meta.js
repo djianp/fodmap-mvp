@@ -1,27 +1,17 @@
 import { FOODS } from '../data/foods.js'
-import saumonImg from '../assets/food/saumon.png'
-import rizNoirImg from '../assets/food/riz-noir.png'
 
-// Local + curated Unsplash photos for the foods we have art for.
-// Foods without an entry fall back to the monogram tile in <Thumb>.
-export const PHOTOS = {
-  "saumon": saumonImg,
-  "truite": saumonImg,
-  "riz-noir": rizNoirImg,
-  "brocoli": "https://images.unsplash.com/photo-1583663848850-46af132dc08e?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "mangue": "https://images.unsplash.com/photo-1591073113125-e46713c829ed?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "carotte-puree": "https://images.unsplash.com/photo-1582515073490-39981397c445?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "carotte-crue": "https://images.unsplash.com/photo-1582515073490-39981397c445?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "myrtilles": "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "framboises": "https://images.unsplash.com/photo-1577003833619-76bbd7f82948?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "ananas": "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "poulet": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "banane-verte": "https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "banane-mure": "https://images.unsplash.com/photo-1543218024-57a70143c369?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "citron": "https://images.unsplash.com/photo-1582476473220-3b26a2a5a51f?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "gingembre": "https://images.unsplash.com/photo-1573414405630-72b9b0e67ce2?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-  "huile-olive": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300&h=300&fit=crop&crop=center&auto=format&q=80",
-}
+// Food ids whose liste image lives at /aliments/<id>.png (served from public/aliments/).
+// Foods absent from this list fall back to the monogram tile in <Thumb>.
+const PHOTO_IDS = [
+  'ail', 'ananas', 'banane-mure', 'banane-verte', 'bar',
+  'beurre-cacahuete', 'brocoli', 'carotte-crue', 'celeri-rave', 'citron',
+  'concombre', 'dorade', 'echalote', 'framboises', 'frites',
+  'gingembre', 'haricots-verts', 'huile-olive', 'kasha', 'ketchup',
+]
+
+export const PHOTOS = Object.fromEntries(
+  PHOTO_IDS.map(id => [id, `/aliments/${id}.png`])
+)
 
 // Fallback tile colors for the monogram badge.
 // Deliberately avoids green/orange/red so the badge never collides with a verdict.

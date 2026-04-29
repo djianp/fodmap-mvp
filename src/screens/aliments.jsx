@@ -122,7 +122,10 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
   const groups = {}
   filtered.forEach(f => { (groups[f.cat] ||= []).push(f) })
   Object.keys(groups).forEach(k => {
-    groups[k].sort((a, b) => verdictOrder[a[moment]] - verdictOrder[b[moment]])
+    groups[k].sort((a, b) =>
+      verdictOrder[a[moment]] - verdictOrder[b[moment]]
+      || a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' })
+    )
   })
   const orderedCats = CATEGORIES.filter(c => groups[c] && groups[c].length)
 

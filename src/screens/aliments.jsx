@@ -5,6 +5,10 @@ import { CATEGORIES } from '../lib/foods-meta.js'
 import { AlimentForm } from './aliment-forms.jsx'
 
 const verdictOrder = { green: 0, amber: 1, red: 2 }
+const noteNum = (f) => {
+  const n = parseFloat(f.note)
+  return Number.isFinite(n) ? n : -Infinity
+}
 
 function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
   useEffect(() => {
@@ -124,6 +128,7 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
   Object.keys(groups).forEach(k => {
     groups[k].sort((a, b) =>
       verdictOrder[a[moment]] - verdictOrder[b[moment]]
+      || noteNum(b) - noteNum(a)
       || a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' })
     )
   })

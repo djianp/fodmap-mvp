@@ -3,7 +3,7 @@ import { BlobLogo, Chip } from '../components/ui.jsx'
 import { GoogleMap } from '../components/google-map.jsx'
 import { useRestos } from '../lib/user-data.js'
 import { placeUrlFor } from '../lib/google-maps.js'
-import { AddRestoForm, AddMealForm } from './resto-forms.jsx'
+import { AddRestoForm, MealForm } from './resto-forms.jsx'
 
 function Stars({ value, size = 11 }) {
   const stars = []
@@ -38,7 +38,7 @@ function Select({ value, options, onChange }) {
   )
 }
 
-function RestoCard({ r, location, onAddMeal }) {
+function RestoCard({ r, location, onAddMeal, onEditMeal }) {
   const walkMin = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
   const mapsUrl = placeUrlFor(r.place_id, `${r.nom} ${r.adresse}`)
   return (
@@ -106,31 +106,42 @@ function RestoCard({ r, location, onAddMeal }) {
       </div>
 
       <div style={{ padding: '10px 14px 14px' }}>
-        {(r.meals || []).map((m) => (
-          <div key={m.id || m.nom} style={{
-            padding: '10px 0',
-            borderBottom: '1px dashed rgba(31,26,20,0.12)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: '#1f1a14', lineHeight: 1.3 }}>
-                  {m.nom}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                  <Stars value={Number(m.rating)} size={10} />
-                  <span style={{ fontSize: 10, color: '#7a6b55', fontWeight: 600 }}>{Number(m.rating).toFixed(1)}</span>
+        {(r.meals || []).map((m) => {
+          const clickable = !!(onEditMeal && m.id)
+          return (
+            <div
+              key={m.id || m.nom}
+              onClick={clickable ? () => onEditMeal(m) : undefined}
+              role={clickable ? 'button' : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEditMeal(m) } } : undefined}
+              style={{
+                padding: '10px 0',
+                borderBottom: '1px dashed rgba(31,26,20,0.12)',
+                cursor: clickable ? 'pointer' : 'default',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: '#1f1a14', lineHeight: 1.3 }}>
+                    {m.nom}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                    <Stars value={Number(m.rating)} size={10} />
+                    <span style={{ fontSize: 10, color: '#7a6b55', fontWeight: 600 }}>{Number(m.rating).toFixed(1)}</span>
+                  </div>
                 </div>
               </div>
+              {m.comment && (
+                <div style={{
+                  marginTop: 8, padding: '8px 10px', background: '#f5e3b8',
+                  border: '1.5px solid #1f1a14', borderRadius: 10,
+                  fontSize: 11, color: '#2d1e0f', lineHeight: 1.4, fontStyle: 'italic',
+                }}>💬 {m.comment}</div>
+              )}
             </div>
-            {m.comment && (
-              <div style={{
-                marginTop: 8, padding: '8px 10px', background: '#f5e3b8',
-                border: '1.5px solid #1f1a14', borderRadius: 10,
-                fontSize: 11, color: '#2d1e0f', lineHeight: 1.4, fontStyle: 'italic',
-              }}>💬 {m.comment}</div>
-            )}
-          </div>
-        ))}
+          )
+        })}
         {(!r.meals || r.meals.length === 0) && (
           <div style={{ padding: '10px 0', fontSize: 11, color: '#a39a8d', fontStyle: 'italic' }}>
             Aucun plat noté pour ce resto.
@@ -201,7 +212,7 @@ function MapView({ restos, location, onPinClick }) {
   )
 }
 
-function RestoModal({ resto, location, onClose, onAddMeal }) {
+function RestoModal({ resto, location, onClose, onAddMeal, onEditMeal }) {
   useEffect(() => {
     if (!resto) return
     const esc = (e) => { if (e.key === 'Escape') onClose() }
@@ -231,7 +242,7 @@ function RestoModal({ resto, location, onClose, onAddMeal }) {
           fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
         }}>×</button>
         <div style={{ padding: 8 }}>
-          <RestoCard r={resto} location={location} onAddMeal={onAddMeal} />
+          <RestoCard r={resto} location={location} onAddMeal={onAddMeal} onEditMeal={onEditMeal} />
         </div>
       </div>
       <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
@@ -248,6 +259,7 @@ export function MVPRestosScreen() {
   const [selected, setSelected] = useState(null)
   const [showAddResto, setShowAddResto] = useState(false)
   const [addMealFor, setAddMealFor] = useState(null)
+  const [editingMeal, setEditingMeal] = useState(null)
   const [q, setQ] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
 
@@ -383,7 +395,7 @@ export function MVPRestosScreen() {
         <GoogleMap restos={filtered} location={location} onPinClick={setSelected} fallback={MapView} />
       ) : (
         <>
-          {filtered.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} />)}
+          {filtered.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} onEditMeal={setEditingMeal} />)}
           {filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7a6b55' }}>
               Aucun resto trouvé avec ces filtres.
@@ -393,7 +405,8 @@ export function MVPRestosScreen() {
       )}
       <RestoModal resto={selected ? filtered.find(r => r.id === selected.id) || selected : null}
         location={location} onClose={() => setSelected(null)}
-        onAddMeal={(r) => { setSelected(null); setAddMealFor(r) }} />
+        onAddMeal={(r) => { setSelected(null); setAddMealFor(r) }}
+        onEditMeal={(m) => { setSelected(null); setEditingMeal(m) }} />
       {showAddResto && (
         <AddRestoForm
           onClose={() => setShowAddResto(false)}
@@ -401,11 +414,19 @@ export function MVPRestosScreen() {
         />
       )}
       {addMealFor && (
-        <AddMealForm
+        <MealForm
           resto={addMealFor}
           proteines={proteines}
           onClose={() => setAddMealFor(null)}
           onSaved={() => { setAddMealFor(null); refresh() }}
+        />
+      )}
+      {editingMeal && (
+        <MealForm
+          meal={editingMeal}
+          proteines={proteines}
+          onClose={() => setEditingMeal(null)}
+          onSaved={() => { setEditingMeal(null); refresh() }}
         />
       )}
     </>

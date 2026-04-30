@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { addResto, addMeal } from '../lib/user-data.js'
+import { addResto, addMeal, updateMeal, deleteMeal } from '../lib/user-data.js'
 import { getWalkTimes } from '../lib/google-maps.js'
 import { PlaceAutocomplete } from '../components/place-autocomplete.jsx'
 
@@ -256,13 +256,19 @@ export function AddRestoForm({ onClose, onSaved }) {
   )
 }
 
-export function AddMealForm({ resto, proteines, onClose, onSaved }) {
+export function MealForm({ resto, meal, proteines, onClose, onSaved }) {
+  const isEdit = !!meal
   const existingProteines = (proteines || []).filter(p => p !== 'Toutes')
+  const initialProteineKnown = isEdit && existingProteines.includes(meal.proteine)
   const [form, setForm] = useState({
-    nom: '', proteine: '', proteine_custom: '',
-    rating: 4, comment: '',
+    nom: meal?.nom || '',
+    proteine: isEdit ? (initialProteineKnown ? meal.proteine : '__new') : '',
+    proteine_custom: isEdit && !initialProteineKnown ? (meal.proteine || '') : '',
+    rating: meal?.rating ?? 4,
+    comment: meal?.comment || '',
   })
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState(null)
   const update = (k, v) => setForm(s => ({ ...s, [k]: v }))
   const proteineValue = form.proteine === '__new' ? form.proteine_custom.trim() : form.proteine
@@ -273,12 +279,17 @@ export function AddMealForm({ resto, proteines, onClose, onSaved }) {
     setSubmitting(true)
     setError(null)
     try {
-      await addMeal(resto.id, {
+      const payload = {
         nom: form.nom.trim(),
         proteine: proteineValue,
         rating: parseFloat(form.rating),
         comment: form.comment.trim(),
-      })
+      }
+      if (isEdit) {
+        await updateMeal(meal.id, payload)
+      } else {
+        await addMeal(resto.id, payload)
+      }
       onSaved()
     } catch (err) {
       setError(err.message || 'Erreur d’enregistrement')
@@ -286,13 +297,28 @@ export function AddMealForm({ resto, proteines, onClose, onSaved }) {
     }
   }
 
+  const onDelete = async () => {
+    if (!isEdit || deleting) return
+    if (!window.confirm(`Supprimer « ${meal.nom} » ?`)) return
+    setDeleting(true)
+    setError(null)
+    try {
+      await deleteMeal(meal.id)
+      onSaved()
+    } catch (err) {
+      setError(err.message || 'Erreur de suppression')
+      setDeleting(false)
+    }
+  }
+
   return (
-    <FormShell title={`Nouveau plat · ${resto.nom}`} onClose={onClose} onSubmit={submit}
-      submitLabel={submitting ? 'Enregistrement…' : 'Ajouter'}
+    <FormShell title={isEdit ? `Modifier · ${meal.nom}` : `Nouveau plat · ${resto.nom}`}
+      onClose={onClose} onSubmit={submit}
+      submitLabel={submitting ? 'Enregistrement…' : (isEdit ? 'Sauver' : 'Ajouter')}
       disabled={!valid || submitting} error={error}>
       <Field label="Nom du plat *" hint="Terminer par le prix entre parenthèses, ex: (22€)">
         <input value={form.nom} onChange={e => update('nom', e.target.value)}
-          placeholder="Ex: Dorade grillée, riz blanc (24€)" style={inputStyle} autoFocus />
+          placeholder="Ex: Dorade grillée, riz blanc (24€)" style={inputStyle} autoFocus={!isEdit} />
       </Field>
       <Field label="Protéine *">
         <select value={form.proteine} onChange={e => update('proteine', e.target.value)}
@@ -318,6 +344,15 @@ export function AddMealForm({ resto, proteines, onClose, onSaved }) {
           placeholder="Ex: sauce à part, sans ail, bien cuit"
           rows={3} style={{ ...inputStyle, resize: 'vertical', minHeight: 72, fontFamily: 'inherit' }} />
       </Field>
+      {isEdit && (
+        <button type="button" onClick={onDelete} disabled={deleting} style={{
+          width: '100%', marginTop: 6,
+          padding: '10px 16px', borderRadius: 999,
+          background: '#fff', color: '#c9543e',
+          border: '2px solid #c9543e', boxShadow: deleting ? 'none' : '0 3px 0 #c9543e',
+          fontSize: 13, fontWeight: 700, cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+        }}>{deleting ? 'Suppression…' : 'Supprimer ce plat'}</button>
+      )}
     </FormShell>
   )
 }

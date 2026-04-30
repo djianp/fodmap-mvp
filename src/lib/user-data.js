@@ -138,6 +138,31 @@ export async function addMeal(restoId, meal) {
   if (error) throw error
 }
 
+export async function updateMeal(id, meal) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { error } = await supabase.from('meals')
+    .update({
+      nom: meal.nom,
+      proteine: meal.proteine,
+      rating: meal.rating,
+      comment: meal.comment || '',
+    })
+    .eq('id', id)
+    .eq('user_id', user.id)
+  if (error) throw error
+}
+
+export async function deleteMeal(id) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { error } = await supabase.from('meals')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+  if (error) throw error
+}
+
 // ──────────── Foods ────────────
 
 async function fetchFoods() {

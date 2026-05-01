@@ -372,7 +372,7 @@ export function MVPRestosScreen() {
         <Chip label="Bureau" icon="🏢" on={location === 'bureau'} onClick={() => setLocation('bureau')} />
         <Chip label="Domicile" icon="🏠" on={location === 'domicile'} onClick={() => setLocation('domicile')} />
       </div>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="chips-scroll" style={{ marginBottom: 10 }}>
         <Chip label="Tous" on={status === 'all'} onClick={() => setStatus('all')} />
         <Chip label="À emporter" icon="🥡" on={status === 'takeaway'} onClick={() => setStatus('takeaway')} />
         <Chip label="Sur place" icon="🍽️" on={status === 'dinein'} onClick={() => setStatus('dinein')} />

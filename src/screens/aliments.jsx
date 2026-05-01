@@ -9,6 +9,13 @@ const noteNum = (f) => {
   const n = parseFloat(f.note)
   return Number.isFinite(n) ? n : -Infinity
 }
+const CATEGORY_ICONS = {
+  'Féculents': '🌾',
+  'Protéines': '🐟',
+  'Légumes': '🥦',
+  'Fruits': '🍎',
+  'Condiments': '🧂',
+}
 
 function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
   useEffect(() => {
@@ -175,9 +182,9 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
         <Chip label="Soir" on={moment === 'soir'} onClick={() => setMoment('soir')} />
       </div>
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 18, flexWrap: 'wrap' }}>
+      <div className="chips-scroll" style={{ marginBottom: 18 }}>
         {['Tous', ...CATEGORIES].map(c =>
-          <Chip key={c} label={c} on={catFilter === c} onClick={() => setCatFilter(c)} />
+          <Chip key={c} label={c} icon={CATEGORY_ICONS[c]} on={catFilter === c} onClick={() => setCatFilter(c)} />
         )}
       </div>
 

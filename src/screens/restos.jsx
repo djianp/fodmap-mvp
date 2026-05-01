@@ -208,7 +208,8 @@ function MapView({ restos, location, onPinClick }) {
           }}>{r.nom.length > 14 ? r.nom.slice(0, 13) + '…' : r.nom}</div>
           <div style={{
             width: 14, height: 14, borderRadius: '50% 50% 50% 0',
-            background: '#f5c887', border: '2px solid #1f1a14',
+            background: r.status === 'totry' ? '#f0a390' : '#f5c887',
+            border: '2px solid #1f1a14',
             transform: 'rotate(-45deg)', boxShadow: '0 1.5px 0 #1f1a14',
           }} />
         </button>
@@ -398,16 +399,28 @@ export function MVPRestosScreen() {
         </div>
       ) : view === 'map' ? (
         <GoogleMap restos={filtered} location={location} onPinClick={setSelected} fallback={MapView} />
-      ) : (
-        <>
-          {filtered.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} onEditMeal={setEditingMeal} />)}
-          {filtered.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7a6b55' }}>
-              Aucun resto trouvé avec ces filtres.
-            </div>
-          )}
-        </>
-      )}
+      ) : (() => {
+        const mainRestos = filtered.filter(r => r.status !== 'totry')
+        const toTryRestos = filtered.filter(r => r.status === 'totry')
+        const showHeader = mainRestos.length > 0 && toTryRestos.length > 0
+        return (
+          <>
+            {mainRestos.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} onEditMeal={setEditingMeal} />)}
+            {showHeader && (
+              <div style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase',
+                fontWeight: 700, color: '#7a6b55', margin: '20px 0 10px' }}>
+                À tester · {toTryRestos.length}
+              </div>
+            )}
+            {toTryRestos.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} onEditMeal={setEditingMeal} />)}
+            {filtered.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7a6b55' }}>
+                Aucun resto trouvé avec ces filtres.
+              </div>
+            )}
+          </>
+        )
+      })()}
       <RestoModal resto={selected ? filtered.find(r => r.id === selected.id) || selected : null}
         location={location} onClose={() => setSelected(null)}
         onAddMeal={(r) => { setSelected(null); setAddMealFor(r) }}

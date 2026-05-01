@@ -33,6 +33,7 @@ html, body {
   scrollbar-width: none;
   margin-right: -20px;
   padding-right: 20px;
+  padding-bottom: 4px;
 }
 .chips-scroll::-webkit-scrollbar { display: none; }
 

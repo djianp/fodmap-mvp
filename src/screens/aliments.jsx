@@ -178,8 +178,8 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-        <Chip label="Midi" on={moment === 'midi'} onClick={() => setMoment('midi')} />
-        <Chip label="Soir" on={moment === 'soir'} onClick={() => setMoment('soir')} />
+        <Chip label="Midi" icon="☀️" on={moment === 'midi'} onClick={() => setMoment('midi')} />
+        <Chip label="Soir" icon="🌙" on={moment === 'soir'} onClick={() => setMoment('soir')} />
       </div>
 
       <div className="chips-scroll" style={{ marginBottom: 18 }}>
@@ -203,7 +203,10 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
         orderedCats.map(cat => (
           <div key={cat} style={{ marginBottom: 18 }}>
             <div style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase',
-              fontWeight: 700, color: '#7a6b55', marginBottom: 8 }}>{cat} · {groups[cat].length}</div>
+              fontWeight: 700, color: '#7a6b55', marginBottom: 8 }}>
+              {CATEGORY_ICONS[cat] && <span style={{ marginRight: 6, letterSpacing: 0 }} aria-hidden="true">{CATEGORY_ICONS[cat]}</span>}
+              {cat} · {groups[cat].length}
+            </div>
             {groups[cat].map(f => <FoodRow key={f.id} food={f} moment={moment} onClick={() => setSelected(f)} />)}
           </div>
         ))

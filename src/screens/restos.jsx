@@ -364,13 +364,13 @@ export function MVPRestosScreen() {
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-        <Chip label="Bureau" on={location === 'bureau'} onClick={() => setLocation('bureau')} />
-        <Chip label="Domicile" on={location === 'domicile'} onClick={() => setLocation('domicile')} />
+        <Chip label="Bureau" icon="🏢" on={location === 'bureau'} onClick={() => setLocation('bureau')} />
+        <Chip label="Domicile" icon="🏠" on={location === 'domicile'} onClick={() => setLocation('domicile')} />
       </div>
       <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         <Chip label="Tous" on={takeaway === 'all'} onClick={() => setTakeaway('all')} />
-        <Chip label="À emporter" on={takeaway === 'yes'} onClick={() => setTakeaway('yes')} />
-        <Chip label="Sur place" on={takeaway === 'no'} onClick={() => setTakeaway('no')} />
+        <Chip label="À emporter" icon="🥡" on={takeaway === 'yes'} onClick={() => setTakeaway('yes')} />
+        <Chip label="Sur place" icon="🍽️" on={takeaway === 'no'} onClick={() => setTakeaway('no')} />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <span style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',

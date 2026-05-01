@@ -65,7 +65,7 @@ export function GoogleMap({ restos, location, onPinClick, fallback: Fallback }) 
         // Anchor lookup failed; carry on without it
       }
 
-      // Resto markers (default red pin, click → onPinClick)
+      // Resto markers — default red pin for tested restos, salmon circle for à-tester
       restos.forEach(r => {
         if (r.lat == null || r.lng == null) return
         const pos = { lat: Number(r.lat), lng: Number(r.lng) }
@@ -73,6 +73,16 @@ export function GoogleMap({ restos, location, onPinClick, fallback: Fallback }) 
           position: pos,
           map: mapRef.current,
           title: r.nom,
+          ...(r.status === 'totry' ? {
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 10,
+              fillColor: '#f0a390',
+              fillOpacity: 1,
+              strokeColor: '#1f1a14',
+              strokeWeight: 2,
+            },
+          } : {}),
         })
         marker.addListener('click', () => onPinClick && onPinClick(r))
         markersRef.current.push(marker)

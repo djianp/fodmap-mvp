@@ -44,7 +44,7 @@ export function Verdict({ value, size = "sm" }) {
   )
 }
 
-export function Chip({ label, on, onClick }) {
+export function Chip({ label, icon, on, onClick }) {
   return (
     <button onClick={onClick} style={{
       padding: "7px 14px", borderRadius: 999,
@@ -54,7 +54,11 @@ export function Chip({ label, on, onClick }) {
       fontSize: 12, fontWeight: 500, whiteSpace: "nowrap",
       boxShadow: on ? "none" : "0 2px 0 #1f1a14",
       cursor: "pointer", fontFamily: "inherit",
-    }}>{label}</button>
+      display: "inline-flex", alignItems: "center", gap: 6, lineHeight: 1,
+    }}>
+      {icon && <span style={{ fontSize: 14, lineHeight: 1 }} aria-hidden="true">{icon}</span>}
+      {label}
+    </button>
   )
 }
 

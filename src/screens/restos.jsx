@@ -71,10 +71,15 @@ function RestoCard({ r, location, onAddMeal, onEditMeal }) {
             </svg>
             {walkMin != null ? `${walkMin} min` : '—'}
           </a>
-          {r.takeaway && <span style={{ padding: '4px 9px', borderRadius: 999,
+          {r.status === 'takeaway' && <span style={{ padding: '4px 9px', borderRadius: 999,
             background: '#b8d398', border: '1.5px solid #1f1a14',
             fontSize: 10, fontWeight: 600, color: '#1f1a14', whiteSpace: 'nowrap' }}>
             À emporter
+          </span>}
+          {r.status === 'totry' && <span style={{ padding: '4px 9px', borderRadius: 999,
+            background: '#f0a390', border: '1.5px solid #1f1a14',
+            fontSize: 10, fontWeight: 600, color: '#1f1a14', whiteSpace: 'nowrap' }}>
+            À tester
           </span>}
           {r.phone && (
             <a href={`tel:${r.phone}`} style={{
@@ -253,7 +258,7 @@ function RestoModal({ resto, location, onClose, onAddMeal, onEditMeal }) {
 export function MVPRestosScreen() {
   const { restos, loading, error, proteines, refresh } = useRestos()
   const [location, setLocation] = useState('bureau')
-  const [takeaway, setTakeaway] = useState('all')
+  const [status, setStatus] = useState('all')
   const [proteine, setProteine] = useState('Toutes')
   const [view, setView] = useState('list')
   const [selected, setSelected] = useState(null)
@@ -265,8 +270,7 @@ export function MVPRestosScreen() {
 
   const filtered = useMemo(() => {
     let list = restos.slice()
-    if (takeaway === 'yes') list = list.filter(r => r.takeaway)
-    if (takeaway === 'no') list = list.filter(r => !r.takeaway)
+    if (status !== 'all') list = list.filter(r => r.status === status)
     if (proteine !== 'Toutes') {
       list = list
         .map(r => ({ ...r, meals: (r.meals || []).filter(m => m.proteine === proteine) }))
@@ -288,7 +292,7 @@ export function MVPRestosScreen() {
       return a.nom.localeCompare(b.nom, 'fr')
     })
     return list
-  }, [takeaway, proteine, location, q, restos])
+  }, [status, proteine, location, q, restos])
 
   return (
     <>
@@ -368,9 +372,10 @@ export function MVPRestosScreen() {
         <Chip label="Domicile" icon="🏠" on={location === 'domicile'} onClick={() => setLocation('domicile')} />
       </div>
       <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <Chip label="Tous" on={takeaway === 'all'} onClick={() => setTakeaway('all')} />
-        <Chip label="À emporter" icon="🥡" on={takeaway === 'yes'} onClick={() => setTakeaway('yes')} />
-        <Chip label="Sur place" icon="🍽️" on={takeaway === 'no'} onClick={() => setTakeaway('no')} />
+        <Chip label="Tous" on={status === 'all'} onClick={() => setStatus('all')} />
+        <Chip label="À emporter" icon="🥡" on={status === 'takeaway'} onClick={() => setStatus('takeaway')} />
+        <Chip label="Sur place" icon="🍽️" on={status === 'dinein'} onClick={() => setStatus('dinein')} />
+        <Chip label="À tester" icon="🧪" on={status === 'totry'} onClick={() => setStatus('totry')} />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <span style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',

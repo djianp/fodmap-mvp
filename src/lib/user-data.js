@@ -25,7 +25,7 @@ async function seedRestos(userId) {
     walk_min_bureau: r.walk_min_bureau,
     walk_min_domicile: r.walk_min_domicile,
     rating: r.rating,
-    takeaway: r.takeaway,
+    status: r.status || 'dinein',
   }))
   const { data: insertedRestos, error } = await supabase
     .from('restos')
@@ -116,7 +116,7 @@ export async function addResto(resto) {
       walk_min_bureau: resto.walk_min_bureau ?? null,
       walk_min_domicile: resto.walk_min_domicile ?? null,
       rating: resto.rating,
-      takeaway: !!resto.takeaway,
+      status: resto.status || 'dinein',
     })
     .select()
     .single()

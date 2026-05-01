@@ -137,7 +137,7 @@ export function AddRestoForm({ onClose, onSaved }) {
   const [walkLoading, setWalkLoading] = useState(false)
   const [walkError, setWalkError] = useState(null)
   const [rating, setRating] = useState(null)
-  const [takeaway, setTakeaway] = useState(false)
+  const [status, setStatus] = useState('dinein')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
@@ -172,7 +172,7 @@ export function AddRestoForm({ onClose, onSaved }) {
         walk_min_bureau: walkTimes?.walk_min_bureau ?? null,
         walk_min_domicile: walkTimes?.walk_min_domicile ?? null,
         rating: rating ? parseFloat(rating) : null,
-        takeaway: !!takeaway,
+        status,
       })
       onSaved(saved)
     } catch (err) {
@@ -241,16 +241,23 @@ export function AddRestoForm({ onClose, onSaved }) {
         <StarInput value={rating} onChange={setRating} />
       </Field>
 
-      <Field label="Options">
-        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-          padding: '10px 12px', border: '1.5px solid #1f1a14', borderRadius: 10,
-          background: takeaway ? '#b8d398' : '#fff',
-          boxShadow: '0 2px 0 #1f1a14' }}>
-          <input type="checkbox" checked={takeaway}
-            onChange={e => setTakeaway(e.target.checked)}
-            style={{ width: 18, height: 18, accentColor: '#1f1a14', margin: 0 }} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Propose de la vente à emporter</span>
-        </label>
+      <Field label="Statut">
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[
+            { v: 'dinein', label: 'Sur place', bg: '#fff' },
+            { v: 'takeaway', label: 'À emporter', bg: '#b8d398' },
+            { v: 'totry', label: 'À tester', bg: '#f0a390' },
+          ].map(o => (
+            <button key={o.v} type="button" onClick={() => setStatus(o.v)} style={{
+              flex: 1, padding: '8px 10px', borderRadius: 999,
+              border: '1.5px solid #1f1a14',
+              background: status === o.v ? o.bg : '#fff',
+              boxShadow: status === o.v ? '0 2px 0 #1f1a14' : 'none',
+              fontSize: 11, fontWeight: 600, color: '#1f1a14',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}>{o.label}</button>
+          ))}
+        </div>
       </Field>
     </FormShell>
   )

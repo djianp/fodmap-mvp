@@ -121,7 +121,7 @@ create table public.restos (
   walk_min_bureau integer,
   walk_min_domicile integer,
   rating numeric not null check (rating >= 0 and rating <= 5),
-  takeaway boolean not null default false,
+  status text not null default 'dinein' check (status in ('takeaway', 'dinein', 'totry')),
   created_at timestamptz default now()
 );
 

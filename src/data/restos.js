@@ -9,7 +9,7 @@ export const RESTOS = [
     lat: 48.8522102, lng: 2.3850177,
     walk_min_bureau: 67, walk_min_domicile: 128,
     phone: "+33143727624",
-    rating: 4.8, takeaway: false,
+    rating: 4.8, status: 'dinein',
     meals: [
       { nom: "Bar de ligne vapeur, grenailles (26€)", proteine: "bar", rating: 5.0,
         comment: "Demander : sans ail dans les pommes de terre, sauce à part." },

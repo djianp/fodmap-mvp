@@ -3,7 +3,7 @@ import { BlobLogo, Chip } from '../components/ui.jsx'
 import { GoogleMap } from '../components/google-map.jsx'
 import { useRestos } from '../lib/user-data.js'
 import { placeUrlFor } from '../lib/google-maps.js'
-import { AddRestoForm, MealForm } from './resto-forms.jsx'
+import { AddRestoForm, EditRestoForm, MealForm } from './resto-forms.jsx'
 
 function Stars({ value, size = 11 }) {
   const stars = []
@@ -38,15 +38,26 @@ function Select({ value, options, onChange }) {
   )
 }
 
-function RestoCard({ r, location, onAddMeal, onEditMeal }) {
+function RestoCard({ r, location, onAddMeal, onEditMeal, onEditResto }) {
   const walkMin = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
   const mapsUrl = placeUrlFor(r.place_id, `${r.nom} ${r.adresse}`)
+  const onTopClick = onEditResto ? () => onEditResto(r) : undefined
   return (
     <div style={{
       background: '#fff', border: '2px solid #1f1a14', borderRadius: 18,
       marginBottom: 14, boxShadow: '0 4px 0 #1f1a14', overflow: 'hidden',
     }}>
-      <div style={{ padding: '14px 14px 12px', borderBottom: '1.5px dashed rgba(31,26,20,0.18)' }}>
+      <div
+        onClick={onTopClick}
+        role={onTopClick ? 'button' : undefined}
+        tabIndex={onTopClick ? 0 : undefined}
+        onKeyDown={onTopClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTopClick() } } : undefined}
+        style={{
+          padding: '14px 14px 12px',
+          borderBottom: '1.5px dashed rgba(31,26,20,0.18)',
+          cursor: onTopClick ? 'pointer' : 'default',
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.3px', lineHeight: 1.2 }}>{r.nom}</div>
@@ -60,7 +71,7 @@ function RestoCard({ r, location, onAddMeal, onEditMeal }) {
           )}
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{
             padding: '4px 9px', borderRadius: 999,
             background: '#e9d7b6', border: '1.5px solid #1f1a14',
             fontSize: 10, fontWeight: 600, color: '#2d1e0f', whiteSpace: 'nowrap',
@@ -82,7 +93,7 @@ function RestoCard({ r, location, onAddMeal, onEditMeal }) {
             À tester
           </span>}
           {r.phone && (
-            <a href={`tel:${r.phone}`} style={{
+            <a href={`tel:${r.phone}`} onClick={e => e.stopPropagation()} style={{
               marginLeft: 'auto', padding: '6px 12px',
               background: '#1f1a14', color: '#f5f0e6', textDecoration: 'none',
               borderRadius: 999, fontSize: 11, fontWeight: 600,
@@ -96,7 +107,7 @@ function RestoCard({ r, location, onAddMeal, onEditMeal }) {
             </a>
           )}
           {onAddMeal && (
-            <button onClick={() => onAddMeal(r)} aria-label="Ajouter un plat" title="Ajouter un plat" style={{
+            <button onClick={(e) => { e.stopPropagation(); onAddMeal(r) }} aria-label="Ajouter un plat" title="Ajouter un plat" style={{
               padding: 0, width: 28, height: 28,
               background: '#fff', color: '#1f1a14',
               borderRadius: 999, fontSize: 16, fontWeight: 700, lineHeight: 1,
@@ -218,7 +229,7 @@ function MapView({ restos, location, onPinClick }) {
   )
 }
 
-function RestoModal({ resto, location, onClose, onAddMeal, onEditMeal }) {
+function RestoModal({ resto, location, onClose, onAddMeal, onEditMeal, onEditResto }) {
   useEffect(() => {
     if (!resto) return
     const esc = (e) => { if (e.key === 'Escape') onClose() }
@@ -248,7 +259,7 @@ function RestoModal({ resto, location, onClose, onAddMeal, onEditMeal }) {
           fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
         }}>×</button>
         <div style={{ padding: 8 }}>
-          <RestoCard r={resto} location={location} onAddMeal={onAddMeal} onEditMeal={onEditMeal} />
+          <RestoCard r={resto} location={location} onAddMeal={onAddMeal} onEditMeal={onEditMeal} onEditResto={onEditResto} />
         </div>
       </div>
       <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
@@ -264,6 +275,7 @@ export function MVPRestosScreen() {
   const [view, setView] = useState('list')
   const [selected, setSelected] = useState(null)
   const [showAddResto, setShowAddResto] = useState(false)
+  const [editingResto, setEditingResto] = useState(null)
   const [addMealFor, setAddMealFor] = useState(null)
   const [editingMeal, setEditingMeal] = useState(null)
   const [q, setQ] = useState('')
@@ -405,14 +417,14 @@ export function MVPRestosScreen() {
         const showHeader = mainRestos.length > 0 && toTryRestos.length > 0
         return (
           <>
-            {mainRestos.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} onEditMeal={setEditingMeal} />)}
+            {mainRestos.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} onEditMeal={setEditingMeal} onEditResto={setEditingResto} />)}
             {showHeader && (
               <div style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase',
                 fontWeight: 700, color: '#7a6b55', margin: '20px 0 10px' }}>
                 À tester · {toTryRestos.length}
               </div>
             )}
-            {toTryRestos.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} onEditMeal={setEditingMeal} />)}
+            {toTryRestos.map(r => <RestoCard key={r.id} r={r} location={location} onAddMeal={setAddMealFor} onEditMeal={setEditingMeal} onEditResto={setEditingResto} />)}
             {filtered.length === 0 && (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7a6b55' }}>
                 Aucun resto trouvé avec ces filtres.
@@ -424,11 +436,19 @@ export function MVPRestosScreen() {
       <RestoModal resto={selected ? filtered.find(r => r.id === selected.id) || selected : null}
         location={location} onClose={() => setSelected(null)}
         onAddMeal={(r) => { setSelected(null); setAddMealFor(r) }}
-        onEditMeal={(m) => { setSelected(null); setEditingMeal(m) }} />
+        onEditMeal={(m) => { setSelected(null); setEditingMeal(m) }}
+        onEditResto={(r) => { setSelected(null); setEditingResto(r) }} />
       {showAddResto && (
         <AddRestoForm
           onClose={() => setShowAddResto(false)}
           onSaved={() => { setShowAddResto(false); refresh() }}
+        />
+      )}
+      {editingResto && (
+        <EditRestoForm
+          resto={editingResto}
+          onClose={() => setEditingResto(null)}
+          onSaved={() => { setEditingResto(null); refresh() }}
         />
       )}
       {addMealFor && (

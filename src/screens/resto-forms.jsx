@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { addResto, addMeal, updateMeal, deleteMeal } from '../lib/user-data.js'
+import { addResto, addMeal, updateMeal, deleteMeal, updateResto, deleteResto } from '../lib/user-data.js'
 import { getWalkTimes } from '../lib/google-maps.js'
 import { PlaceAutocomplete } from '../components/place-autocomplete.jsx'
 
@@ -259,6 +259,96 @@ export function AddRestoForm({ onClose, onSaved }) {
           ))}
         </div>
       </Field>
+    </FormShell>
+  )
+}
+
+export function EditRestoForm({ resto, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    nom: resto.nom || '',
+    phone: resto.phone || '',
+    rating: resto.rating ?? null,
+    status: resto.status || 'dinein',
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState(null)
+  const update = (k, v) => setForm(s => ({ ...s, [k]: v }))
+  const valid = form.nom.trim()
+
+  const submit = async () => {
+    if (!valid || submitting) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      await updateResto(resto.id, {
+        nom: form.nom.trim(),
+        phone: form.phone.trim(),
+        rating: form.rating ? parseFloat(form.rating) : null,
+        status: form.status,
+      })
+      onSaved()
+    } catch (err) {
+      setError(err.message || 'Erreur d’enregistrement')
+      setSubmitting(false)
+    }
+  }
+
+  const onDelete = async () => {
+    if (deleting) return
+    if (!window.confirm(`Supprimer « ${resto.nom} » et tous ses plats ?`)) return
+    setDeleting(true)
+    setError(null)
+    try {
+      await deleteResto(resto.id)
+      onSaved()
+    } catch (err) {
+      setError(err.message || 'Erreur de suppression')
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <FormShell title={`Modifier · ${resto.nom}`} onClose={onClose} onSubmit={submit}
+      submitLabel={submitting ? 'Enregistrement…' : 'Sauver'}
+      disabled={!valid || submitting} error={error}>
+      <Field label="Nom *">
+        <input value={form.nom} onChange={e => update('nom', e.target.value)} style={inputStyle} autoFocus />
+      </Field>
+      <Field label="Adresse" hint="Pour changer l’adresse, supprimez et ré-ajoutez le restaurant.">
+        <input value={resto.adresse || ''} disabled style={{ ...inputStyle, color: '#7a6b55', background: '#eee6d3' }} />
+      </Field>
+      <Field label="Téléphone">
+        <input value={form.phone} onChange={e => update('phone', e.target.value)} style={inputStyle} placeholder="+33…" />
+      </Field>
+      <Field label="Note générale" hint="Optionnel — laisse vide pour ne pas noter">
+        <StarInput value={form.rating} onChange={v => update('rating', v)} />
+      </Field>
+      <Field label="Statut">
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[
+            { v: 'dinein', label: 'Sur place', bg: '#fff' },
+            { v: 'takeaway', label: 'À emporter', bg: '#b8d398' },
+            { v: 'totry', label: 'À tester', bg: '#f0a390' },
+          ].map(o => (
+            <button key={o.v} type="button" onClick={() => update('status', o.v)} style={{
+              flex: 1, padding: '8px 10px', borderRadius: 999,
+              border: '1.5px solid #1f1a14',
+              background: form.status === o.v ? o.bg : '#fff',
+              boxShadow: form.status === o.v ? '0 2px 0 #1f1a14' : 'none',
+              fontSize: 11, fontWeight: 600, color: '#1f1a14',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}>{o.label}</button>
+          ))}
+        </div>
+      </Field>
+      <button type="button" onClick={onDelete} disabled={deleting} style={{
+        width: '100%', marginTop: 6,
+        padding: '10px 16px', borderRadius: 999,
+        background: '#fff', color: '#c9543e',
+        border: '2px solid #c9543e', boxShadow: deleting ? 'none' : '0 3px 0 #c9543e',
+        fontSize: 13, fontWeight: 700, cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+      }}>{deleting ? 'Suppression…' : 'Supprimer ce restaurant'}</button>
     </FormShell>
   )
 }

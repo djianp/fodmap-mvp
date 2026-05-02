@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BlobLogo, Chip, FoodRow, Verdict, Thumb } from '../components/ui.jsx'
 import { useFoods, deleteFood } from '../lib/user-data.js'
-import { CATEGORIES } from '../lib/foods-meta.js'
+import { CATEGORIES, PHOTOS } from '../lib/foods-meta.js'
 import { AlimentForm } from './aliment-forms.jsx'
 
 const verdictOrder = { green: 0, amber: 1, red: 2 }
@@ -25,6 +25,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
     return () => window.removeEventListener('keydown', esc)
   }, [onClose, food])
   if (!food) return null
+  const photoUrl = PHOTOS[food.id]
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 30,
@@ -33,12 +34,13 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
       padding: '40px 14px 90px',
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        width: '100%', maxWidth: 430, maxHeight: '100%', overflowY: 'auto',
+        width: '100%', maxWidth: 430, maxHeight: '100%',
         background: '#f5f0e6', borderRadius: 22, border: '2px solid #1f1a14',
         boxShadow: '0 8px 0 #1f1a14',
         position: 'relative',
         animation: 'slideUp 0.22s ease-out',
-        padding: 18,
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
       }}>
         <button onClick={onClose} aria-label="Fermer" style={{
           position: 'absolute', top: 10, right: 10, zIndex: 2,
@@ -48,15 +50,33 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
           fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
         }}>×</button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, paddingRight: 36 }}>
-          <Thumb food={food} size={48} />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.4px' }}>{food.nom}</div>
-            <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 2 }}>
-              {food.cat}{food.note ? ` · ${food.note}` : ''}
+        {photoUrl && (
+          <div role="img" aria-label={food.nom} style={{
+            height: 240, flexShrink: 0,
+            backgroundImage: `url("${photoUrl}")`,
+            backgroundSize: 'cover', backgroundPosition: 'center',
+          }} />
+        )}
+
+        <div style={{ padding: 18, overflowY: 'auto', flex: 1, minHeight: 0 }}>
+          {photoUrl ? (
+            <div style={{ marginBottom: 14, paddingRight: 36 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.5px' }}>{food.nom}</div>
+              <div style={{ fontSize: 12, color: '#7a6b55', marginTop: 4 }}>
+                {food.cat}{food.note ? ` · ${food.note}` : ''}
+              </div>
             </div>
-          </div>
-        </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, paddingRight: 36 }}>
+              <Thumb food={food} size={48} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.4px' }}>{food.nom}</div>
+                <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 2 }}>
+                  {food.cat}{food.note ? ` · ${food.note}` : ''}
+                </div>
+              </div>
+            </div>
+          )}
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
           <div style={{ flex: 1, textAlign: 'center' }}>
@@ -104,6 +124,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
             border: '2px solid #c9543e', boxShadow: '0 3px 0 #c9543e',
             fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
           }}>Supprimer</button>
+        </div>
         </div>
       </div>
       <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>

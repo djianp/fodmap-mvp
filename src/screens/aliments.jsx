@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BlobLogo, Chip, FoodRow, Verdict, Thumb } from '../components/ui.jsx'
 import { useFoods, deleteFood } from '../lib/user-data.js'
-import { CATEGORIES, PHOTOS } from '../lib/foods-meta.js'
+import { CATEGORIES, PHOTOS, PHOTOS_DETAIL } from '../lib/foods-meta.js'
 import { AlimentForm } from './aliment-forms.jsx'
 
 const verdictOrder = { green: 0, amber: 1, red: 2 }
@@ -25,7 +25,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
     return () => window.removeEventListener('keydown', esc)
   }, [onClose, food])
   if (!food) return null
-  const photoUrl = PHOTOS[food.id]
+  const photoUrl = PHOTOS_DETAIL[food.id] || PHOTOS[food.id]
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 30,

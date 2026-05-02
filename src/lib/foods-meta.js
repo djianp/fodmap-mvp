@@ -1,16 +1,26 @@
 import { FOODS } from '../data/foods.js'
 
-// Food ids whose liste image lives at /aliments/<id>.png (served from public/aliments/).
-// Foods absent from this list fall back to the monogram tile in <Thumb>.
+// Food ids that have a liste image at /aliments/<id>.jpg and a hero image at
+// /aliments/<id>-detail.jpg. Foods absent from this list fall back to the
+// monogram tile in <Thumb>.
 const PHOTO_IDS = [
   'ail', 'ananas', 'banane-mure', 'banane-verte', 'bar',
-  'beurre-cacahuete', 'brocoli', 'carotte-crue', 'celeri-rave', 'citron',
-  'concombre', 'dorade', 'echalote', 'framboises', 'frites',
-  'gingembre', 'haricots-verts', 'huile-olive', 'kasha', 'ketchup',
+  'beurre-cacahuete', 'brocoli', 'carotte-crue', 'carotte-puree', 'celeri-rave',
+  'citron', 'concombre', 'dorade', 'echalote', 'framboises',
+  'frites', 'gingembre', 'grenailles', 'haricots-verts', 'huile-olive',
+  'kasha', 'ketchup', 'laitue', 'mais', 'mangue',
+  'mayonnaise', 'muffins', 'myrtilles', 'oignon', 'pain-de-viande',
+  'pain-epeautre', 'pain-epeautre-industriel', 'patate-douce', 'poulet', 'radis',
+  'riz-noir', 'sarrasin-blanc', 'sashimi', 'saumon', 'saumon-fume',
+  'speculoos', 'tomates-roties', 'truite',
 ]
 
 export const PHOTOS = Object.fromEntries(
-  PHOTO_IDS.map(id => [id, `/aliments/${id}.png`])
+  PHOTO_IDS.map(id => [id, `/aliments/${id}.jpg`])
+)
+
+export const PHOTOS_DETAIL = Object.fromEntries(
+  PHOTO_IDS.map(id => [id, `/aliments/${id}-detail.jpg`])
 )
 
 // Fallback tile colors for the monogram badge.

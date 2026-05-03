@@ -5,6 +5,37 @@ import { useRestos } from '../lib/user-data.js'
 import { placeUrlFor } from '../lib/google-maps.js'
 import { AddRestoForm, EditRestoForm, MealForm } from './resto-forms.jsx'
 
+const PROTEIN_EMOJIS = {
+  poulet: '🍗',
+  saumon: '🐟', 'saumon cuit': '🐟', 'saumon fume': '🐟',
+  truite: '🐟', bar: '🐟', cabillaud: '🐟', dorade: '🐟', thon: '🐟',
+  lieu: '🐟', merlu: '🐟', sole: '🐟', maquereau: '🐟', sardine: '🐟', sardines: '🐟',
+  poke: '🍣', sushi: '🍣', sashimi: '🍣',
+  crevette: '🍤', crevettes: '🍤', gambas: '🍤', langoustine: '🍤', homard: '🦞',
+  oeuf: '🥚', oeufs: '🥚',
+  boeuf: '🥩', agneau: '🥩', veau: '🥩', steak: '🥩',
+  porc: '🥓', jambon: '🥓', bacon: '🥓', lard: '🥓',
+  canard: '🦆',
+  lapin: '🐰',
+  tofu: '🧆', seitan: '🧆', tempeh: '🧆',
+  lentilles: '🌱', 'pois chiches': '🌱', haricots: '🌱',
+}
+
+function emojiForProteine(p) {
+  const n = (p || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').trim()
+  if (PROTEIN_EMOJIS[n]) return PROTEIN_EMOJIS[n]
+  if (/saumon|truite|cabillaud|dorade|\bbar\b|thon|sole|merlu|lieu|poisson|maquereau|sardine/.test(n)) return '🐟'
+  if (/poulet|volaille|chicken/.test(n)) return '🍗'
+  if (/canard|duck/.test(n)) return '🦆'
+  if (/oeuf|egg/.test(n)) return '🥚'
+  if (/boeuf|beef|agneau|veau|viande|steak/.test(n)) return '🥩'
+  if (/porc|jambon|bacon|lard/.test(n)) return '🥓'
+  if (/crevett|gambas|langoust/.test(n)) return '🍤'
+  if (/sushi|maki|sashimi|poke/.test(n)) return '🍣'
+  if (/tofu|seitan|tempeh|legumineuse|lentill|pois|haricot|fève/.test(n)) return '🧆'
+  return '🍽️'
+}
+
 function Stars({ value, size = 11 }) {
   const stars = []
   for (let i = 0; i < 5; i++) {
@@ -330,10 +361,11 @@ export function MVPRestosScreen() {
       })
     })
     const out = [{ value: 'Toutes', label: `Toutes les protéines (${base.length})` }]
-    proteines.forEach(p => {
-      if (p === 'Toutes') return
-      const c = counts[p] || 0
-      if (c > 0 || p === proteine) out.push({ value: p, label: `${p} (${c})` })
+    const visible = proteines
+      .filter(p => p !== 'Toutes' && (counts[p] > 0 || p === proteine))
+      .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+    visible.forEach(p => {
+      out.push({ value: p, label: `${emojiForProteine(p)} ${p} (${counts[p] || 0})` })
     })
     return out
   }, [restos, proteines, status, location, q, proteine])

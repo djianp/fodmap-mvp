@@ -30,7 +30,7 @@ function Select({ value, options, onChange }) {
         fontSize: 12, fontWeight: 500, color: '#1f1a14',
         boxShadow: '0 2px 0 #1f1a14', cursor: 'pointer', fontFamily: 'inherit',
       }}>
-        {options.map(o => <option key={o} value={o}>{o === 'Toutes' ? 'Toutes les protéines' : o}</option>)}
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
       <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-55%)',
         pointerEvents: 'none', fontSize: 10, color: '#1f1a14' }}>▾</span>
@@ -307,6 +307,37 @@ export function MVPRestosScreen() {
     return list
   }, [status, proteine, location, q, restos])
 
+  const proteineOptions = useMemo(() => {
+    let base = restos.slice()
+    if (status !== 'all') base = base.filter(r => r.status === status)
+    base = base.filter(r => {
+      const w = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
+      return w != null && w <= 30
+    })
+    if (q.trim()) {
+      const norm = s => s.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
+      const nq = norm(q.trim())
+      base = base.filter(r => norm(r.nom).includes(nq))
+    }
+    const counts = {}
+    base.forEach(r => {
+      const seen = new Set()
+      ;(r.meals || []).forEach(m => {
+        if (m.proteine && !seen.has(m.proteine)) {
+          seen.add(m.proteine)
+          counts[m.proteine] = (counts[m.proteine] || 0) + 1
+        }
+      })
+    })
+    const out = [{ value: 'Toutes', label: `Toutes les protéines (${base.length})` }]
+    proteines.forEach(p => {
+      if (p === 'Toutes') return
+      const c = counts[p] || 0
+      if (c > 0 || p === proteine) out.push({ value: p, label: `${p} (${c})` })
+    })
+    return out
+  }, [restos, proteines, status, location, q, proteine])
+
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -394,7 +425,7 @@ export function MVPRestosScreen() {
         <span style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
           fontWeight: 700, color: '#7a6b55' }}>Protéine</span>
         <div style={{ flex: 1 }}>
-          <Select value={proteine} options={proteines} onChange={setProteine} />
+          <Select value={proteine} options={proteineOptions} onChange={setProteine} />
         </div>
       </div>
 

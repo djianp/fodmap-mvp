@@ -47,8 +47,8 @@ function MVPTabBar({ current, onChange }) {
 function FooterLinks({ onSettings }) {
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4,
-      padding: '32px 4px 8px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+      padding: '32px 0 8px',
     }}>
       <button onClick={onSettings} style={{
         display: 'inline-flex', alignItems: 'center', gap: 8,

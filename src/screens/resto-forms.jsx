@@ -64,7 +64,28 @@ function StarInput({ value, onChange }) {
   )
 }
 
+function useVisualViewport() {
+  const [vv, setVv] = useState(() => ({
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+    offsetTop: 0,
+  }))
+  useEffect(() => {
+    const vp = window.visualViewport
+    if (!vp) return
+    const onChange = () => setVv({ height: vp.height, offsetTop: vp.offsetTop })
+    vp.addEventListener('resize', onChange)
+    vp.addEventListener('scroll', onChange)
+    onChange()
+    return () => {
+      vp.removeEventListener('resize', onChange)
+      vp.removeEventListener('scroll', onChange)
+    }
+  }, [])
+  return vv
+}
+
 export function FormShell({ title, onClose, onSubmit, submitLabel, disabled, error, children }) {
+  const vv = useVisualViewport()
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', esc)
@@ -75,7 +96,8 @@ export function FormShell({ title, onClose, onSubmit, submitLabel, disabled, err
       if (e.target.closest('gmp-place-autocomplete, .pac-container')) return
       onClose()
     }} style={{
-      position: 'fixed', inset: 0, zIndex: 40,
+      position: 'fixed', left: 0, width: '100%', zIndex: 40,
+      top: vv.offsetTop, height: vv.height,
       background: 'rgba(31,26,20,0.55)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       padding: '40px 14px 90px',

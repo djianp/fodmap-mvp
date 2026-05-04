@@ -91,6 +91,12 @@ export function useRestos() {
     load()
   }, [load])
 
+  useEffect(() => {
+    const handler = () => load()
+    window.addEventListener('restos-refresh', handler)
+    return () => window.removeEventListener('restos-refresh', handler)
+  }, [load])
+
   const proteines = useMemo(() => {
     const set = new Set(PROTEINES.filter(p => p !== 'Toutes'))
     restos.forEach(r => (r.meals || []).forEach(m => m.proteine && set.add(m.proteine)))

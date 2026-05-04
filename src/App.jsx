@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { MVPAlimentsScreen } from './screens/aliments.jsx'
 import { MVPRestosScreen } from './screens/restos.jsx'
 import { Login } from './screens/login.jsx'
+import { SettingsModal } from './screens/settings.jsx'
 import { supabase } from './lib/supabase.js'
+import { loadSettings } from './lib/user-settings.js'
 
 function MVPTabBar({ current, onChange }) {
   const tabs = [
@@ -42,16 +44,29 @@ function MVPTabBar({ current, onChange }) {
   )
 }
 
-function SignOutFooter() {
+function FooterLinks({ onSettings }) {
   return (
     <div style={{
-      display: 'flex', justifyContent: 'center',
-      padding: '32px 0 8px',
+      display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4,
+      padding: '32px 4px 8px',
     }}>
+      <button onClick={onSettings} style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+        background: 'transparent', border: 'none',
+        color: '#7a6b55', fontSize: 13, fontWeight: 600,
+        cursor: 'pointer', padding: '8px 12px',
+        fontFamily: 'inherit',
+      }}>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        Paramètres
+      </button>
       <button
         onClick={() => supabase.auth.signOut()}
         style={{
-          display: 'flex', alignItems: 'center', gap: 8,
+          display: 'inline-flex', alignItems: 'center', gap: 8,
           background: 'transparent', border: 'none',
           color: '#7a6b55', fontSize: 13, fontWeight: 600,
           cursor: 'pointer', padding: '8px 12px',
@@ -76,6 +91,7 @@ function AppShell() {
   })()
   const [tab, setTab] = useState(initialTab)
   const [moment, setMoment] = useState('midi')
+  const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
     try { localStorage.setItem('mvp_tab', tab) } catch {}
@@ -90,9 +106,10 @@ function AppShell() {
       <div className="scroll">
         {tab === 'aliments' && <MVPAlimentsScreen moment={moment} setMoment={setMoment} />}
         {tab === 'restos' && <MVPRestosScreen />}
-        <SignOutFooter />
+        <FooterLinks onSettings={() => setShowSettings(true)} />
       </div>
       <MVPTabBar current={tab} onChange={setTab} />
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   )
 }
@@ -105,9 +122,11 @@ export default function App() {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setLoadingSession(false)
+      if (data.session) loadSettings()
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s)
+      if (s) loadSettings()
     })
     return () => sub.subscription.unsubscribe()
   }, [])

@@ -86,6 +86,8 @@ function useVisualViewport() {
 
 export function FormShell({ title, onClose, onSubmit, submitLabel, disabled, error, children }) {
   const vv = useVisualViewport()
+  const layoutHeight = typeof window !== 'undefined' ? window.innerHeight : vv.height
+  const keyboardOpen = layoutHeight - vv.height > 100
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', esc)
@@ -99,8 +101,10 @@ export function FormShell({ title, onClose, onSubmit, submitLabel, disabled, err
       position: 'fixed', left: 0, width: '100%', zIndex: 40,
       top: vv.offsetTop, height: vv.height,
       background: 'rgba(31,26,20,0.55)',
-      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-      padding: '40px 14px 90px',
+      display: 'flex',
+      alignItems: keyboardOpen ? 'flex-start' : 'flex-end',
+      justifyContent: 'center',
+      padding: keyboardOpen ? '12px 14px 12px' : '40px 14px 90px',
     }}>
       <form onSubmit={e => { e.preventDefault(); onSubmit() }}
         onClick={e => e.stopPropagation()} style={{

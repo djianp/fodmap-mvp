@@ -94,10 +94,7 @@ export function FormShell({ title, onClose, onSubmit, submitLabel, disabled, err
     return () => window.removeEventListener('keydown', esc)
   }, [onClose])
   return (
-    <div onClick={(e) => {
-      if (e.target.closest('gmp-place-autocomplete, .pac-container')) return
-      onClose()
-    }} style={{
+    <div onClick={onClose} style={{
       position: 'fixed', left: 0, width: '100%', zIndex: 40,
       top: vv.offsetTop, height: vv.height,
       background: 'rgba(31,26,20,0.55)',

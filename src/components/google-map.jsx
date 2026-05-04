@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { loadMaps, getOfficeLatLng, getHomeLatLng } from '../lib/google-maps.js'
+import { useSettings } from '../lib/user-settings.js'
 
 const HOME_SVG = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='18' fill='#1f1a14' stroke='#f5f0e6' stroke-width='2'/><path d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z' fill='#f5f0e6' transform='translate(8 8)'/></svg>`
 const OFFICE_SVG = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='18' fill='#1f1a14' stroke='#f5f0e6' stroke-width='2'/><path d='M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H2v15h20V6zm-9-2h2v2h-2V4z' fill='#f5f0e6' transform='translate(8 8)'/></svg>`
@@ -17,6 +18,7 @@ export function GoogleMap({ restos, location, onPinClick, fallback: Fallback }) 
   const mapRef = useRef(null)
   const markersRef = useRef([])
   const [error, setError] = useState(null)
+  const { office, home } = useSettings()
 
   useEffect(() => {
     let cancelled = false
@@ -96,7 +98,7 @@ export function GoogleMap({ restos, location, onPinClick, fallback: Fallback }) 
 
     setup()
     return () => { cancelled = true }
-  }, [restos, location, onPinClick])
+  }, [restos, location, onPinClick, office.address, home.address])
 
   if (error && Fallback) {
     return <Fallback restos={restos} location={location} onPinClick={onPinClick} />

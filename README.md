@@ -136,6 +136,17 @@ create table public.meals (
   created_at timestamptz default now()
 );
 
+create table public.user_settings (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  office_address text,
+  office_lat numeric,
+  office_lng numeric,
+  home_address text,
+  home_lat numeric,
+  home_lng numeric,
+  updated_at timestamptz default now()
+);
+
 create table public.foods (
   id text not null,
   user_id uuid references auth.users(id) on delete cascade not null,
@@ -168,6 +179,10 @@ create policy "owner rw meals" on public.meals
 
 alter table public.foods enable row level security;
 create policy "owner rw foods" on public.foods
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+alter table public.user_settings enable row level security;
+create policy "owner rw user_settings" on public.user_settings
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 ```
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { BlobLogo, Chip } from '../components/ui.jsx'
 import { GoogleMap } from '../components/google-map.jsx'
 import { useRestos } from '../lib/user-data.js'
+import { useSettings } from '../lib/user-settings.js'
 import { placeUrlFor } from '../lib/google-maps.js'
 import { AddRestoForm, EditRestoForm, MealForm } from './resto-forms.jsx'
 
@@ -300,6 +301,7 @@ function RestoModal({ resto, location, onClose, onAddMeal, onEditMeal, onEditRes
 
 export function MVPRestosScreen() {
   const { restos, loading, error, proteines, refresh } = useRestos()
+  const { recalcing } = useSettings()
   const [location, setLocation] = useState('bureau')
   const [status, setStatus] = useState('all')
   const [proteine, setProteine] = useState('Toutes')
@@ -426,6 +428,23 @@ export function MVPRestosScreen() {
             marginBottom: 10,
           }}
         />
+      )}
+      {recalcing && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: '#fff3d6', border: '1.5px solid #1f1a14', borderRadius: 10,
+          padding: '8px 12px', marginBottom: 12,
+          fontSize: 11, fontWeight: 600, color: '#1f1a14',
+          boxShadow: '0 2px 0 #1f1a14',
+        }}>
+          <span style={{
+            width: 12, height: 12, borderRadius: 999,
+            border: '2px solid #1f1a14', borderTopColor: 'transparent',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          Recalcul des temps de marche en cours…
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 12, color: '#7a6b55' }}>

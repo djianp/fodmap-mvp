@@ -1,5 +1,5 @@
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
-import { OFFICE_ADDRESS, HOME_ADDRESS } from './places-config.js'
+import { getOffice, getHome } from './user-settings.js'
 
 let loadPromise = null
 
@@ -20,9 +20,11 @@ export function loadMaps() {
 
 export async function getWalkTimes(destination) {
   await loadMaps()
+  const office = getOffice()
+  const home = getHome()
   const service = new google.maps.DistanceMatrixService()
   const response = await service.getDistanceMatrix({
-    origins: [OFFICE_ADDRESS, HOME_ADDRESS],
+    origins: [office.address, home.address],
     destinations: [destination],
     travelMode: google.maps.TravelMode.WALKING,
     unitSystem: google.maps.UnitSystem.METRIC,
@@ -39,6 +41,27 @@ export async function getWalkTimes(destination) {
   }
 }
 
+export async function getWalkTimesBatch(office, home, destinations) {
+  await loadMaps()
+  const service = new google.maps.DistanceMatrixService()
+  const response = await service.getDistanceMatrix({
+    origins: [office.address, home.address],
+    destinations,
+    travelMode: google.maps.TravelMode.WALKING,
+    unitSystem: google.maps.UnitSystem.METRIC,
+  })
+  const [bureauRow, domicileRow] = response.rows
+  return destinations.map((_, i) => {
+    const b = bureauRow.elements[i]
+    const d = domicileRow.elements[i]
+    if (b.status !== 'OK' || d.status !== 'OK') return null
+    return {
+      walk_min_bureau: Math.round(b.duration.value / 60),
+      walk_min_domicile: Math.round(d.duration.value / 60),
+    }
+  })
+}
+
 export function placeUrlFor(placeId, query) {
   const q = encodeURIComponent(query || 'restaurant')
   if (placeId) {
@@ -47,8 +70,8 @@ export function placeUrlFor(placeId, query) {
   return `https://www.google.com/maps/search/?api=1&query=${q}`
 }
 
-let officeLatLng = null
-let homeLatLng = null
+let officeCache = null
+let homeCache = null
 
 async function geocodeViaPlaces(address) {
   const { places } = await loadMaps()
@@ -63,11 +86,25 @@ async function geocodeViaPlaces(address) {
 }
 
 export async function getOfficeLatLng() {
-  if (!officeLatLng) officeLatLng = await geocodeViaPlaces(OFFICE_ADDRESS)
-  return officeLatLng
+  const stored = getOffice()
+  if (officeCache && officeCache.address === stored.address) return officeCache.latlng
+  if (stored.lat != null && stored.lng != null) {
+    officeCache = { address: stored.address, latlng: { lat: stored.lat, lng: stored.lng } }
+    return officeCache.latlng
+  }
+  const latlng = await geocodeViaPlaces(stored.address)
+  officeCache = { address: stored.address, latlng }
+  return latlng
 }
 
 export async function getHomeLatLng() {
-  if (!homeLatLng) homeLatLng = await geocodeViaPlaces(HOME_ADDRESS)
-  return homeLatLng
+  const stored = getHome()
+  if (homeCache && homeCache.address === stored.address) return homeCache.latlng
+  if (stored.lat != null && stored.lng != null) {
+    homeCache = { address: stored.address, latlng: { lat: stored.lat, lng: stored.lng } }
+    return homeCache.latlng
+  }
+  const latlng = await geocodeViaPlaces(stored.address)
+  homeCache = { address: stored.address, latlng }
+  return latlng
 }

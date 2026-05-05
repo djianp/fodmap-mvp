@@ -174,10 +174,12 @@ function RestoCard({ r, location, onAddMeal, onEditMeal, onEditResto }) {
                   <div style={{ fontWeight: 600, fontSize: 13, color: '#1f1a14', lineHeight: 1.3 }}>
                     {m.nom}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                    <Stars value={Number(m.rating)} size={10} />
-                    <span style={{ fontSize: 10, color: '#7a6b55', fontWeight: 600 }}>{Number(m.rating).toFixed(1)}</span>
-                  </div>
+                  {m.rating != null && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                      <Stars value={Number(m.rating)} size={10} />
+                      <span style={{ fontSize: 10, color: '#7a6b55', fontWeight: 600 }}>{Number(m.rating).toFixed(1)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               {m.comment && (

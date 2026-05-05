@@ -131,7 +131,7 @@ create table public.meals (
   user_id uuid references auth.users(id) on delete cascade not null,
   nom text not null,
   proteine text not null,
-  rating numeric not null check (rating >= 0 and rating <= 5),
+  rating numeric check (rating >= 0 and rating <= 5),
   comment text default '',
   created_at timestamptz default now()
 );

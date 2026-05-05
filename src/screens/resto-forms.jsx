@@ -57,9 +57,18 @@ function StarInput({ value, onChange }) {
           </div>
         )
       })}
-      <span style={{ marginLeft: 8, fontSize: 12, color: '#7a6b55', fontWeight: 600 }}>
-        {value ? `${value}/5` : ''}
-      </span>
+      {value ? (
+        <span style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 12, color: '#7a6b55', fontWeight: 600 }}>{value}/5</span>
+          <button type="button" onClick={() => onChange(null)} aria-label="Retirer la note" style={{
+            width: 20, height: 20, borderRadius: 999,
+            border: '1.5px solid #7a6b55', background: '#fff',
+            color: '#7a6b55', fontSize: 12, lineHeight: 1, cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            padding: 0, fontFamily: 'inherit',
+          }}>×</button>
+        </span>
+      ) : null}
     </div>
   )
 }
@@ -384,7 +393,7 @@ export function MealForm({ resto, meal, proteines, onClose, onSaved }) {
     nom: meal?.nom || '',
     proteine: isEdit ? (initialProteineKnown ? meal.proteine : '__new') : '',
     proteine_custom: isEdit && !initialProteineKnown ? (meal.proteine || '') : '',
-    rating: meal?.rating ?? 4,
+    rating: meal?.rating ?? null,
     comment: meal?.comment || '',
   })
   const [submitting, setSubmitting] = useState(false)
@@ -392,7 +401,7 @@ export function MealForm({ resto, meal, proteines, onClose, onSaved }) {
   const [error, setError] = useState(null)
   const update = (k, v) => setForm(s => ({ ...s, [k]: v }))
   const proteineValue = form.proteine === '__new' ? form.proteine_custom.trim() : form.proteine
-  const valid = form.nom.trim() && proteineValue && form.rating
+  const valid = form.nom.trim() && proteineValue
 
   const submit = async () => {
     if (!valid || submitting) return
@@ -402,7 +411,7 @@ export function MealForm({ resto, meal, proteines, onClose, onSaved }) {
       const payload = {
         nom: form.nom.trim(),
         proteine: proteineValue,
-        rating: parseFloat(form.rating),
+        rating: form.rating ? parseFloat(form.rating) : null,
         comment: form.comment.trim(),
       }
       if (isEdit) {
@@ -456,7 +465,7 @@ export function MealForm({ resto, meal, proteines, onClose, onSaved }) {
             style={{ ...inputStyle, marginTop: 8 }} />
         )}
       </Field>
-      <Field label="Note *">
+      <Field label="Note" hint="Optionnel — laisse vide pour ne pas noter">
         <StarInput value={form.rating} onChange={v => update('rating', v)} />
       </Field>
       <Field label="Commentaire" hint="Ce qu'il faut demander, ce qu'il faut éviter, etc.">

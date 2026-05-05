@@ -269,7 +269,7 @@ export function AddRestoForm({ onClose, onSaved }) {
         </Field>
       )}
 
-      <Field label="Note générale" hint="Optionnel — laisser vide pour ne pas noter">
+      <Field label="Note générale" hint={rating ? null : "Optionnel — laisser vide pour ne pas noter"}>
         <StarInput value={rating} onChange={setRating} />
       </Field>
 
@@ -353,7 +353,7 @@ export function EditRestoForm({ resto, onClose, onSaved }) {
       <Field label="Téléphone">
         <input value={form.phone} onChange={e => update('phone', e.target.value)} style={inputStyle} placeholder="+33…" />
       </Field>
-      <Field label="Note générale" hint="Optionnel — laisser vide pour ne pas noter">
+      <Field label="Note générale" hint={form.rating ? null : "Optionnel — laisser vide pour ne pas noter"}>
         <StarInput value={form.rating} onChange={v => update('rating', v)} />
       </Field>
       <Field label="Statut">
@@ -465,7 +465,7 @@ export function MealForm({ resto, meal, proteines, onClose, onSaved }) {
             style={{ ...inputStyle, marginTop: 8 }} />
         )}
       </Field>
-      <Field label="Note" hint="Optionnel — laisser vide pour ne pas noter">
+      <Field label="Note" hint={form.rating ? null : "Optionnel — laisser vide pour ne pas noter"}>
         <StarInput value={form.rating} onChange={v => update('rating', v)} />
       </Field>
       <Field label="Commentaire" hint="Ce qu'il faut demander, ce qu'il faut éviter, etc.">

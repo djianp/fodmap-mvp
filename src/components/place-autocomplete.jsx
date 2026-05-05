@@ -8,7 +8,7 @@ const inputStyle = {
   boxShadow: '0 2px 0 #1f1a14', outline: 'none', boxSizing: 'border-box',
 }
 
-export function PlaceAutocomplete({ onPlaceSelected, placeholder = 'Cherche une adresse' }) {
+export function PlaceAutocomplete({ onPlaceSelected, placeholder = 'Chercher une adresse' }) {
   const [query, setQuery] = useState('')
   const [predictions, setPredictions] = useState([])
   const [open, setOpen] = useState(false)

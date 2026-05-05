@@ -44,9 +44,9 @@ export function Login() {
               padding: 20, textAlign: 'center', boxShadow: '0 4px 0 #1f1a14',
               maxWidth: 280,
             }}>
-              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Check ton mail ✉️</div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Mail envoyé ✉️</div>
               <div style={{ fontSize: 13, color: '#7a6b55', lineHeight: 1.4 }}>
-                Un lien de connexion a été envoyé à <strong>{email}</strong>. Clique dessus pour entrer.
+                Un lien de connexion a été envoyé à <strong>{email}</strong>. Cliquer dessus pour entrer.
               </div>
               <button onClick={() => { setStatus('idle'); setEmail('') }} style={{
                 marginTop: 14, fontSize: 12, fontWeight: 600,
@@ -60,7 +60,7 @@ export function Login() {
               <input
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="ton@email.fr"
+                placeholder="adresse@email.fr"
                 type="email"
                 autoFocus
                 required
@@ -92,7 +92,7 @@ export function Login() {
           )}
 
           <div style={{ fontSize: 11, color: '#a39a8d', textAlign: 'center', lineHeight: 1.5, marginTop: 12 }}>
-            Tu recevras un lien à usage unique.<br />Pas de mot de passe à retenir.
+            Un lien à usage unique sera envoyé.<br />Pas de mot de passe à retenir.
           </div>
       </div>
     </div>

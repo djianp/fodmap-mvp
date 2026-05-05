@@ -75,7 +75,7 @@ export function SettingsModal({ onClose }) {
         <AddressPicker value={draftHome} onChange={setDraftHome} />
       </Field>
       <div style={{ fontSize: 11, color: '#7a6b55', lineHeight: 1.5, marginTop: 4 }}>
-        À l'enregistrement, les temps de marche de tous tes restaurants seront recalculés en arrière-plan.
+        À l'enregistrement, les temps de marche de tous les restaurants seront recalculés en arrière-plan.
       </div>
     </FormShell>
   )

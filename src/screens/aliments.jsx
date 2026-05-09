@@ -50,16 +50,17 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
           fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
         }}>×</button>
 
-        {photoUrl && (
-          <div role="img" aria-label={food.nom} style={{
-            height: 240, flexShrink: 0,
-            backgroundImage: `url("${photoUrl}")`,
-            backgroundSize: 'cover', backgroundPosition: 'center',
-          }} />
-        )}
+        <div style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
+          {photoUrl && (
+            <div role="img" aria-label={food.nom} style={{
+              height: 240, flexShrink: 0,
+              backgroundImage: `url("${photoUrl}")`,
+              backgroundSize: 'cover', backgroundPosition: 'center',
+            }} />
+          )}
 
-        <div style={{ padding: 18, overflowY: 'auto', flex: 1, minHeight: 0 }}>
-          {photoUrl ? (
+          <div style={{ padding: 18 }}>
+            {photoUrl ? (
             <div style={{ marginBottom: 14, paddingRight: 36 }}>
               <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.5px' }}>{food.nom}</div>
               <div style={{ fontSize: 12, color: '#7a6b55', marginTop: 4 }}>
@@ -126,6 +127,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
             border: '2px solid #c9543e', boxShadow: '0 3px 0 #c9543e',
             fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
           }}>Supprimer</button>
+        </div>
         </div>
         </div>
       </div>

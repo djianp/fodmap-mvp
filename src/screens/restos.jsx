@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BlobLogo, Chip } from '../components/ui.jsx'
+import { BlobLogo, Chip, Markdown } from '../components/ui.jsx'
 import { GoogleMap } from '../components/google-map.jsx'
 import { useRestos } from '../lib/user-data.js'
 import { useSettings } from '../lib/user-settings.js'
@@ -186,8 +186,14 @@ function RestoCard({ r, location, onAddMeal, onEditMeal, onEditResto }) {
                 <div style={{
                   marginTop: 8, padding: '8px 10px', background: '#f5e3b8',
                   border: '1.5px solid #1f1a14', borderRadius: 10,
-                  fontSize: 11, color: '#2d1e0f', lineHeight: 1.4, fontStyle: 'italic',
-                }}>💬 {m.comment}</div>
+                  fontSize: 11, color: '#2d1e0f', lineHeight: 1.4,
+                  display: 'flex', gap: 6, alignItems: 'flex-start',
+                }}>
+                  <span aria-hidden="true">💬</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Markdown>{m.comment}</Markdown>
+                  </div>
+                </div>
               )}
             </div>
           )

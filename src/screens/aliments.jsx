@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BlobLogo, Chip, FoodRow, Verdict, Thumb, Markdown } from '../components/ui.jsx'
 import { useFoods, deleteFood } from '../lib/user-data.js'
 import { CATEGORIES, PHOTOS, PHOTOS_DETAIL } from '../lib/foods-meta.js'
@@ -18,12 +18,24 @@ const CATEGORY_ICONS = {
 }
 
 function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
+  const scrollRef = useRef(null)
+  const [expanded, setExpanded] = useState(false)
   useEffect(() => {
     if (!food) return
     const esc = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
   }, [onClose, food])
+  useEffect(() => {
+    if (!food) { setExpanded(false); return }
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = () => {
+      if (el.scrollTop > 80) setExpanded(true)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [food])
   if (!food) return null
   const photoUrl = food.photo_url || PHOTOS_DETAIL[food.id] || PHOTOS[food.id]
   return (
@@ -31,16 +43,23 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
       position: 'fixed', inset: 0, zIndex: 30,
       background: 'rgba(31,26,20,0.55)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-      padding: '40px 14px 90px',
+      padding: expanded ? 0 : '40px 14px 90px',
+      transition: 'padding 0.3s ease',
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        width: '100%', maxWidth: 430, maxHeight: '100%',
-        background: '#f5f0e6', borderRadius: 22, border: '2px solid #1f1a14',
-        boxShadow: '0 8px 0 #1f1a14',
+        width: '100%',
+        maxWidth: expanded ? 'none' : 430,
+        height: expanded ? '100%' : undefined,
+        maxHeight: '100%',
+        background: '#f5f0e6',
+        borderRadius: expanded ? 0 : 22,
+        border: expanded ? 'none' : '2px solid #1f1a14',
+        boxShadow: expanded ? 'none' : '0 8px 0 #1f1a14',
         position: 'relative',
         animation: 'slideUp 0.22s ease-out',
         overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
+        transition: 'max-width 0.3s ease, border-radius 0.3s ease, height 0.3s ease',
       }}>
         <button onClick={onClose} aria-label="Fermer" style={{
           position: 'absolute', top: 10, right: 10, zIndex: 2,
@@ -50,7 +69,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
           fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
         }}>×</button>
 
-        <div style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
+        <div ref={scrollRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
           {photoUrl && (
             <div role="img" aria-label={food.nom} style={{
               height: 240, flexShrink: 0,

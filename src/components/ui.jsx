@@ -1,4 +1,24 @@
 import { PHOTOS, tileFor, VERDICT_TEXT, metaFor, initialFor } from '../lib/foods-meta.js'
+import ReactMarkdown from 'react-markdown'
+
+const MARKDOWN_COMPONENTS = {
+  p: ({ children }) => <p style={{ margin: '4px 0' }}>{children}</p>,
+  ul: ({ children }) => <ul style={{ margin: '4px 0', paddingLeft: 20 }}>{children}</ul>,
+  ol: ({ children }) => <ol style={{ margin: '4px 0', paddingLeft: 20 }}>{children}</ol>,
+  li: ({ children }) => <li style={{ margin: '2px 0' }}>{children}</li>,
+  h1: ({ children }) => <h1 style={{ fontSize: 15, fontWeight: 700, margin: '8px 0 4px' }}>{children}</h1>,
+  h2: ({ children }) => <h2 style={{ fontSize: 14, fontWeight: 700, margin: '8px 0 4px' }}>{children}</h2>,
+  h3: ({ children }) => <h3 style={{ fontSize: 13, fontWeight: 700, margin: '6px 0 3px' }}>{children}</h3>,
+  a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#e67f52', textDecoration: 'underline' }}>{children}</a>,
+  code: ({ children }) => <code style={{ background: 'rgba(31,26,20,0.08)', padding: '1px 4px', borderRadius: 4, fontSize: '0.95em' }}>{children}</code>,
+  blockquote: ({ children }) => <blockquote style={{ margin: '4px 0', paddingLeft: 10, borderLeft: '3px solid rgba(31,26,20,0.25)', color: '#7a6b55' }}>{children}</blockquote>,
+  hr: () => <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px solid rgba(31,26,20,0.18)' }} />,
+}
+
+export function Markdown({ children }) {
+  if (!children) return null
+  return <ReactMarkdown components={MARKDOWN_COMPONENTS}>{children}</ReactMarkdown>
+}
 
 export function Thumb({ food, size = 48 }) {
   const url = PHOTOS[food.id]

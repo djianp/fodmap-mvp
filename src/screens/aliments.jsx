@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BlobLogo, Chip, FoodRow, Verdict, Thumb } from '../components/ui.jsx'
+import { BlobLogo, Chip, FoodRow, Verdict, Thumb, Markdown } from '../components/ui.jsx'
 import { useFoods, deleteFood } from '../lib/user-data.js'
 import { CATEGORIES, PHOTOS, PHOTOS_DETAIL } from '../lib/foods-meta.js'
 import { AlimentForm } from './aliment-forms.jsx'
@@ -106,7 +106,9 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
         {food.details && (
           <div style={{ marginBottom: 12, padding: '10px 12px', background: '#f5e3b8', border: '1.5px solid #1f1a14', borderRadius: 10 }}>
             <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Notes personnelles</div>
-            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>{food.details}</div>
+            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45 }}>
+              <Markdown>{food.details}</Markdown>
+            </div>
           </div>
         )}
 

@@ -24,6 +24,8 @@ async function seedRestos(userId) {
     lng: r.lng,
     walk_min_bureau: r.walk_min_bureau,
     walk_min_domicile: r.walk_min_domicile,
+    drive_min_bureau: r.drive_min_bureau ?? null,
+    drive_min_domicile: r.drive_min_domicile ?? null,
     rating: r.rating,
     status: r.status || 'dinein',
   }))
@@ -121,6 +123,8 @@ export async function addResto(resto) {
       lng: resto.lng,
       walk_min_bureau: resto.walk_min_bureau ?? null,
       walk_min_domicile: resto.walk_min_domicile ?? null,
+      drive_min_bureau: resto.drive_min_bureau ?? null,
+      drive_min_domicile: resto.drive_min_domicile ?? null,
       rating: resto.rating,
       status: resto.status || 'dinein',
     })

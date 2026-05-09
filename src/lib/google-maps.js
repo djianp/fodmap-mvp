@@ -18,48 +18,51 @@ export function loadMaps() {
   return loadPromise
 }
 
-export async function getWalkTimes(destination) {
+async function distanceMatrix(origins, destinations, mode) {
+  const service = new google.maps.DistanceMatrixService()
+  return service.getDistanceMatrix({
+    origins,
+    destinations,
+    travelMode: mode,
+    unitSystem: google.maps.UnitSystem.METRIC,
+  })
+}
+
+function pickMin(el) {
+  return el?.status === 'OK' ? Math.round(el.duration.value / 60) : null
+}
+
+export async function getRouteTimes(destination) {
   await loadMaps()
   const office = getOffice()
   const home = getHome()
-  const service = new google.maps.DistanceMatrixService()
-  const response = await service.getDistanceMatrix({
-    origins: [office.address, home.address],
-    destinations: [destination],
-    travelMode: google.maps.TravelMode.WALKING,
-    unitSystem: google.maps.UnitSystem.METRIC,
-  })
-  const [bureauRow, domicileRow] = response.rows
-  const bureauEl = bureauRow.elements[0]
-  const domicileEl = domicileRow.elements[0]
-  if (bureauEl.status !== 'OK' || domicileEl.status !== 'OK') {
-    throw new Error(`Distance Matrix non-OK: bureau=${bureauEl.status}, domicile=${domicileEl.status}`)
-  }
+  const origins = [office.address, home.address]
+  const dests = [destination]
+  const [walking, driving] = await Promise.all([
+    distanceMatrix(origins, dests, google.maps.TravelMode.WALKING),
+    distanceMatrix(origins, dests, google.maps.TravelMode.DRIVING),
+  ])
   return {
-    walk_min_bureau: Math.round(bureauEl.duration.value / 60),
-    walk_min_domicile: Math.round(domicileEl.duration.value / 60),
+    walk_min_bureau: pickMin(walking.rows[0].elements[0]),
+    walk_min_domicile: pickMin(walking.rows[1].elements[0]),
+    drive_min_bureau: pickMin(driving.rows[0].elements[0]),
+    drive_min_domicile: pickMin(driving.rows[1].elements[0]),
   }
 }
 
-export async function getWalkTimesBatch(office, home, destinations) {
+export async function getRouteTimesBatch(office, home, destinations) {
   await loadMaps()
-  const service = new google.maps.DistanceMatrixService()
-  const response = await service.getDistanceMatrix({
-    origins: [office.address, home.address],
-    destinations,
-    travelMode: google.maps.TravelMode.WALKING,
-    unitSystem: google.maps.UnitSystem.METRIC,
-  })
-  const [bureauRow, domicileRow] = response.rows
-  return destinations.map((_, i) => {
-    const b = bureauRow.elements[i]
-    const d = domicileRow.elements[i]
-    if (b.status !== 'OK' || d.status !== 'OK') return null
-    return {
-      walk_min_bureau: Math.round(b.duration.value / 60),
-      walk_min_domicile: Math.round(d.duration.value / 60),
-    }
-  })
+  const origins = [office.address, home.address]
+  const [walking, driving] = await Promise.all([
+    distanceMatrix(origins, destinations, google.maps.TravelMode.WALKING),
+    distanceMatrix(origins, destinations, google.maps.TravelMode.DRIVING),
+  ])
+  return destinations.map((_, i) => ({
+    walk_min_bureau: pickMin(walking.rows[0].elements[i]),
+    walk_min_domicile: pickMin(walking.rows[1].elements[i]),
+    drive_min_bureau: pickMin(driving.rows[0].elements[i]),
+    drive_min_domicile: pickMin(driving.rows[1].elements[i]),
+  }))
 }
 
 export function placeUrlFor(placeId, query) {

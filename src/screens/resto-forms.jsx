@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { addResto, addMeal, updateMeal, deleteMeal, updateResto, deleteResto } from '../lib/user-data.js'
-import { getWalkTimes } from '../lib/google-maps.js'
+import { getRouteTimes } from '../lib/google-maps.js'
 import { PlaceAutocomplete } from '../components/place-autocomplete.jsx'
 
 export function Field({ label, children, hint }) {
@@ -178,7 +178,7 @@ export function AddRestoForm({ onClose, onSaved }) {
     setWalkLoading(true)
     setWalkError(null)
     try {
-      const times = await getWalkTimes({ lat: p.lat, lng: p.lng })
+      const times = await getRouteTimes({ lat: p.lat, lng: p.lng })
       setWalkTimes(times)
     } catch (err) {
       setWalkError(err.message || String(err))
@@ -203,6 +203,8 @@ export function AddRestoForm({ onClose, onSaved }) {
         lng: place.lng,
         walk_min_bureau: walkTimes?.walk_min_bureau ?? null,
         walk_min_domicile: walkTimes?.walk_min_domicile ?? null,
+        drive_min_bureau: walkTimes?.drive_min_bureau ?? null,
+        drive_min_domicile: walkTimes?.drive_min_domicile ?? null,
         rating: rating ? parseFloat(rating) : null,
         status,
       })
@@ -257,12 +259,22 @@ export function AddRestoForm({ onClose, onSaved }) {
               <span style={{ padding: '4px 10px', borderRadius: 999,
                 background: '#e9d7b6', border: '1.5px solid #1f1a14',
                 fontSize: 11, fontWeight: 600 }}>
-                {walkTimes.walk_min_bureau} min · bureau
+                🚶 {walkTimes.walk_min_bureau ?? '—'} min · bureau
               </span>
               <span style={{ padding: '4px 10px', borderRadius: 999,
                 background: '#e9d7b6', border: '1.5px solid #1f1a14',
                 fontSize: 11, fontWeight: 600 }}>
-                {walkTimes.walk_min_domicile} min · domicile
+                🚶 {walkTimes.walk_min_domicile ?? '—'} min · domicile
+              </span>
+              <span style={{ padding: '4px 10px', borderRadius: 999,
+                background: '#c8b5d4', border: '1.5px solid #1f1a14',
+                fontSize: 11, fontWeight: 600 }}>
+                🚗 {walkTimes.drive_min_bureau ?? '—'} min · bureau
+              </span>
+              <span style={{ padding: '4px 10px', borderRadius: 999,
+                background: '#c8b5d4', border: '1.5px solid #1f1a14',
+                fontSize: 11, fontWeight: 600 }}>
+                🚗 {walkTimes.drive_min_domicile ?? '—'} min · domicile
               </span>
             </div>
           ) : null}
@@ -278,6 +290,7 @@ export function AddRestoForm({ onClose, onSaved }) {
           {[
             { v: 'dinein', label: 'Sur place', bg: '#fff' },
             { v: 'takeaway', label: 'À emporter', bg: '#b8d398' },
+            { v: 'delivery', label: 'Livraison', bg: '#c8b5d4' },
             { v: 'totry', label: 'À tester', bg: '#f0a390' },
           ].map(o => (
             <button key={o.v} type="button" onClick={() => setStatus(o.v)} style={{
@@ -361,6 +374,7 @@ export function EditRestoForm({ resto, onClose, onSaved }) {
           {[
             { v: 'dinein', label: 'Sur place', bg: '#fff' },
             { v: 'takeaway', label: 'À emporter', bg: '#b8d398' },
+            { v: 'delivery', label: 'Livraison', bg: '#c8b5d4' },
             { v: 'totry', label: 'À tester', bg: '#f0a390' },
           ].map(o => (
             <button key={o.v} type="button" onClick={() => update('status', o.v)} style={{

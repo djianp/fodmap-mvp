@@ -21,7 +21,7 @@ export function Markdown({ children }) {
 }
 
 export function Thumb({ food, size = 48 }) {
-  const url = PHOTOS[food.id]
+  const url = food.photo_url || PHOTOS[food.id]
   const tile = tileFor(food.id)
   const style = {
     width: size, height: size,

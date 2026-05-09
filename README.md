@@ -158,6 +158,7 @@ create table public.foods (
   fodmap text,
   contrainte text,
   details text,
+  photo_url text,
   tags text[] default '{}',
   created_at timestamptz default now(),
   updated_at timestamptz default now(),

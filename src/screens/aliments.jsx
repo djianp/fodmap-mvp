@@ -25,7 +25,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
     return () => window.removeEventListener('keydown', esc)
   }, [onClose, food])
   if (!food) return null
-  const photoUrl = PHOTOS_DETAIL[food.id] || PHOTOS[food.id]
+  const photoUrl = food.photo_url || PHOTOS_DETAIL[food.id] || PHOTOS[food.id]
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 30,

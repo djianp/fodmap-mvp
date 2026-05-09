@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FormShell, Field, inputStyle } from './resto-forms.jsx'
 import { addFood, updateFood } from '../lib/user-data.js'
-import { CATEGORIES } from '../lib/foods-meta.js'
+import { uploadFoodPhoto, deleteFoodPhoto } from '../lib/storage.js'
+import { CATEGORIES, PHOTOS_DETAIL, PHOTOS } from '../lib/foods-meta.js'
 
 const VERDICT_OPTIONS = [
   { v: 'green', label: 'OK', bg: '#b8d398' },
@@ -33,6 +34,66 @@ function VerdictPicker({ value, onChange }) {
   )
 }
 
+function PhotoPicker({ existingUrl, file, onPick, onClear }) {
+  const inputRef = useRef(null)
+  const [previewFromFile, setPreviewFromFile] = useState(null)
+
+  useEffect(() => {
+    if (!file) { setPreviewFromFile(null); return }
+    const url = URL.createObjectURL(file)
+    setPreviewFromFile(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  const visiblePreview = previewFromFile || existingUrl
+  const triggerPick = () => inputRef.current?.click()
+  const onChange = (e) => {
+    const f = e.target.files?.[0]
+    if (f) onPick(f)
+    e.target.value = ''
+  }
+
+  return (
+    <div>
+      <input ref={inputRef} type="file" accept="image/*" onChange={onChange} style={{ display: 'none' }} />
+      {visiblePreview ? (
+        <div style={{
+          position: 'relative',
+          borderRadius: 12, border: '1.5px solid #1f1a14', overflow: 'hidden',
+          boxShadow: '0 2px 0 #1f1a14',
+        }}>
+          <div role="img" aria-label="Aperçu de la photo" style={{
+            height: 160, width: '100%',
+            backgroundImage: `url("${visiblePreview}")`,
+            backgroundSize: 'cover', backgroundPosition: 'center',
+          }} />
+          <div style={{ display: 'flex', gap: 6, padding: 8, background: '#fff' }}>
+            <button type="button" onClick={triggerPick} style={{
+              flex: 1, padding: '8px 12px', borderRadius: 999,
+              border: '1.5px solid #1f1a14', background: '#fff', color: '#1f1a14',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            }}>Changer</button>
+            <button type="button" onClick={onClear} style={{
+              padding: '8px 12px', borderRadius: 999,
+              border: '1.5px solid #c9543e', background: '#fff', color: '#c9543e',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            }}>Retirer</button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" onClick={triggerPick} style={{
+          width: '100%', padding: '14px 16px', borderRadius: 12,
+          border: '1.5px dashed #1f1a14', background: '#fff', color: '#7a6b55',
+          fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}>
+          <span aria-hidden="true">📷</span> Choisir une photo
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function AlimentForm({ food, onClose, onSaved }) {
   const isEdit = !!food
   const [form, setForm] = useState({
@@ -45,18 +106,24 @@ export function AlimentForm({ food, onClose, onSaved }) {
     contrainte: food?.contrainte || '',
     details: food?.details || '',
   })
+  // Photo state. existingUrl is what's already saved (food.photo_url); pendingFile is a newly-picked
+  // File the user hasn't saved yet. cleared means the user tapped "Retirer" — applied on save.
+  const [pendingFile, setPendingFile] = useState(null)
+  const [cleared, setCleared] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
   const update = (k, v) => setForm(s => ({ ...s, [k]: v }))
   const valid = form.nom.trim() && form.cat && form.midi && form.soir
+  const existingPhoto = !cleared && food?.photo_url
+  const existingHero = existingPhoto || PHOTOS_DETAIL[food?.id] || PHOTOS[food?.id] || null
 
   const submit = async () => {
     if (!valid || submitting) return
     setSubmitting(true)
     setError(null)
     try {
-      const payload = {
+      const basePayload = {
         nom: form.nom.trim(),
         cat: form.cat,
         midi: form.midi,
@@ -67,9 +134,23 @@ export function AlimentForm({ food, onClose, onSaved }) {
         details: form.details.trim() || null,
         tags: food?.tags || [],
       }
-      const saved = isEdit
-        ? await updateFood(food.id, payload)
-        : await addFood(payload)
+      // Save text fields first so we have a stable id for the photo path
+      let saved = isEdit
+        ? await updateFood(food.id, basePayload)
+        : await addFood(basePayload)
+
+      const wantClear = isEdit && cleared && food.photo_url
+      if (wantClear) {
+        await deleteFoodPhoto(food.photo_url).catch(() => {})
+        saved = await updateFood(saved.id, { ...basePayload, photo_url: null })
+      }
+      if (pendingFile) {
+        if (food?.photo_url && !wantClear) {
+          await deleteFoodPhoto(food.photo_url).catch(() => {})
+        }
+        const url = await uploadFoodPhoto(saved.id, pendingFile)
+        saved = await updateFood(saved.id, { ...basePayload, photo_url: url })
+      }
       onSaved(saved)
     } catch (err) {
       setError(err.message || "Erreur d'enregistrement")
@@ -88,6 +169,14 @@ export function AlimentForm({ food, onClose, onSaved }) {
     >
       <Field label="Nom *">
         <input value={form.nom} onChange={e => update('nom', e.target.value)} style={inputStyle} autoFocus={!isEdit} placeholder="Ex: Quinoa" />
+      </Field>
+      <Field label="Photo" hint="Optionnel — affichée en haut de la fiche.">
+        <PhotoPicker
+          existingUrl={existingHero}
+          file={pendingFile}
+          onPick={(f) => { setPendingFile(f); setCleared(false) }}
+          onClear={() => { setPendingFile(null); setCleared(true) }}
+        />
       </Field>
       <Field label="Catégorie *">
         <select value={form.cat} onChange={e => update('cat', e.target.value)}

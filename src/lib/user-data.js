@@ -278,6 +278,7 @@ export async function addFood(food) {
     fodmap: food.fodmap || null,
     contrainte: food.contrainte || null,
     details: food.details || null,
+    photo_url: food.photo_url || null,
     tags: food.tags || [],
   }).select().single()
   if (error) throw error
@@ -287,19 +288,23 @@ export async function addFood(food) {
 export async function updateFood(id, food) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not signed in')
+  const update = {
+    nom: food.nom,
+    cat: food.cat,
+    midi: food.midi,
+    soir: food.soir,
+    note: food.note || null,
+    fodmap: food.fodmap || null,
+    contrainte: food.contrainte || null,
+    details: food.details || null,
+    tags: food.tags || [],
+    updated_at: new Date().toISOString(),
+  }
+  if (Object.prototype.hasOwnProperty.call(food, 'photo_url')) {
+    update.photo_url = food.photo_url
+  }
   const { data, error } = await supabase.from('foods')
-    .update({
-      nom: food.nom,
-      cat: food.cat,
-      midi: food.midi,
-      soir: food.soir,
-      note: food.note || null,
-      fodmap: food.fodmap || null,
-      contrainte: food.contrainte || null,
-      details: food.details || null,
-      tags: food.tags || [],
-      updated_at: new Date().toISOString(),
-    })
+    .update(update)
     .eq('id', id)
     .eq('user_id', user.id)
     .select()

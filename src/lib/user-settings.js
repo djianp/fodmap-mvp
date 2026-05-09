@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase.js'
 import { DEFAULT_OFFICE_ADDRESS, DEFAULT_HOME_ADDRESS } from './places-config.js'
-import { getWalkTimesBatch } from './google-maps.js'
+import { getRouteTimesBatch } from './google-maps.js'
 
 let _office = { address: DEFAULT_OFFICE_ADDRESS, lat: null, lng: null }
 let _home = { address: DEFAULT_HOME_ADDRESS, lat: null, lng: null }
@@ -53,12 +53,12 @@ export async function saveSettings({ office, home }) {
 
   _recalcing = true
   notify()
-  recalcAllWalkTimes(office, home)
-    .catch(err => console.warn('Walk-time recalc failed:', err))
+  recalcAllRouteTimes(office, home)
+    .catch(err => console.warn('Route-time recalc failed:', err))
     .finally(() => { _recalcing = false; notify() })
 }
 
-async function recalcAllWalkTimes(office, home) {
+async function recalcAllRouteTimes(office, home) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
   const { data: restos } = await supabase.from('restos')
@@ -72,17 +72,22 @@ async function recalcAllWalkTimes(office, home) {
     const batch = restos.slice(i, i + 25)
     try {
       const destinations = batch.map(r => ({ lat: Number(r.lat), lng: Number(r.lng) }))
-      const times = await getWalkTimesBatch(office, home, destinations)
+      const times = await getRouteTimesBatch(office, home, destinations)
       for (let j = 0; j < batch.length; j++) {
         const t = times[j]
         if (!t) continue
         await supabase.from('restos')
-          .update({ walk_min_bureau: t.walk_min_bureau, walk_min_domicile: t.walk_min_domicile })
+          .update({
+            walk_min_bureau: t.walk_min_bureau,
+            walk_min_domicile: t.walk_min_domicile,
+            drive_min_bureau: t.drive_min_bureau,
+            drive_min_domicile: t.drive_min_domicile,
+          })
           .eq('id', batch[j].id)
           .eq('user_id', user.id)
       }
     } catch (err) {
-      console.warn('Walk-time batch failed:', err)
+      console.warn('Route-time batch failed:', err)
     }
   }
 

@@ -71,7 +71,10 @@ function Select({ value, options, onChange }) {
 }
 
 function RestoCard({ r, location, onAddMeal, onEditMeal, onEditResto }) {
+  const isDelivery = r.status === 'delivery'
   const walkMin = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
+  const driveMin = location === 'bureau' ? r.drive_min_bureau : r.drive_min_domicile
+  const travelMin = isDelivery ? driveMin : walkMin
   const mapsUrl = placeUrlFor(r.place_id, `${r.nom} ${r.adresse}`)
   const onTopClick = onEditResto ? () => onEditResto(r) : undefined
   return (
@@ -109,15 +112,26 @@ function RestoCard({ r, location, onAddMeal, onEditMeal, onEditResto }) {
             fontSize: 10, fontWeight: 600, color: '#2d1e0f', whiteSpace: 'nowrap',
             textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
           }}>
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
-              <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"/>
-            </svg>
-            {walkMin != null ? `${walkMin} min` : '—'}
+            {isDelivery ? (
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
+                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
+                <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"/>
+              </svg>
+            )}
+            {travelMin != null ? `${travelMin} min` : '—'}
           </a>
           {r.status === 'takeaway' && <span style={{ padding: '4px 9px', borderRadius: 999,
             background: '#b8d398', border: '1.5px solid #1f1a14',
             fontSize: 10, fontWeight: 600, color: '#1f1a14', whiteSpace: 'nowrap' }}>
             À emporter
+          </span>}
+          {r.status === 'delivery' && <span style={{ padding: '4px 9px', borderRadius: 999,
+            background: '#c8b5d4', border: '1.5px solid #1f1a14',
+            fontSize: 10, fontWeight: 600, color: '#1f1a14', whiteSpace: 'nowrap' }}>
+            Livraison
           </span>}
           {r.status === 'totry' && <span style={{ padding: '4px 9px', borderRadius: 999,
             background: '#f0a390', border: '1.5px solid #1f1a14',
@@ -331,6 +345,10 @@ export function MVPRestosScreen() {
         .filter(r => r.meals.length > 0)
     }
     list = list.filter(r => {
+      if (r.status === 'delivery') {
+        const d = location === 'bureau' ? r.drive_min_bureau : r.drive_min_domicile
+        return d != null && d <= 30
+      }
       const w = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
       return w != null && w <= 30
     })
@@ -352,6 +370,10 @@ export function MVPRestosScreen() {
     let base = restos.slice()
     if (status !== 'all') base = base.filter(r => r.status === status)
     base = base.filter(r => {
+      if (r.status === 'delivery') {
+        const d = location === 'bureau' ? r.drive_min_bureau : r.drive_min_domicile
+        return d != null && d <= 30
+      }
       const w = location === 'bureau' ? r.walk_min_bureau : r.walk_min_domicile
       return w != null && w <= 30
     })
@@ -450,7 +472,7 @@ export function MVPRestosScreen() {
             border: '2px solid #1f1a14', borderTopColor: 'transparent',
             animation: 'spin 0.8s linear infinite',
           }} />
-          Recalcul des temps de marche en cours…
+          Recalcul des temps de trajet en cours…
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </div>
       )}
@@ -478,6 +500,7 @@ export function MVPRestosScreen() {
         <Chip label="Tous" on={status === 'all'} onClick={() => setStatus('all')} />
         <Chip label="À emporter" icon="🥡" on={status === 'takeaway'} onClick={() => setStatus('takeaway')} />
         <Chip label="Sur place" icon="🍽️" on={status === 'dinein'} onClick={() => setStatus('dinein')} />
+        <Chip label="Livraison" icon="🚗" on={status === 'delivery'} onClick={() => setStatus('delivery')} />
         <Chip label="À tester" icon="🧪" on={status === 'totry'} onClick={() => setStatus('totry')} />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>

@@ -120,8 +120,10 @@ create table public.restos (
   lng numeric,
   walk_min_bureau integer,
   walk_min_domicile integer,
+  drive_min_bureau integer,
+  drive_min_domicile integer,
   rating numeric not null check (rating >= 0 and rating <= 5),
-  status text not null default 'dinein' check (status in ('takeaway', 'dinein', 'totry')),
+  status text not null default 'dinein' check (status in ('takeaway', 'dinein', 'totry', 'delivery')),
   created_at timestamptz default now()
 );
 

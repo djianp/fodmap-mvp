@@ -68,14 +68,14 @@ export function SettingsModal({ onClose }) {
     <FormShell title="Paramètres" onClose={onClose} onSubmit={submit}
       submitLabel={submitting ? 'Enregistrement…' : 'Sauvegarder'}
       disabled={!dirty || submitting} error={error}>
-      <Field label="Bureau" hint="Adresse utilisée pour le filtre « Bureau » et les temps de marche.">
+      <Field label="Bureau" hint="Adresse utilisée pour le filtre « Bureau » et les temps de trajet.">
         <AddressPicker value={draftOffice} onChange={setDraftOffice} />
       </Field>
-      <Field label="Domicile" hint="Adresse utilisée pour le filtre « Domicile » et les temps de marche.">
+      <Field label="Domicile" hint="Adresse utilisée pour le filtre « Domicile » et les temps de trajet.">
         <AddressPicker value={draftHome} onChange={setDraftHome} />
       </Field>
       <div style={{ fontSize: 11, color: '#7a6b55', lineHeight: 1.5, marginTop: 4 }}>
-        À l'enregistrement, les temps de marche de tous les restaurants seront recalculés en arrière-plan.
+        À l'enregistrement, les temps de trajet de tous les restaurants seront recalculés en arrière-plan.
       </div>
     </FormShell>
   )

@@ -175,6 +175,7 @@ create table public.suggestions (
   occasions text[] not null default '{}',
   contexts text[] not null default '{}',
   rating numeric check (rating >= 0 and rating <= 5),
+  infos_cles text,
   comment text,
   photo_url text,
   to_try boolean not null default false,

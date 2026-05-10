@@ -13,14 +13,20 @@ UI is in French.
 
 ## Features
 
-**Aliments tab** — searchable list of ~40 foods, filterable by category and meal-of-day (`midi` / `soir`), color-coded green / amber / red for SIBO compatibility.
+**Aliments tab** — searchable list of ~40 foods, filterable by category and meal-of-day (`midi` / `soir`), color-coded green / amber / red for SIBO compatibility. Tap a food to open a detail modal with FODMAP rationale, contrainte, and markdown-rendered personal notes; the modal expands to fullscreen as you scroll into long notes. You can upload your own hero photo per food (stored in Supabase Storage).
 
 **Restos tab** — personal directory of restaurants you've vetted:
-- Name, half-star rating, address, distance from `bureau` / `domicile`, click-to-call (`tel:` link).
-- Per-meal entries: name, protein category, half-star rating, free-text comment ("ask for sauce on the side, no garlic").
-- Filter by location, takeaway, and protein.
-- Toggle between list view and a schematic map view with clickable pins.
-- Add restaurants and meals via in-app forms; persisted to Supabase, synced across devices.
+- Name, half-star rating, address, walking-time pill (or driving-time pill, with car icon, for delivery restos), click-to-call (`tel:` link).
+- Per-meal entries: name, protein category, optional half-star rating, free-text comment ("ask for sauce on the side, no garlic"). Tap a meal to edit it.
+- 4-way status (`Sur place` / `À emporter` / `À tester` / `Livraison`) with distinct pills on the cards. À-tester restos appear in their own section at the bottom of the list. Map pins are colour-coded too.
+- Filters: location anchor, status, protein (alphabetical, emoji-prefixed, hides empty options, shows result counts), free-text search.
+- Toggle between list view and a real Google Maps view with clickable pins.
+
+**Suggestions tab** — meal/snack ideas tagged by occasion (Petit-déj / Déj / Snack / Dîner) and context (Maison / Bureau / Resto). Multi-select chip filters, optional photo, half-star rating, "À tester" pill, plus a short `infos_cles` displayed on the card and a longer markdown `commentaire` shown only inside the detail modal.
+
+**Settings** (link in the footer) — set your bureau and domicile addresses. Saved per-user in Supabase, syncs across devices. Saving triggers a background recalc of walking *and* driving times for every existing restaurant.
+
+UI is in French; copy uses infinitive / impersonal phrasing. A future bilingual (FR / EN) plan is documented in [`i18n-plan.md`](./i18n-plan.md).
 
 ---
 
@@ -76,30 +82,41 @@ For local magic-link login to work, `http://localhost:5173/**` must be on the Su
 ## Project structure
 
 ```
-fodmap/
-├── index.html              Entry HTML (mounts <App>)
+fodmap-mvp/
+├── index.html                       Entry HTML (mounts <App>)
 ├── package.json
 ├── vite.config.js
-├── public/                 Static assets served as-is at /
+├── public/                          Static assets served as-is at /
 └── src/
-    ├── main.jsx            React root, StrictMode + createRoot
-    ├── App.jsx             Auth gate (Login vs AppShell) + tab nav
-    ├── index.css           Phone-frame layout + globals
-    ├── assets/food/        Bundled food photos
+    ├── main.jsx                     React root, StrictMode + createRoot
+    ├── App.jsx                      Auth gate (Login vs AppShell) + 3-tab nav
+    ├── index.css                    Phone-frame layout + .chips-scroll utility
+    ├── assets/food/                 Bundled food photos (seed dataset)
     ├── components/
-    │   └── ui.jsx          Shared UI primitives (Chip, Verdict, FoodRow…)
+    │   ├── ui.jsx                   BlobLogo, Thumb, Chip, Verdict, FoodRow, IconBtn, Markdown
+    │   ├── google-map.jsx           Real Google Maps view (lazy-loaded SDK)
+    │   └── place-autocomplete.jsx   Custom address picker (AutocompleteSuggestion + in-flow dropdown)
     ├── data/
-    │   ├── foods.js        ~40 foods (static, never user-mutated)
-    │   └── restos.js       Seed restaurants used as first-login data
+    │   ├── foods.js                 ~40 foods (seed only; first-login bulk insert)
+    │   └── restos.js                Seed restaurants
     ├── lib/
-    │   ├── supabase.js     Supabase client (reads VITE_* env vars)
-    │   ├── user-data.js    useRestos() hook + addResto / addMeal / seed
-    │   └── foods-meta.js   Photo URL map, categories, search helpers
+    │   ├── supabase.js              Supabase client (reads VITE_* env vars)
+    │   ├── user-data.js             Hooks + CRUD for foods / restos / meals / suggestions
+    │   ├── user-settings.js         Pub-sub state for office / home address + recalc
+    │   ├── google-maps.js           SDK loader, getRouteTimes (walk + drive), geocode
+    │   ├── places-config.js         Default office / home addresses
+    │   ├── storage.js               Photo upload / delete (food-photos, suggestion-photos)
+    │   ├── foods-meta.js            Photo URL map, categories, search helpers
+    │   └── suggestions-meta.js      OCCASIONS / CONTEXTS option arrays
     └── screens/
-        ├── login.jsx       Magic-link login
-        ├── aliments.jsx    Foods tab
-        ├── restos.jsx      Restaurants tab (cards + map + modals)
-        └── resto-forms.jsx Add-resto + add-meal modal forms
+        ├── login.jsx                Magic-link login
+        ├── aliments.jsx             Foods tab + AlimentDetailModal
+        ├── aliment-forms.jsx        Add / edit aliment form (photo picker)
+        ├── restos.jsx               Restos tab (cards, map, modals)
+        ├── resto-forms.jsx          Add resto / edit resto / meal form + shared FormShell
+        ├── settings.jsx             Settings modal (office / home address)
+        ├── suggestions.jsx          Suggestions tab + SuggestionDetailModal
+        └── suggestion-forms.jsx     Add / edit suggestion form
 ```
 
 ---
@@ -208,6 +225,43 @@ alter table public.user_settings enable row level security;
 create policy "owner rw user_settings" on public.user_settings
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 ```
+
+Then create the two public storage buckets used for user-uploaded photos:
+
+```sql
+insert into storage.buckets (id, name, public)
+values ('food-photos', 'food-photos', true),
+       ('suggestion-photos', 'suggestion-photos', true)
+on conflict (id) do nothing;
+
+create policy "owner can write food photos" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'food-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "owner can update food photos" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'food-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "owner can delete food photos" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'food-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "anyone can read food photos" on storage.objects
+  for select to public
+  using (bucket_id = 'food-photos');
+
+create policy "owner can write suggestion photos" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'suggestion-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "owner can update suggestion photos" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'suggestion-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "owner can delete suggestion photos" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'suggestion-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "anyone can read suggestion photos" on storage.objects
+  for select to public
+  using (bucket_id = 'suggestion-photos');
+```
+
+Each user's photos live under their own `<user_id>/…` folder; only that user can write or delete them, but the URLs are publicly readable so the app can render them without signed URLs.
 
 Then configure auth URLs at **Authentication → URL Configuration**:
 

@@ -168,6 +168,25 @@ create table public.foods (
 );
 create unique index foods_user_nom on public.foods (user_id, lower(nom));
 
+create table public.suggestions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  nom text not null,
+  occasions text[] not null default '{}',
+  contexts text[] not null default '{}',
+  rating numeric check (rating >= 0 and rating <= 5),
+  comment text,
+  photo_url text,
+  to_try boolean not null default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create index idx_suggestions_user_id on public.suggestions(user_id);
+
+alter table public.suggestions enable row level security;
+create policy "owner rw suggestions" on public.suggestions
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 create index idx_restos_user_id on public.restos(user_id);
 create index idx_meals_resto_id on public.meals(resto_id);
 create index idx_meals_user_id on public.meals(user_id);

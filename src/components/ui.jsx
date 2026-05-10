@@ -130,7 +130,7 @@ export function SectionHeader({ title, action, onAction }) {
   )
 }
 
-export function BlobLogo({ size = 32 }) {
+export function BlobLogo({ size = 32, children = 'g' }) {
   return (
     <div style={{
       width: size, height: size, background: "#e67f52",
@@ -138,7 +138,7 @@ export function BlobLogo({ size = 32 }) {
       display: "flex", alignItems: "center", justifyContent: "center",
       color: "#f5f0e6", fontWeight: 700, fontSize: size * 0.47,
       transform: "rotate(-8deg)", flexShrink: 0,
-    }}>g</div>
+    }}>{children}</div>
   )
 }
 

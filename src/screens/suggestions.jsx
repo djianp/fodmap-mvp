@@ -117,6 +117,12 @@ function SuggestionDetailModal({ suggestion, onClose, onEdit, onDelete }) {
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   }, [suggestion])
+  useEffect(() => {
+    if (!suggestion) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [suggestion])
   if (!suggestion) return null
   const photoUrl = suggestion.photo_url
   const cats = [

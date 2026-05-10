@@ -36,6 +36,12 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   }, [food])
+  useEffect(() => {
+    if (!food) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [food])
   if (!food) return null
   const photoUrl = food.photo_url || PHOTOS_DETAIL[food.id] || PHOTOS[food.id]
   return (

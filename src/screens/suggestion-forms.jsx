@@ -143,6 +143,7 @@ export function SuggestionForm({ suggestion, onClose, onSaved }) {
     occasions: suggestion?.occasions || [],
     contexts: suggestion?.contexts || [],
     rating: suggestion?.rating ?? null,
+    infos_cles: suggestion?.infos_cles || '',
     comment: suggestion?.comment || '',
     to_try: !!suggestion?.to_try,
   })
@@ -170,6 +171,7 @@ export function SuggestionForm({ suggestion, onClose, onSaved }) {
         occasions: form.occasions,
         contexts: form.contexts,
         rating: form.rating ? parseFloat(form.rating) : null,
+        infos_cles: form.infos_cles.trim() || null,
         comment: form.comment.trim() || null,
         to_try: form.to_try,
       }
@@ -253,6 +255,10 @@ export function SuggestionForm({ suggestion, onClose, onSaved }) {
           <span aria-hidden="true" style={{ fontSize: 14, lineHeight: 1 }}>🧪</span>
           À tester
         </button>
+      </Field>
+      <Field label="Infos clés" hint="Affiché sur la carte. Court — un détail rapide à retenir.">
+        <input value={form.infos_cles} onChange={e => update('infos_cles', e.target.value)} style={inputStyle}
+          placeholder="Ex: Rapide, sans cuisson" />
       </Field>
       <Field label="Commentaire" hint="Recettes, observations, ressentis.">
         <textarea value={form.comment} onChange={e => update('comment', e.target.value)} rows={4}

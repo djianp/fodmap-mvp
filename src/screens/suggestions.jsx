@@ -79,7 +79,7 @@ function SuggestionCard({ s, onEdit }) {
             }}>À tester</span>
           )}
         </div>
-        {s.comment && (
+        {s.infos_cles && (
           <div style={{
             marginTop: 8, padding: '6px 10px', background: '#f5e3b8',
             border: '1.5px solid #1f1a14', borderRadius: 10,
@@ -88,7 +88,7 @@ function SuggestionCard({ s, onEdit }) {
           }}>
             <span aria-hidden="true">💬</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <Markdown>{s.comment}</Markdown>
+              <Markdown>{s.infos_cles}</Markdown>
             </div>
           </div>
         )}

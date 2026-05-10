@@ -100,33 +100,33 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 6 }}>Midi</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 6 }}>Midi</div>
             <Verdict value={food.midi} size="lg" />
           </div>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 6 }}>Soir</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 6 }}>Soir</div>
             <Verdict value={food.soir} size="lg" />
           </div>
         </div>
 
         {food.fodmap && (
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>FODMAP</div>
-            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45 }}>{food.fodmap}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>FODMAP</div>
+            <div style={{ fontSize: 15, color: '#1f1a14', lineHeight: 1.45 }}>{food.fodmap}</div>
           </div>
         )}
 
         {food.contrainte && (
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Contrainte</div>
-            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45, fontWeight: 700 }}>{food.contrainte}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Contrainte</div>
+            <div style={{ fontSize: 15, color: '#1f1a14', lineHeight: 1.45, fontWeight: 700 }}>{food.contrainte}</div>
           </div>
         )}
 
         {food.details && (
           <div style={{ marginBottom: 12, padding: '10px 12px', background: '#f5e3b8', border: '1.5px solid #1f1a14', borderRadius: 10 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Notes personnelles</div>
-            <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.45 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Notes personnelles</div>
+            <div style={{ fontSize: 15, color: '#1f1a14', lineHeight: 1.45 }}>
               <Markdown>{food.details}</Markdown>
             </div>
           </div>
@@ -138,13 +138,13 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
             padding: '10px 16px', borderRadius: 999,
             background: '#1f1a14', color: '#f5f0e6',
             border: '2px solid #1f1a14', boxShadow: '0 3px 0 #1f1a14',
-            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
           }}>Modifier</button>
           <button onClick={() => onDelete(food)} style={{
             padding: '10px 16px', borderRadius: 999,
             background: '#fff', color: '#c9543e',
             border: '2px solid #c9543e', boxShadow: '0 3px 0 #c9543e',
-            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
           }}>Supprimer</button>
         </div>
         </div>

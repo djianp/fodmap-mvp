@@ -36,6 +36,12 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   }, [food])
+  useEffect(() => {
+    if (!food) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [food])
   if (!food) return null
   const photoUrl = food.photo_url || PHOTOS_DETAIL[food.id] || PHOTOS[food.id]
   return (
@@ -69,7 +75,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
           fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
         }}>×</button>
 
-        <div ref={scrollRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
+        <div ref={scrollRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0, overscrollBehavior: 'contain' }}>
           {photoUrl && (
             <div role="img" aria-label={food.nom} style={{
               height: 240, flexShrink: 0,

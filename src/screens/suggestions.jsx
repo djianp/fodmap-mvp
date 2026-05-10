@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BlobLogo, Markdown } from '../components/ui.jsx'
-import { useSuggestions } from '../lib/user-data.js'
+import { useSuggestions, deleteSuggestion } from '../lib/user-data.js'
+import { deleteSuggestionPhoto } from '../lib/storage.js'
 import { OCCASIONS, CONTEXTS, labelOccasion, labelContext } from '../lib/suggestions-meta.js'
 import { SuggestionForm } from './suggestion-forms.jsx'
 
@@ -36,10 +37,10 @@ function MultiChip({ option, on, onClick }) {
   )
 }
 
-function SuggestionCard({ s, onEdit }) {
+function SuggestionCard({ s, onClick }) {
   const cats = [...s.occasions.map(labelOccasion), ...s.contexts.map(labelContext)]
   return (
-    <button onClick={() => onEdit(s)} style={{
+    <button onClick={() => onClick(s)} style={{
       width: '100%', textAlign: 'left', cursor: 'pointer',
       background: '#fff', border: '2px solid #1f1a14', borderRadius: 18,
       padding: 12, marginBottom: 12,
@@ -97,12 +98,147 @@ function SuggestionCard({ s, onEdit }) {
   )
 }
 
+function SuggestionDetailModal({ suggestion, onClose, onEdit, onDelete }) {
+  const scrollRef = useRef(null)
+  const [expanded, setExpanded] = useState(false)
+  useEffect(() => {
+    if (!suggestion) return
+    const esc = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
+  }, [onClose, suggestion])
+  useEffect(() => {
+    if (!suggestion) { setExpanded(false); return }
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = () => {
+      if (el.scrollTop > 80) setExpanded(true)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [suggestion])
+  if (!suggestion) return null
+  const photoUrl = suggestion.photo_url
+  const cats = [
+    ...(suggestion.occasions || []).map(labelOccasion),
+    ...(suggestion.contexts || []).map(labelContext),
+  ]
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 30,
+      background: 'rgba(31,26,20,0.55)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      padding: expanded ? 0 : '40px 14px 90px',
+      transition: 'padding 0.3s ease',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '100%',
+        maxWidth: expanded ? 'none' : 430,
+        height: expanded ? '100%' : undefined,
+        maxHeight: '100%',
+        background: '#f5f0e6',
+        borderRadius: expanded ? 0 : 22,
+        border: expanded ? 'none' : '2px solid #1f1a14',
+        boxShadow: expanded ? 'none' : '0 8px 0 #1f1a14',
+        position: 'relative',
+        animation: 'slideUp 0.22s ease-out',
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+        transition: 'max-width 0.3s ease, border-radius 0.3s ease, height 0.3s ease',
+      }}>
+        <button onClick={onClose} aria-label="Fermer" style={{
+          position: 'absolute', top: 10, right: 10, zIndex: 2,
+          width: 32, height: 32, borderRadius: 999, border: '2px solid #1f1a14',
+          background: '#fff', boxShadow: '0 2px 0 #1f1a14', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
+        }}>×</button>
+
+        <div ref={scrollRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
+          {photoUrl && (
+            <div role="img" aria-label={suggestion.nom} style={{
+              height: 240, flexShrink: 0,
+              backgroundImage: `url("${photoUrl}")`,
+              backgroundSize: 'cover', backgroundPosition: 'center',
+            }} />
+          )}
+
+          <div style={{ padding: 18 }}>
+            <div style={{ marginBottom: 14, paddingRight: 36 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.5px' }}>{suggestion.nom}</div>
+              {cats.length > 0 && (
+                <div style={{ fontSize: 12, color: '#7a6b55', marginTop: 4 }}>
+                  {cats.join(' · ')}
+                </div>
+              )}
+            </div>
+
+            {(suggestion.rating != null || suggestion.to_try) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+                {suggestion.rating != null && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Stars value={Number(suggestion.rating)} size={14} />
+                    <span style={{ fontSize: 13, color: '#7a6b55', fontWeight: 600 }}>{Number(suggestion.rating).toFixed(1)}</span>
+                  </div>
+                )}
+                {suggestion.to_try && (
+                  <span style={{
+                    padding: '5px 10px', borderRadius: 999,
+                    background: '#f0a390', border: '1.5px solid #1f1a14',
+                    fontSize: 11, fontWeight: 600, color: '#1f1a14', whiteSpace: 'nowrap',
+                  }}>À tester</span>
+                )}
+              </div>
+            )}
+
+            {suggestion.infos_cles && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Infos clés</div>
+                <div style={{ fontSize: 15, color: '#1f1a14', lineHeight: 1.45 }}>
+                  <Markdown>{suggestion.infos_cles}</Markdown>
+                </div>
+              </div>
+            )}
+
+            {suggestion.comment && (
+              <div style={{ marginBottom: 12, padding: '10px 12px', background: '#f5e3b8', border: '1.5px solid #1f1a14', borderRadius: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Commentaire</div>
+                <div style={{ fontSize: 15, color: '#1f1a14', lineHeight: 1.45 }}>
+                  <Markdown>{suggestion.comment}</Markdown>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button onClick={onEdit} style={{
+                flex: 1,
+                padding: '10px 16px', borderRadius: 999,
+                background: '#1f1a14', color: '#f5f0e6',
+                border: '2px solid #1f1a14', boxShadow: '0 3px 0 #1f1a14',
+                fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+              }}>Modifier</button>
+              <button onClick={() => onDelete(suggestion)} style={{
+                padding: '10px 16px', borderRadius: 999,
+                background: '#fff', color: '#c9543e',
+                border: '2px solid #c9543e', boxShadow: '0 3px 0 #c9543e',
+                fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+              }}>Supprimer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+    </div>
+  )
+}
+
 export function MVPSuggestionsScreen() {
   const { suggestions, loading, error, refresh } = useSuggestions()
   const [q, setQ] = useState('')
   const [occasions, setOccasions] = useState([])
   const [contexts, setContexts] = useState([])
   const [showAdd, setShowAdd] = useState(false)
+  const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(null)
 
   const toggle = (setter, list, v) =>
@@ -123,6 +259,8 @@ export function MVPSuggestionsScreen() {
     }
     return list
   }, [q, occasions, contexts, suggestions])
+
+  const selectedLatest = selected ? suggestions.find(s => s.id === selected.id) || selected : null
 
   return (
     <>
@@ -182,7 +320,7 @@ export function MVPSuggestionsScreen() {
         </div>
       ) : (
         <>
-          {filtered.map(s => <SuggestionCard key={s.id} s={s} onEdit={setEditing} />)}
+          {filtered.map(s => <SuggestionCard key={s.id} s={s} onClick={setSelected} />)}
           {filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7a6b55' }}>
               Aucune suggestion trouvée.
@@ -190,6 +328,23 @@ export function MVPSuggestionsScreen() {
           )}
         </>
       )}
+
+      <SuggestionDetailModal
+        suggestion={selectedLatest}
+        onClose={() => setSelected(null)}
+        onEdit={() => { setEditing(selectedLatest); setSelected(null) }}
+        onDelete={async (s) => {
+          if (!window.confirm(`Supprimer « ${s.nom} » ?`)) return
+          try {
+            if (s.photo_url) await deleteSuggestionPhoto(s.photo_url).catch(() => {})
+            await deleteSuggestion(s.id)
+            setSelected(null)
+            refresh()
+          } catch (err) {
+            window.alert(err.message || String(err))
+          }
+        }}
+      />
 
       {showAdd && (
         <SuggestionForm

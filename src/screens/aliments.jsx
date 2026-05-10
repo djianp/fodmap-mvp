@@ -69,7 +69,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
           fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
         }}>×</button>
 
-        <div ref={scrollRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
+        <div ref={scrollRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0, overscrollBehavior: 'contain' }}>
           {photoUrl && (
             <div role="img" aria-label={food.nom} style={{
               height: 240, flexShrink: 0,

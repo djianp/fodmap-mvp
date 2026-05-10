@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { MVPAlimentsScreen } from './screens/aliments.jsx'
 import { MVPRestosScreen } from './screens/restos.jsx'
+import { MVPSuggestionsScreen } from './screens/suggestions.jsx'
 import { Login } from './screens/login.jsx'
 import { SettingsModal } from './screens/settings.jsx'
 import { supabase } from './lib/supabase.js'
@@ -17,6 +18,13 @@ function MVPTabBar({ current, onChange }) {
     { id: 'restos', label: 'Restos', icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="22" height="22">
         <path d="M4 3v7a3 3 0 0 0 3 3m-3-10v18m6-18v7a3 3 0 0 1-3 3M15 3c-1.5 0-3 2-3 6s1.5 4 3 4m0-10v18"/>
+      </svg>
+    )},
+    { id: 'suggestions', label: 'Suggestions', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+        <path d="M9 18h6"/>
+        <path d="M10 21h4"/>
+        <path d="M12 2a7 7 0 0 0-4 12.7c.7.6 1.1 1.5 1.1 2.4V18h5.8v-.9c0-.9.4-1.8 1.1-2.4A7 7 0 0 0 12 2z"/>
       </svg>
     )},
   ]
@@ -106,6 +114,7 @@ function AppShell() {
       <div className="scroll">
         {tab === 'aliments' && <MVPAlimentsScreen moment={moment} setMoment={setMoment} />}
         {tab === 'restos' && <MVPRestosScreen />}
+        {tab === 'suggestions' && <MVPSuggestionsScreen />}
         <FooterLinks onSettings={() => setShowSettings(true)} />
       </div>
       <MVPTabBar current={tab} onChange={setTab} />

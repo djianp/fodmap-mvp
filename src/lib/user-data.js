@@ -326,3 +326,87 @@ export async function deleteFood(id) {
     .eq('user_id', user.id)
   if (error) throw error
 }
+
+// ──────────── Suggestions ────────────
+
+async function fetchSuggestions() {
+  const { data, error } = await supabase
+    .from('suggestions')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export function useSuggestions() {
+  const [suggestions, setSuggestions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      setSuggestions(await fetchSuggestions())
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  return { suggestions, loading, error, refresh: load }
+}
+
+export async function addSuggestion(suggestion) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('suggestions').insert({
+    user_id: user.id,
+    nom: suggestion.nom,
+    occasions: suggestion.occasions || [],
+    contexts: suggestion.contexts || [],
+    rating: suggestion.rating ?? null,
+    comment: suggestion.comment || null,
+    photo_url: suggestion.photo_url || null,
+    to_try: !!suggestion.to_try,
+  }).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateSuggestion(id, suggestion) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const update = {
+    nom: suggestion.nom,
+    occasions: suggestion.occasions || [],
+    contexts: suggestion.contexts || [],
+    rating: suggestion.rating ?? null,
+    comment: suggestion.comment || null,
+    to_try: !!suggestion.to_try,
+    updated_at: new Date().toISOString(),
+  }
+  if (Object.prototype.hasOwnProperty.call(suggestion, 'photo_url')) {
+    update.photo_url = suggestion.photo_url
+  }
+  const { data, error } = await supabase.from('suggestions')
+    .update(update)
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteSuggestion(id) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { error } = await supabase.from('suggestions')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+  if (error) throw error
+}

@@ -38,6 +38,48 @@
   --map-water:       #a8b4c4;
 }
 
+/* Dark theme — applied via JS by setting <html data-theme="dark">.
+   The "system" choice is resolved client-side: when the user picks Système,
+   user-settings.js reads prefers-color-scheme and sets the same attribute,
+   so there's only one set of overrides to maintain. */
+[data-theme="dark"] {
+  /* Binary palette flips */
+  --ink:             #f5f0e6;
+  --paper:           #1c1916;
+
+  /* Surfaces — warm dark, not pure black, to keep the cozy feel */
+  --bg-page:         #0f0d0a;
+  --bg-card:         #2a2620;
+  --bg-soft:         #3d342a;
+  --bg-comment:      #3a3120;
+  --bg-disabled:     #4a3f33;
+  --bg-input-ro:     #2a2620;
+  --bg-banner:       #3a2f18;
+
+  /* Text */
+  --text-muted:      #a39482;
+  --text-hint:       #807062;
+  --text-on-comment: #e8dfca;
+
+  /* Translucent layers — flipped to cream-on-dark */
+  --border-soft:     rgba(245,240,230,0.18);
+  --border-divider:  rgba(245,240,230,0.12);
+  --border-very-soft:#2a2620;
+  --overlay:         rgba(0,0,0,0.65);
+
+  /* Accents — slightly brighter for legibility on dark surfaces */
+  --accent-orange:   #f3956b;
+  --accent-error:    #e0664f;
+  --pill-green:      #9bc679;
+  --pill-amber:      #f0bc6a;
+  --pill-red:        #ec8a72;
+  --pill-lavender:   #b59dc9;
+
+  /* Map fallback — strokes lighter than the dark sand bg so they read */
+  --map-stroke:      #7a6850;
+  --map-water:       #5b6878;
+}
+
 html, body {
   margin: 0;
   padding: 0;

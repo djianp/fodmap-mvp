@@ -5,6 +5,7 @@ import { getRouteTimesBatch } from './google-maps.js'
 
 let _office = { address: DEFAULT_OFFICE_ADDRESS, lat: null, lng: null }
 let _home = { address: DEFAULT_HOME_ADDRESS, lat: null, lng: null }
+let _theme = 'system'
 let _loaded = false
 let _recalcing = false
 const subscribers = new Set()
@@ -13,6 +14,30 @@ function notify() { subscribers.forEach(fn => fn()) }
 
 export function getOffice() { return _office }
 export function getHome() { return _home }
+export function getTheme() { return _theme }
+
+function resolveTheme(choice) {
+  if (choice === 'light' || choice === 'dark') return choice
+  if (typeof window === 'undefined' || !window.matchMedia) return 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+function applyTheme() {
+  if (typeof document === 'undefined') return
+  document.documentElement.setAttribute('data-theme', resolveTheme(_theme))
+}
+
+// Initial apply on module load — respects OS preference until the user's saved
+// theme arrives from Supabase.
+applyTheme()
+
+// Keep the document attribute in sync if the OS theme flips while the user is
+// on the "Système" setting.
+if (typeof window !== 'undefined' && window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (_theme === 'system') applyTheme()
+  })
+}
 
 export async function loadSettings() {
   if (_loaded) return
@@ -26,6 +51,10 @@ export async function loadSettings() {
       if (data.home_address) {
         _home = { address: data.home_address, lat: data.home_lat, lng: data.home_lng }
       }
+      if (data.theme) {
+        _theme = data.theme
+        applyTheme()
+      }
       notify()
     }
   } catch (err) {
@@ -33,9 +62,10 @@ export async function loadSettings() {
   }
 }
 
-export async function saveSettings({ office, home }) {
+export async function saveSettings({ office, home, theme }) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not signed in')
+  const nextTheme = theme || _theme
   const { error } = await supabase.from('user_settings').upsert({
     user_id: user.id,
     office_address: office.address,
@@ -44,18 +74,25 @@ export async function saveSettings({ office, home }) {
     home_address: home.address,
     home_lat: home.lat,
     home_lng: home.lng,
+    theme: nextTheme,
     updated_at: new Date().toISOString(),
   })
   if (error) throw error
+  const addressesChanged =
+    office.address !== _office.address || home.address !== _home.address
   _office = office
   _home = home
+  _theme = nextTheme
+  applyTheme()
   notify()
 
-  _recalcing = true
-  notify()
-  recalcAllRouteTimes(office, home)
-    .catch(err => console.warn('Route-time recalc failed:', err))
-    .finally(() => { _recalcing = false; notify() })
+  if (addressesChanged) {
+    _recalcing = true
+    notify()
+    recalcAllRouteTimes(office, home)
+      .catch(err => console.warn('Route-time recalc failed:', err))
+      .finally(() => { _recalcing = false; notify() })
+  }
 }
 
 async function recalcAllRouteTimes(office, home) {
@@ -101,5 +138,5 @@ export function useSettings() {
     subscribers.add(fn)
     return () => { subscribers.delete(fn) }
   }, [])
-  return { office: _office, home: _home, recalcing: _recalcing, save: saveSettings }
+  return { office: _office, home: _home, theme: _theme, recalcing: _recalcing, save: saveSettings }
 }

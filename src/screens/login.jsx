@@ -35,22 +35,22 @@ export function Login() {
           <BlobLogo size={64} />
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 700, fontSize: 28, letterSpacing: '-0.8px', marginBottom: 6 }}>FODMAP MVP</div>
-            <div style={{ fontSize: 14, color: '#7a6b55' }}>Aliments + restos approuvés</div>
+            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Aliments + restos approuvés</div>
           </div>
 
           {status === 'sent' ? (
             <div style={{
-              background: '#fff', border: '2px solid #1f1a14', borderRadius: 16,
-              padding: 20, textAlign: 'center', boxShadow: '0 4px 0 #1f1a14',
+              background: 'var(--bg-card)', border: '2px solid var(--ink)', borderRadius: 16,
+              padding: 20, textAlign: 'center', boxShadow: '0 4px 0 var(--ink)',
               maxWidth: 280,
             }}>
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Mail envoyé ✉️</div>
-              <div style={{ fontSize: 13, color: '#7a6b55', lineHeight: 1.4 }}>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.4 }}>
                 Un lien de connexion a été envoyé à <strong>{email}</strong>. Cliquer dessus pour entrer.
               </div>
               <button onClick={() => { setStatus('idle'); setEmail('') }} style={{
                 marginTop: 14, fontSize: 12, fontWeight: 600,
-                background: 'none', border: 'none', color: '#e67f52',
+                background: 'none', border: 'none', color: 'var(--accent-orange)',
                 cursor: 'pointer', padding: 0, textDecoration: 'underline',
                 fontFamily: 'inherit',
               }}>Utiliser une autre adresse</button>
@@ -66,32 +66,32 @@ export function Login() {
                 required
                 style={{
                   width: '100%', padding: '12px 14px', borderRadius: 12,
-                  border: '2px solid #1f1a14', background: '#fff',
-                  fontSize: 15, color: '#1f1a14', fontFamily: 'inherit',
-                  boxShadow: '0 3px 0 #1f1a14', outline: 'none', boxSizing: 'border-box',
+                  border: '2px solid var(--ink)', background: 'var(--bg-card)',
+                  fontSize: 15, color: 'var(--ink)', fontFamily: 'inherit',
+                  boxShadow: '0 3px 0 var(--ink)', outline: 'none', boxSizing: 'border-box',
                 }}
               />
               <button type="submit" disabled={!email.trim() || status === 'sending'} style={{
                 padding: '12px 18px', borderRadius: 999,
-                border: '2px solid #1f1a14',
-                background: !email.trim() || status === 'sending' ? '#d9c3a0' : '#1f1a14',
-                color: !email.trim() || status === 'sending' ? '#7a6b55' : '#f5f0e6',
+                border: '2px solid var(--ink)',
+                background: !email.trim() || status === 'sending' ? 'var(--bg-disabled)' : 'var(--ink)',
+                color: !email.trim() || status === 'sending' ? 'var(--text-muted)' : 'var(--paper)',
                 fontSize: 14, fontWeight: 700, letterSpacing: 0.3,
-                boxShadow: !email.trim() || status === 'sending' ? 'none' : '0 3px 0 #1f1a14',
+                boxShadow: !email.trim() || status === 'sending' ? 'none' : '0 3px 0 var(--ink)',
                 cursor: !email.trim() || status === 'sending' ? 'not-allowed' : 'pointer',
                 fontFamily: 'inherit',
               }}>
                 {status === 'sending' ? 'Envoi…' : 'Recevoir le lien magique'}
               </button>
               {status === 'error' && (
-                <div style={{ fontSize: 12, color: '#c9543e', textAlign: 'center', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--accent-error)', textAlign: 'center', marginTop: 4 }}>
                   {error}
                 </div>
               )}
             </form>
           )}
 
-          <div style={{ fontSize: 11, color: '#a39a8d', textAlign: 'center', lineHeight: 1.5, marginTop: 12 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-hint)', textAlign: 'center', lineHeight: 1.5, marginTop: 12 }}>
             Un lien à usage unique sera envoyé.<br />Pas de mot de passe à retenir.
           </div>
       </div>

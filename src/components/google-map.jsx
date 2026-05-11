@@ -107,9 +107,9 @@ export function GoogleMap({ restos, location, onPinClick, fallback: Fallback }) 
   return (
     <div ref={containerRef} style={{
       height: 520, width: '100%',
-      border: '2px solid #1f1a14', borderRadius: 18,
-      overflow: 'hidden', boxShadow: '0 4px 0 #1f1a14',
-      background: '#e9d7b6',
+      border: '2px solid var(--ink)', borderRadius: 18,
+      overflow: 'hidden', boxShadow: '0 4px 0 var(--ink)',
+      background: 'var(--bg-soft)',
     }} />
   )
 }

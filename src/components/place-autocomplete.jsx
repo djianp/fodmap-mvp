@@ -3,9 +3,9 @@ import { loadMaps } from '../lib/google-maps.js'
 
 const inputStyle = {
   width: '100%', padding: '10px 12px', borderRadius: 10,
-  border: '1.5px solid #1f1a14', background: '#fff',
-  fontSize: 14, color: '#1f1a14', fontFamily: 'inherit',
-  boxShadow: '0 2px 0 #1f1a14', outline: 'none', boxSizing: 'border-box',
+  border: '1.5px solid var(--ink)', background: 'var(--bg-card)',
+  fontSize: 14, color: 'var(--ink)', fontFamily: 'inherit',
+  boxShadow: '0 2px 0 var(--ink)', outline: 'none', boxSizing: 'border-box',
 }
 
 export function PlaceAutocomplete({ onPlaceSelected, placeholder = 'Chercher une adresse' }) {
@@ -99,8 +99,8 @@ export function PlaceAutocomplete({ onPlaceSelected, placeholder = 'Chercher une
       {open && predictions.length > 0 && (
         <div style={{
           marginTop: 6,
-          background: '#fff', border: '1.5px solid #1f1a14', borderRadius: 10,
-          boxShadow: '0 3px 0 #1f1a14',
+          background: 'var(--bg-card)', border: '1.5px solid var(--ink)', borderRadius: 10,
+          boxShadow: '0 3px 0 var(--ink)',
           maxHeight: 260, overflowY: 'auto',
         }}>
           {predictions.map((s, i) => {
@@ -115,14 +115,14 @@ export function PlaceAutocomplete({ onPlaceSelected, placeholder = 'Chercher une
                   display: 'block', width: '100%', textAlign: 'left',
                   padding: '10px 12px',
                   border: 'none',
-                  borderBottom: i < predictions.length - 1 ? '1px solid #efe6d5' : 'none',
+                  borderBottom: i < predictions.length - 1 ? '1px solid var(--border-very-soft)' : 'none',
                   background: 'transparent', cursor: 'pointer',
-                  fontSize: 13, fontFamily: 'inherit', color: '#1f1a14',
+                  fontSize: 13, fontFamily: 'inherit', color: 'var(--ink)',
                 }}
               >
                 <div style={{ fontWeight: 600 }}>{main}</div>
                 {secondary && (
-                  <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 2 }}>{secondary}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{secondary}</div>
                 )}
               </button>
             )

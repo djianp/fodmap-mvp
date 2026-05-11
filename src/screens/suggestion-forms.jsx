@@ -15,11 +15,11 @@ function StarInput({ value, onChange }) {
         return (
           <div key={i} style={{ position: 'relative', width: 30, height: 32 }}>
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 28, lineHeight: 1, color: '#d9c3a0', pointerEvents: 'none' }}>★</div>
+              fontSize: 28, lineHeight: 1, color: 'var(--bg-disabled)', pointerEvents: 'none' }}>★</div>
             {fillPct > 0 && (
               <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', width: `${fillPct}%`, pointerEvents: 'none' }}>
                 <div style={{ width: 30, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 28, lineHeight: 1, color: '#e67f52' }}>★</div>
+                  fontSize: 28, lineHeight: 1, color: 'var(--accent-orange)' }}>★</div>
               </div>
             )}
             <button type="button" onClick={() => onChange(i - 0.5)}
@@ -37,11 +37,11 @@ function StarInput({ value, onChange }) {
       })}
       {value ? (
         <span style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 12, color: '#7a6b55', fontWeight: 600 }}>{value}/5</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>{value}/5</span>
           <button type="button" onClick={() => onChange(null)} aria-label="Retirer la note" style={{
             width: 20, height: 20, borderRadius: 999,
-            border: '1.5px solid #7a6b55', background: '#fff',
-            color: '#7a6b55', fontSize: 12, lineHeight: 1, cursor: 'pointer',
+            border: '1.5px solid var(--text-muted)', background: 'var(--bg-card)',
+            color: 'var(--text-muted)', fontSize: 12, lineHeight: 1, cursor: 'pointer',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             padding: 0, fontFamily: 'inherit',
           }}>×</button>
@@ -76,23 +76,23 @@ function PhotoPicker({ existingUrl, file, onPick, onClear }) {
       {visiblePreview ? (
         <div style={{
           position: 'relative',
-          borderRadius: 12, border: '1.5px solid #1f1a14', overflow: 'hidden',
-          boxShadow: '0 2px 0 #1f1a14',
+          borderRadius: 12, border: '1.5px solid var(--ink)', overflow: 'hidden',
+          boxShadow: '0 2px 0 var(--ink)',
         }}>
           <div role="img" aria-label="Aperçu de la photo" style={{
             height: 160, width: '100%',
             backgroundImage: `url("${visiblePreview}")`,
             backgroundSize: 'cover', backgroundPosition: 'center',
           }} />
-          <div style={{ display: 'flex', gap: 6, padding: 8, background: '#fff' }}>
+          <div style={{ display: 'flex', gap: 6, padding: 8, background: 'var(--bg-card)' }}>
             <button type="button" onClick={triggerPick} style={{
               flex: 1, padding: '8px 12px', borderRadius: 999,
-              border: '1.5px solid #1f1a14', background: '#fff', color: '#1f1a14',
+              border: '1.5px solid var(--ink)', background: 'var(--bg-card)', color: 'var(--ink)',
               fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
             }}>Changer</button>
             <button type="button" onClick={onClear} style={{
               padding: '8px 12px', borderRadius: 999,
-              border: '1.5px solid #c9543e', background: '#fff', color: '#c9543e',
+              border: '1.5px solid var(--accent-error)', background: 'var(--bg-card)', color: 'var(--accent-error)',
               fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
             }}>Retirer</button>
           </div>
@@ -100,7 +100,7 @@ function PhotoPicker({ existingUrl, file, onPick, onClear }) {
       ) : (
         <button type="button" onClick={triggerPick} style={{
           width: '100%', padding: '14px 16px', borderRadius: 12,
-          border: '1.5px dashed #1f1a14', background: '#fff', color: '#7a6b55',
+          border: '1.5px dashed var(--ink)', background: 'var(--bg-card)', color: 'var(--text-muted)',
           fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
@@ -119,11 +119,11 @@ function MultiChips({ options, value, onToggle }) {
         return (
           <button key={o.v} type="button" onClick={() => onToggle(o.v)} style={{
             padding: '7px 12px', borderRadius: 999,
-            border: '1.5px solid #1f1a14',
-            background: on ? '#1f1a14' : '#fff',
-            color: on ? '#f5f0e6' : '#1f1a14',
+            border: '1.5px solid var(--ink)',
+            background: on ? 'var(--ink)' : 'var(--bg-card)',
+            color: on ? 'var(--paper)' : 'var(--ink)',
             fontSize: 12, fontWeight: 500,
-            boxShadow: on ? 'none' : '0 2px 0 #1f1a14',
+            boxShadow: on ? 'none' : '0 2px 0 var(--ink)',
             cursor: 'pointer', fontFamily: 'inherit',
             display: 'inline-flex', alignItems: 'center', gap: 6, lineHeight: 1,
           }}>
@@ -245,10 +245,10 @@ export function SuggestionForm({ suggestion, onClose, onSaved }) {
       <Field label="Statut">
         <button type="button" onClick={() => update('to_try', !form.to_try)} style={{
           padding: '8px 14px', borderRadius: 999,
-          border: '1.5px solid #1f1a14',
-          background: form.to_try ? '#f0a390' : '#fff',
-          color: '#1f1a14', fontSize: 12, fontWeight: 600,
-          boxShadow: form.to_try ? '0 2px 0 #1f1a14' : 'none',
+          border: '1.5px solid var(--ink)',
+          background: form.to_try ? 'var(--pill-red)' : 'var(--bg-card)',
+          color: 'var(--ink)', fontSize: 12, fontWeight: 600,
+          boxShadow: form.to_try ? '0 2px 0 var(--ink)' : 'none',
           cursor: 'pointer', fontFamily: 'inherit',
           display: 'inline-flex', alignItems: 'center', gap: 6, lineHeight: 1,
         }}>
@@ -269,8 +269,8 @@ export function SuggestionForm({ suggestion, onClose, onSaved }) {
         <button type="button" onClick={onDelete} disabled={deleting} style={{
           width: '100%', marginTop: 6,
           padding: '10px 16px', borderRadius: 999,
-          background: '#fff', color: '#c9543e',
-          border: '2px solid #c9543e', boxShadow: deleting ? 'none' : '0 3px 0 #c9543e',
+          background: 'var(--bg-card)', color: 'var(--accent-error)',
+          border: '2px solid var(--accent-error)', boxShadow: deleting ? 'none' : '0 3px 0 var(--accent-error)',
           fontSize: 13, fontWeight: 700, cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
         }}>{deleting ? 'Suppression…' : 'Supprimer cette suggestion'}</button>
       )}

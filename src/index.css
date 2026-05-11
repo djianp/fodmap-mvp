@@ -1,11 +1,49 @@
 * { box-sizing: border-box; }
 
+:root {
+  /* Binary palette — text, borders, shadows, dark-action-button background, etc. */
+  --ink:             #1f1a14;
+  --paper:           #f5f0e6;
+
+  /* Surfaces */
+  --bg-page:         #e5ddce;
+  --bg-card:         #fff;
+  --bg-soft:         #e9d7b6;
+  --bg-comment:      #f5e3b8;
+  --bg-disabled:     #d9c3a0;
+  --bg-input-ro:     #eee6d3;
+  --bg-banner:       #fff3d6;
+
+  /* Text */
+  --text-muted:      #7a6b55;
+  --text-hint:       #a39a8d;
+  --text-on-comment: #2d1e0f;
+
+  /* Translucent layers */
+  --border-soft:     rgba(31,26,20,0.18);
+  --border-divider:  rgba(31,26,20,0.12);
+  --border-very-soft:#efe6d5;     /* opaque pale, autocomplete predictions divider */
+  --overlay:         rgba(31,26,20,0.55);
+
+  /* Accents */
+  --accent-orange:   #e67f52;
+  --accent-error:    #c9543e;
+  --pill-green:      #b8d398;
+  --pill-amber:      #f5c887;
+  --pill-red:        #f0a390;
+  --pill-lavender:   #c8b5d4;
+
+  /* Map fallback decoration */
+  --map-stroke:      #c4a878;
+  --map-water:       #a8b4c4;
+}
+
 html, body {
   margin: 0;
   padding: 0;
-  background: #e5ddce;
+  background: var(--bg-page);
   font-family: 'Bricolage Grotesque', system-ui, sans-serif;
-  color: #1f1a14;
+  color: var(--ink);
 }
 
 #root {
@@ -18,7 +56,7 @@ html, body {
   max-width: 430px;
   min-height: 100vh;
   position: relative;
-  background: #f5f0e6;
+  background: var(--paper);
 }
 
 .scroll {

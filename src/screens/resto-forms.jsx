@@ -7,18 +7,18 @@ export function Field({ label, children, hint }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: 'block', fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
-        fontWeight: 700, color: '#7a6b55', marginBottom: 6 }}>{label}</label>
+        fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>{label}</label>
       {children}
-      {hint && <div style={{ fontSize: 10, color: '#a39a8d', marginTop: 4 }}>{hint}</div>}
+      {hint && <div style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 4 }}>{hint}</div>}
     </div>
   )
 }
 
 export const inputStyle = {
   width: '100%', padding: '10px 12px', borderRadius: 10,
-  border: '1.5px solid #1f1a14', background: '#fff',
-  fontSize: 14, color: '#1f1a14', fontFamily: 'inherit',
-  boxShadow: '0 2px 0 #1f1a14', outline: 'none', boxSizing: 'border-box',
+  border: '1.5px solid var(--ink)', background: 'var(--bg-card)',
+  fontSize: 14, color: 'var(--ink)', fontFamily: 'inherit',
+  boxShadow: '0 2px 0 var(--ink)', outline: 'none', boxSizing: 'border-box',
 }
 
 function StarInput({ value, onChange }) {
@@ -32,12 +32,12 @@ function StarInput({ value, onChange }) {
         return (
           <div key={i} style={{ position: 'relative', width: 30, height: 32 }}>
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 28, lineHeight: 1, color: '#d9c3a0', pointerEvents: 'none' }}>★</div>
+              fontSize: 28, lineHeight: 1, color: 'var(--bg-disabled)', pointerEvents: 'none' }}>★</div>
             {fillPct > 0 && (
               <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', width: `${fillPct}%`,
                 pointerEvents: 'none' }}>
                 <div style={{ width: 30, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 28, lineHeight: 1, color: '#e67f52' }}>★</div>
+                  fontSize: 28, lineHeight: 1, color: 'var(--accent-orange)' }}>★</div>
               </div>
             )}
             <button type="button"
@@ -59,11 +59,11 @@ function StarInput({ value, onChange }) {
       })}
       {value ? (
         <span style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 12, color: '#7a6b55', fontWeight: 600 }}>{value}/5</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>{value}/5</span>
           <button type="button" onClick={() => onChange(null)} aria-label="Retirer la note" style={{
             width: 20, height: 20, borderRadius: 999,
-            border: '1.5px solid #7a6b55', background: '#fff',
-            color: '#7a6b55', fontSize: 12, lineHeight: 1, cursor: 'pointer',
+            border: '1.5px solid var(--text-muted)', background: 'var(--bg-card)',
+            color: 'var(--text-muted)', fontSize: 12, lineHeight: 1, cursor: 'pointer',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             padding: 0, fontFamily: 'inherit',
           }}>×</button>
@@ -106,7 +106,7 @@ export function FormShell({ title, onClose, onSubmit, submitLabel, disabled, err
     <div onClick={onClose} style={{
       position: 'fixed', left: 0, width: '100%', zIndex: 40,
       top: vv.offsetTop, height: vv.height,
-      background: 'rgba(31,26,20,0.55)',
+      background: 'var(--overlay)',
       display: 'flex',
       alignItems: keyboardOpen ? 'flex-start' : 'flex-end',
       justifyContent: 'center',
@@ -115,46 +115,46 @@ export function FormShell({ title, onClose, onSubmit, submitLabel, disabled, err
       <form onSubmit={e => { e.preventDefault(); onSubmit() }}
         onClick={e => e.stopPropagation()} style={{
           width: '100%', maxWidth: 430, maxHeight: '100%', overflowY: 'auto',
-          background: '#f5f0e6', borderRadius: 22, border: '2px solid #1f1a14',
-          boxShadow: '0 8px 0 #1f1a14', position: 'relative',
+          background: 'var(--paper)', borderRadius: 22, border: '2px solid var(--ink)',
+          boxShadow: '0 8px 0 var(--ink)', position: 'relative',
           animation: 'slideUp 0.22s ease-out',
         }}>
         <div style={{
-          padding: '16px 18px 14px', borderBottom: '2px dashed rgba(31,26,20,0.18)',
+          padding: '16px 18px 14px', borderBottom: '2px dashed var(--border-soft)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <div style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px' }}>{title}</div>
           <button type="button" onClick={onClose} aria-label="Fermer" style={{
-            width: 32, height: 32, borderRadius: 999, border: '2px solid #1f1a14',
-            background: '#fff', boxShadow: '0 2px 0 #1f1a14', cursor: 'pointer',
+            width: 32, height: 32, borderRadius: 999, border: '2px solid var(--ink)',
+            background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
+            fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: 'var(--ink)',
           }}>×</button>
         </div>
         <div style={{ padding: '16px 18px' }}>
           {children}
           {error && (
-            <div style={{ padding: '10px 12px', background: '#f0a390',
-              border: '1.5px solid #1f1a14', borderRadius: 10, fontSize: 12,
-              color: '#1f1a14', marginTop: 8 }}>
+            <div style={{ padding: '10px 12px', background: 'var(--pill-red)',
+              border: '1.5px solid var(--ink)', borderRadius: 10, fontSize: 12,
+              color: 'var(--ink)', marginTop: 8 }}>
               {error}
             </div>
           )}
         </div>
         <div style={{
-          padding: '12px 18px 18px', borderTop: '2px dashed rgba(31,26,20,0.18)',
+          padding: '12px 18px 18px', borderTop: '2px dashed var(--border-soft)',
           display: 'flex', gap: 8, justifyContent: 'flex-end',
         }}>
           <button type="button" onClick={onClose} style={{
-            padding: '10px 16px', borderRadius: 999, border: '1.5px solid #1f1a14',
-            background: '#fff', color: '#1f1a14', fontSize: 13, fontWeight: 600,
-            boxShadow: '0 2px 0 #1f1a14', cursor: 'pointer', fontFamily: 'inherit',
+            padding: '10px 16px', borderRadius: 999, border: '1.5px solid var(--ink)',
+            background: 'var(--bg-card)', color: 'var(--ink)', fontSize: 13, fontWeight: 600,
+            boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer', fontFamily: 'inherit',
           }}>Annuler</button>
           <button type="submit" disabled={disabled} style={{
-            padding: '10px 18px', borderRadius: 999, border: '2px solid #1f1a14',
-            background: disabled ? '#d9c3a0' : '#1f1a14',
-            color: disabled ? '#7a6b55' : '#f5f0e6',
-            fontSize: 13, fontWeight: 700, boxShadow: disabled ? 'none' : '0 3px 0 #1f1a14',
+            padding: '10px 18px', borderRadius: 999, border: '2px solid var(--ink)',
+            background: disabled ? 'var(--bg-disabled)' : 'var(--ink)',
+            color: disabled ? 'var(--text-muted)' : 'var(--paper)',
+            fontSize: 13, fontWeight: 700, boxShadow: disabled ? 'none' : '0 3px 0 var(--ink)',
             cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
           }}>{submitLabel}</button>
         </div>
@@ -222,19 +222,19 @@ export function AddRestoForm({ onClose, onSaved }) {
       <Field label="Restaurant *" hint="Chercher un restaurant sur Google Maps">
         {place ? (
           <div style={{
-            padding: 12, border: '1.5px solid #1f1a14', borderRadius: 10,
-            background: '#fff', boxShadow: '0 2px 0 #1f1a14',
+            padding: 12, border: '1.5px solid var(--ink)', borderRadius: 10,
+            background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)',
           }}>
             <div style={{ fontWeight: 700, fontSize: 14 }}>{place.nom}</div>
-            <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 4 }}>{place.adresse}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{place.adresse}</div>
             {place.phone && (
-              <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 2 }}>{place.phone}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{place.phone}</div>
             )}
             <button type="button" onClick={() => {
               setPlace(null); setWalkTimes(null); setWalkError(null)
             }} style={{
               marginTop: 8, fontSize: 11, fontWeight: 600,
-              background: 'none', border: 'none', color: '#e67f52',
+              background: 'none', border: 'none', color: 'var(--accent-orange)',
               cursor: 'pointer', padding: 0, textDecoration: 'underline',
               fontFamily: 'inherit',
             }}>Changer de restaurant</button>
@@ -247,32 +247,32 @@ export function AddRestoForm({ onClose, onSaved }) {
       {place && (
         <Field label="Temps de marche">
           {walkLoading ? (
-            <div style={{ fontSize: 12, color: '#7a6b55', fontStyle: 'italic' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
               Calcul…
             </div>
           ) : walkError ? (
-            <div style={{ fontSize: 12, color: '#c9543e' }}>
+            <div style={{ fontSize: 12, color: 'var(--accent-error)' }}>
               Impossible de calculer : {walkError}
             </div>
           ) : walkTimes ? (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ padding: '4px 10px', borderRadius: 999,
-                background: '#e9d7b6', border: '1.5px solid #1f1a14',
+                background: 'var(--bg-soft)', border: '1.5px solid var(--ink)',
                 fontSize: 11, fontWeight: 600 }}>
                 🚶 {walkTimes.walk_min_bureau ?? '—'} min · bureau
               </span>
               <span style={{ padding: '4px 10px', borderRadius: 999,
-                background: '#e9d7b6', border: '1.5px solid #1f1a14',
+                background: 'var(--bg-soft)', border: '1.5px solid var(--ink)',
                 fontSize: 11, fontWeight: 600 }}>
                 🚶 {walkTimes.walk_min_domicile ?? '—'} min · domicile
               </span>
               <span style={{ padding: '4px 10px', borderRadius: 999,
-                background: '#c8b5d4', border: '1.5px solid #1f1a14',
+                background: 'var(--pill-lavender)', border: '1.5px solid var(--ink)',
                 fontSize: 11, fontWeight: 600 }}>
                 🚗 {walkTimes.drive_min_bureau ?? '—'} min · bureau
               </span>
               <span style={{ padding: '4px 10px', borderRadius: 999,
-                background: '#c8b5d4', border: '1.5px solid #1f1a14',
+                background: 'var(--pill-lavender)', border: '1.5px solid var(--ink)',
                 fontSize: 11, fontWeight: 600 }}>
                 🚗 {walkTimes.drive_min_domicile ?? '—'} min · domicile
               </span>
@@ -288,17 +288,17 @@ export function AddRestoForm({ onClose, onSaved }) {
       <Field label="Statut">
         <div style={{ display: 'flex', gap: 6 }}>
           {[
-            { v: 'dinein', label: 'Sur place', bg: '#fff' },
-            { v: 'takeaway', label: 'À emporter', bg: '#b8d398' },
-            { v: 'delivery', label: 'Livraison', bg: '#c8b5d4' },
-            { v: 'totry', label: 'À tester', bg: '#f0a390' },
+            { v: 'dinein', label: 'Sur place', bg: 'var(--bg-card)' },
+            { v: 'takeaway', label: 'À emporter', bg: 'var(--pill-green)' },
+            { v: 'delivery', label: 'Livraison', bg: 'var(--pill-lavender)' },
+            { v: 'totry', label: 'À tester', bg: 'var(--pill-red)' },
           ].map(o => (
             <button key={o.v} type="button" onClick={() => setStatus(o.v)} style={{
               flex: 1, padding: '8px 10px', borderRadius: 999,
-              border: '1.5px solid #1f1a14',
-              background: status === o.v ? o.bg : '#fff',
-              boxShadow: status === o.v ? '0 2px 0 #1f1a14' : 'none',
-              fontSize: 11, fontWeight: 600, color: '#1f1a14',
+              border: '1.5px solid var(--ink)',
+              background: status === o.v ? o.bg : 'var(--bg-card)',
+              boxShadow: status === o.v ? '0 2px 0 var(--ink)' : 'none',
+              fontSize: 11, fontWeight: 600, color: 'var(--ink)',
               cursor: 'pointer', fontFamily: 'inherit',
             }}>{o.label}</button>
           ))}
@@ -361,7 +361,7 @@ export function EditRestoForm({ resto, onClose, onSaved }) {
         <input value={form.nom} onChange={e => update('nom', e.target.value)} style={inputStyle} autoFocus />
       </Field>
       <Field label="Adresse" hint="Pour changer l’adresse, supprimez et ré-ajoutez le restaurant.">
-        <input value={resto.adresse || ''} disabled style={{ ...inputStyle, color: '#7a6b55', background: '#eee6d3' }} />
+        <input value={resto.adresse || ''} disabled style={{ ...inputStyle, color: 'var(--text-muted)', background: 'var(--bg-input-ro)' }} />
       </Field>
       <Field label="Téléphone">
         <input value={form.phone} onChange={e => update('phone', e.target.value)} style={inputStyle} placeholder="+33…" />
@@ -372,17 +372,17 @@ export function EditRestoForm({ resto, onClose, onSaved }) {
       <Field label="Statut">
         <div style={{ display: 'flex', gap: 6 }}>
           {[
-            { v: 'dinein', label: 'Sur place', bg: '#fff' },
-            { v: 'takeaway', label: 'À emporter', bg: '#b8d398' },
-            { v: 'delivery', label: 'Livraison', bg: '#c8b5d4' },
-            { v: 'totry', label: 'À tester', bg: '#f0a390' },
+            { v: 'dinein', label: 'Sur place', bg: 'var(--bg-card)' },
+            { v: 'takeaway', label: 'À emporter', bg: 'var(--pill-green)' },
+            { v: 'delivery', label: 'Livraison', bg: 'var(--pill-lavender)' },
+            { v: 'totry', label: 'À tester', bg: 'var(--pill-red)' },
           ].map(o => (
             <button key={o.v} type="button" onClick={() => update('status', o.v)} style={{
               flex: 1, padding: '8px 10px', borderRadius: 999,
-              border: '1.5px solid #1f1a14',
-              background: form.status === o.v ? o.bg : '#fff',
-              boxShadow: form.status === o.v ? '0 2px 0 #1f1a14' : 'none',
-              fontSize: 11, fontWeight: 600, color: '#1f1a14',
+              border: '1.5px solid var(--ink)',
+              background: form.status === o.v ? o.bg : 'var(--bg-card)',
+              boxShadow: form.status === o.v ? '0 2px 0 var(--ink)' : 'none',
+              fontSize: 11, fontWeight: 600, color: 'var(--ink)',
               cursor: 'pointer', fontFamily: 'inherit',
             }}>{o.label}</button>
           ))}
@@ -391,8 +391,8 @@ export function EditRestoForm({ resto, onClose, onSaved }) {
       <button type="button" onClick={onDelete} disabled={deleting} style={{
         width: '100%', marginTop: 6,
         padding: '10px 16px', borderRadius: 999,
-        background: '#fff', color: '#c9543e',
-        border: '2px solid #c9543e', boxShadow: deleting ? 'none' : '0 3px 0 #c9543e',
+        background: 'var(--bg-card)', color: 'var(--accent-error)',
+        border: '2px solid var(--accent-error)', boxShadow: deleting ? 'none' : '0 3px 0 var(--accent-error)',
         fontSize: 13, fontWeight: 700, cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
       }}>{deleting ? 'Suppression…' : 'Supprimer ce restaurant'}</button>
     </FormShell>
@@ -491,8 +491,8 @@ export function MealForm({ resto, meal, proteines, onClose, onSaved }) {
         <button type="button" onClick={onDelete} disabled={deleting} style={{
           width: '100%', marginTop: 6,
           padding: '10px 16px', borderRadius: 999,
-          background: '#fff', color: '#c9543e',
-          border: '2px solid #c9543e', boxShadow: deleting ? 'none' : '0 3px 0 #c9543e',
+          background: 'var(--bg-card)', color: 'var(--accent-error)',
+          border: '2px solid var(--accent-error)', boxShadow: deleting ? 'none' : '0 3px 0 var(--accent-error)',
           fontSize: 13, fontWeight: 700, cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
         }}>{deleting ? 'Suppression…' : 'Supprimer ce plat'}</button>
       )}

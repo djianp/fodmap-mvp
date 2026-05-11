@@ -16,7 +16,7 @@ function AddressPicker({ value, onChange }) {
         {value?.address && (
           <button type="button" onClick={() => setEditing(false)} style={{
             marginTop: 8, fontSize: 11, fontWeight: 600,
-            background: 'none', border: 'none', color: '#7a6b55',
+            background: 'none', border: 'none', color: 'var(--text-muted)',
             cursor: 'pointer', padding: 0, fontFamily: 'inherit',
           }}>Annuler</button>
         )}
@@ -26,13 +26,13 @@ function AddressPicker({ value, onChange }) {
 
   return (
     <div style={{
-      padding: 12, border: '1.5px solid #1f1a14', borderRadius: 10,
-      background: '#fff', boxShadow: '0 2px 0 #1f1a14',
+      padding: 12, border: '1.5px solid var(--ink)', borderRadius: 10,
+      background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)',
     }}>
-      <div style={{ fontSize: 13, color: '#1f1a14', lineHeight: 1.4 }}>{value.address}</div>
+      <div style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.4 }}>{value.address}</div>
       <button type="button" onClick={() => setEditing(true)} style={{
         marginTop: 8, fontSize: 11, fontWeight: 600,
-        background: 'none', border: 'none', color: '#e67f52',
+        background: 'none', border: 'none', color: 'var(--accent-orange)',
         cursor: 'pointer', padding: 0, textDecoration: 'underline',
         fontFamily: 'inherit',
       }}>Changer</button>
@@ -74,7 +74,7 @@ export function SettingsModal({ onClose }) {
       <Field label="Domicile" hint="Adresse utilisée pour le filtre « Domicile » et les temps de trajet.">
         <AddressPicker value={draftHome} onChange={setDraftHome} />
       </Field>
-      <div style={{ fontSize: 11, color: '#7a6b55', lineHeight: 1.5, marginTop: 4 }}>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 4 }}>
         À l'enregistrement, les temps de trajet de tous les restaurants seront recalculés en arrière-plan.
       </div>
     </FormShell>

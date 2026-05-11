@@ -32,13 +32,13 @@ function MVPTabBar({ current, onChange }) {
     <div style={{
       position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
       width: '100%', maxWidth: 430, height: 76,
-      background: '#fff', borderTop: '2px solid #1f1a14',
+      background: 'var(--bg-card)', borderTop: '2px solid var(--ink)',
       display: 'flex', padding: '10px 14px 18px', gap: 4, zIndex: 20,
     }}>
       {tabs.map(t => (
         <button key={t.id} onClick={() => onChange(t.id)} style={{
-          flex: 1, background: current === t.id ? '#f5e3b8' : 'transparent',
-          border: 'none', color: current === t.id ? '#1f1a14' : '#7a6b55',
+          flex: 1, background: current === t.id ? 'var(--bg-comment)' : 'transparent',
+          border: 'none', color: current === t.id ? 'var(--ink)' : 'var(--text-muted)',
           fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
           padding: '6px 0', borderRadius: 12, cursor: 'pointer',
@@ -61,7 +61,7 @@ function FooterLinks({ onSettings }) {
       <button onClick={onSettings} style={{
         display: 'inline-flex', alignItems: 'center', gap: 8,
         background: 'transparent', border: 'none',
-        color: '#7a6b55', fontSize: 13, fontWeight: 600,
+        color: 'var(--text-muted)', fontSize: 13, fontWeight: 600,
         cursor: 'pointer', padding: '8px 12px',
         fontFamily: 'inherit',
       }}>
@@ -76,7 +76,7 @@ function FooterLinks({ onSettings }) {
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,
           background: 'transparent', border: 'none',
-          color: '#7a6b55', fontSize: 13, fontWeight: 600,
+          color: 'var(--text-muted)', fontSize: 13, fontWeight: 600,
           cursor: 'pointer', padding: '8px 12px',
           fontFamily: 'inherit',
         }}

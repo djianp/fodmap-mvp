@@ -47,7 +47,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 30,
-      background: 'rgba(31,26,20,0.55)',
+      background: 'var(--overlay)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       padding: expanded ? 0 : '40px 14px 90px',
       transition: 'padding 0.3s ease',
@@ -57,10 +57,10 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
         maxWidth: expanded ? 'none' : 430,
         height: expanded ? '100%' : undefined,
         maxHeight: '100%',
-        background: '#f5f0e6',
+        background: 'var(--paper)',
         borderRadius: expanded ? 0 : 22,
-        border: expanded ? 'none' : '2px solid #1f1a14',
-        boxShadow: expanded ? 'none' : '0 8px 0 #1f1a14',
+        border: expanded ? 'none' : '2px solid var(--ink)',
+        boxShadow: expanded ? 'none' : '0 8px 0 var(--ink)',
         position: 'relative',
         animation: 'slideUp 0.22s ease-out',
         overflow: 'hidden',
@@ -69,10 +69,10 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
       }}>
         <button onClick={onClose} aria-label="Fermer" style={{
           position: 'absolute', top: 10, right: 10, zIndex: 2,
-          width: 32, height: 32, borderRadius: 999, border: '2px solid #1f1a14',
-          background: '#fff', boxShadow: '0 2px 0 #1f1a14', cursor: 'pointer',
+          width: 32, height: 32, borderRadius: 999, border: '2px solid var(--ink)',
+          background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: '#1f1a14',
+          fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: 'var(--ink)',
         }}>×</button>
 
         <div ref={scrollRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0, overscrollBehavior: 'contain' }}>
@@ -88,7 +88,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
             {photoUrl ? (
             <div style={{ marginBottom: 14, paddingRight: 36 }}>
               <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.5px' }}>{food.nom}</div>
-              <div style={{ fontSize: 12, color: '#7a6b55', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
                 {food.cat}{food.note ? ` · ${food.note}` : ''}
               </div>
             </div>
@@ -97,7 +97,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
               <Thumb food={food} size={48} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.4px' }}>{food.nom}</div>
-                <div style={{ fontSize: 11, color: '#7a6b55', marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                   {food.cat}{food.note ? ` · ${food.note}` : ''}
                 </div>
               </div>
@@ -106,33 +106,33 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 6 }}>Midi</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Midi</div>
             <Verdict value={food.midi} size="lg" />
           </div>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 6 }}>Soir</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Soir</div>
             <Verdict value={food.soir} size="lg" />
           </div>
         </div>
 
         {food.fodmap && (
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>FODMAP</div>
-            <div style={{ fontSize: 15, color: '#1f1a14', lineHeight: 1.45 }}>{food.fodmap}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>FODMAP</div>
+            <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.45 }}>{food.fodmap}</div>
           </div>
         )}
 
         {food.contrainte && (
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Contrainte</div>
-            <div style={{ fontSize: 15, color: '#1f1a14', lineHeight: 1.45, fontWeight: 700 }}>{food.contrainte}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Contrainte</div>
+            <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.45, fontWeight: 700 }}>{food.contrainte}</div>
           </div>
         )}
 
         {food.details && (
-          <div style={{ marginBottom: 12, padding: '10px 12px', background: '#f5e3b8', border: '1.5px solid #1f1a14', borderRadius: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: '#7a6b55', textTransform: 'uppercase', marginBottom: 4 }}>Notes personnelles</div>
-            <div style={{ fontSize: 15, color: '#1f1a14', lineHeight: 1.45 }}>
+          <div style={{ marginBottom: 12, padding: '10px 12px', background: 'var(--bg-comment)', border: '1.5px solid var(--ink)', borderRadius: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Notes personnelles</div>
+            <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.45 }}>
               <Markdown>{food.details}</Markdown>
             </div>
           </div>
@@ -142,14 +142,14 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
           <button onClick={onEdit} style={{
             flex: 1,
             padding: '10px 16px', borderRadius: 999,
-            background: '#1f1a14', color: '#f5f0e6',
-            border: '2px solid #1f1a14', boxShadow: '0 3px 0 #1f1a14',
+            background: 'var(--ink)', color: 'var(--paper)',
+            border: '2px solid var(--ink)', boxShadow: '0 3px 0 var(--ink)',
             fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
           }}>Modifier</button>
           <button onClick={() => onDelete(food)} style={{
             padding: '10px 16px', borderRadius: 999,
-            background: '#fff', color: '#c9543e',
-            border: '2px solid #c9543e', boxShadow: '0 3px 0 #c9543e',
+            background: 'var(--bg-card)', color: 'var(--accent-error)',
+            border: '2px solid var(--accent-error)', boxShadow: '0 3px 0 var(--accent-error)',
             fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
           }}>Supprimer</button>
         </div>
@@ -201,9 +201,9 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
         <button onClick={() => setShowAdd(true)} disabled={loading} style={{
           marginLeft: 'auto',
           padding: '6px 12px', borderRadius: 999,
-          background: loading ? '#d9c3a0' : '#1f1a14',
-          color: loading ? '#7a6b55' : '#f5f0e6',
-          border: '2px solid #1f1a14', boxShadow: loading ? 'none' : '0 2px 0 #1f1a14',
+          background: loading ? 'var(--bg-disabled)' : 'var(--ink)',
+          color: loading ? 'var(--text-muted)' : 'var(--paper)',
+          border: '2px solid var(--ink)', boxShadow: loading ? 'none' : '0 2px 0 var(--ink)',
           fontSize: 11, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
           display: 'inline-flex', alignItems: 'center', gap: 4, letterSpacing: 0.3,
         }}>
@@ -213,18 +213,18 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
 
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        background: '#fff', border: '2px solid #1f1a14', borderRadius: 14,
-        padding: '10px 14px', marginBottom: 12, boxShadow: '0 3px 0 #1f1a14',
+        background: 'var(--bg-card)', border: '2px solid var(--ink)', borderRadius: 14,
+        padding: '10px 14px', marginBottom: 12, boxShadow: '0 3px 0 var(--ink)',
       }}>
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1f1a14" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input
           value={q}
           onChange={e => setQ(e.target.value)}
           placeholder="Rechercher un aliment…"
           style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent',
-            fontFamily: 'inherit', fontSize: 14, color: '#1f1a14' }}
+            fontFamily: 'inherit', fontSize: 14, color: 'var(--ink)' }}
         />
-        {q && <button onClick={() => setQ('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7a6b55', fontSize: 18, padding: 0 }}>×</button>}
+        {q && <button onClick={() => setQ('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, padding: 0 }}>×</button>}
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
@@ -239,21 +239,21 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
       </div>
 
       {error && (
-        <div style={{ padding: 14, background: '#f0a390', border: '2px solid #1f1a14',
-          borderRadius: 12, fontSize: 12, color: '#1f1a14', marginBottom: 14 }}>
+        <div style={{ padding: 14, background: 'var(--pill-red)', border: '2px solid var(--ink)',
+          borderRadius: 12, fontSize: 12, color: 'var(--ink)', marginBottom: 14 }}>
           Erreur de chargement : {error.message || String(error)}
         </div>
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#7a6b55', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
           Chargement des aliments…
         </div>
       ) : (
         orderedCats.map(cat => (
           <div key={cat} style={{ marginBottom: 18 }}>
             <div style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase',
-              fontWeight: 700, color: '#7a6b55', marginBottom: 8 }}>
+              fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>
               {CATEGORY_ICONS[cat] && <span style={{ marginRight: 6, letterSpacing: 0 }} aria-hidden="true">{CATEGORY_ICONS[cat]}</span>}
               {cat} · {groups[cat].length}
             </div>
@@ -263,7 +263,7 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
       )}
 
       {!loading && filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7a6b55' }}>
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
           Aucun aliment trouvé.
         </div>
       )}

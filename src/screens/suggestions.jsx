@@ -241,14 +241,11 @@ function SuggestionDetailModal({ suggestion, onClose, onEdit, onDelete }) {
 export function MVPSuggestionsScreen() {
   const { suggestions, loading, error, refresh } = useSuggestions()
   const [q, setQ] = useState('')
-  const [occasions, setOccasions] = useState([])
-  const [contexts, setContexts] = useState([])
+  const [occasion, setOccasion] = useState('')
+  const [context, setContext] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(null)
-
-  const toggle = (setter, list, v) =>
-    setter(list.includes(v) ? list.filter(x => x !== v) : [...list, v])
 
   const filtered = useMemo(() => {
     let list = suggestions.slice()
@@ -257,14 +254,14 @@ export function MVPSuggestionsScreen() {
       const nq = norm(q.trim())
       list = list.filter(s => norm(s.nom).includes(nq))
     }
-    if (occasions.length) {
-      list = list.filter(s => (s.occasions || []).some(o => occasions.includes(o)))
+    if (occasion) {
+      list = list.filter(s => (s.occasions || []).includes(occasion))
     }
-    if (contexts.length) {
-      list = list.filter(s => (s.contexts || []).some(c => contexts.includes(c)))
+    if (context) {
+      list = list.filter(s => (s.contexts || []).includes(context))
     }
     return list
-  }, [q, occasions, contexts, suggestions])
+  }, [q, occasion, context, suggestions])
 
   const selectedLatest = selected ? suggestions.find(s => s.id === selected.id) || selected : null
 
@@ -304,12 +301,12 @@ export function MVPSuggestionsScreen() {
 
       <div className="chips-scroll" style={{ marginBottom: 8 }}>
         {OCCASIONS.map(o => (
-          <MultiChip key={o.v} option={o} on={occasions.includes(o.v)} onClick={() => toggle(setOccasions, occasions, o.v)} />
+          <MultiChip key={o.v} option={o} on={occasion === o.v} onClick={() => setOccasion(occasion === o.v ? '' : o.v)} />
         ))}
       </div>
       <div className="chips-scroll" style={{ marginBottom: 18 }}>
         {CONTEXTS.map(c => (
-          <MultiChip key={c.v} option={c} on={contexts.includes(c.v)} onClick={() => toggle(setContexts, contexts, c.v)} />
+          <MultiChip key={c.v} option={c} on={context === c.v} onClick={() => setContext(context === c.v ? '' : c.v)} />
         ))}
       </div>
 

@@ -163,6 +163,7 @@ create table public.user_settings (
   home_address text,
   home_lat numeric,
   home_lng numeric,
+  theme text not null default 'system' check (theme in ('light', 'dark', 'system')),
   updated_at timestamptz default now()
 );
 

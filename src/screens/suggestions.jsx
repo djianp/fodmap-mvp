@@ -241,6 +241,7 @@ function SuggestionDetailModal({ suggestion, onClose, onEdit, onDelete }) {
 export function MVPSuggestionsScreen() {
   const { suggestions, loading, error, refresh } = useSuggestions()
   const [q, setQ] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
   const [occasion, setOccasion] = useState('')
   const [context, setContext] = useState('')
   const [showAdd, setShowAdd] = useState(false)
@@ -270,34 +271,57 @@ export function MVPSuggestionsScreen() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <BlobLogo size={30}>💡</BlobLogo>
         <div style={{ fontWeight: 700, fontSize: 22, letterSpacing: '-0.6px' }}>Suggestions</div>
-        <button onClick={() => setShowAdd(true)} disabled={loading} style={{
-          marginLeft: 'auto',
-          padding: '6px 12px', borderRadius: 999,
-          background: loading ? 'var(--bg-disabled)' : 'var(--ink)',
-          color: loading ? 'var(--text-muted)' : 'var(--paper)',
-          border: '2px solid var(--ink)', boxShadow: loading ? 'none' : '0 2px 0 var(--ink)',
-          fontSize: 11, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-          display: 'inline-flex', alignItems: 'center', gap: 4, letterSpacing: 0.3,
-        }}>
-          <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> Suggestion
-        </button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+          <button
+            onClick={() => {
+              const next = !searchOpen
+              setSearchOpen(next)
+              if (!next) setQ('')
+            }}
+            aria-label="Rechercher"
+            title="Rechercher une suggestion"
+            style={{
+              width: 32, height: 32, borderRadius: 999,
+              background: searchOpen ? 'var(--ink)' : 'var(--bg-card)',
+              color: searchOpen ? 'var(--paper)' : 'var(--ink)',
+              border: '1.5px solid var(--ink)', boxShadow: '0 2px 0 var(--ink)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', padding: 0, fontFamily: 'inherit',
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.5" y2="16.5" />
+            </svg>
+          </button>
+          <button onClick={() => setShowAdd(true)} disabled={loading} style={{
+            padding: '6px 12px', borderRadius: 999,
+            background: loading ? 'var(--bg-disabled)' : 'var(--ink)',
+            color: loading ? 'var(--text-muted)' : 'var(--paper)',
+            border: '2px solid var(--ink)', boxShadow: loading ? 'none' : '0 2px 0 var(--ink)',
+            fontSize: 11, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+            display: 'inline-flex', alignItems: 'center', gap: 4, letterSpacing: 0.3,
+          }}>
+            <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> Suggestion
+          </button>
+        </div>
       </div>
 
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        background: 'var(--bg-card)', border: '2px solid var(--ink)', borderRadius: 14,
-        padding: '10px 14px', marginBottom: 12, boxShadow: '0 3px 0 var(--ink)',
-      }}>
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      {searchOpen && (
         <input
+          autoFocus
           value={q}
           onChange={e => setQ(e.target.value)}
           placeholder="Rechercher une suggestion…"
-          style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent',
-            fontFamily: 'inherit', fontSize: 14, color: 'var(--ink)' }}
+          style={{
+            width: '100%', padding: '10px 12px', borderRadius: 10,
+            border: '1.5px solid var(--ink)', background: 'var(--bg-card)',
+            fontSize: 14, color: 'var(--ink)', fontFamily: 'inherit',
+            boxShadow: '0 2px 0 var(--ink)', outline: 'none', boxSizing: 'border-box',
+            marginBottom: 12,
+          }}
         />
-        {q && <button onClick={() => setQ('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, padding: 0 }}>×</button>}
-      </div>
+      )}
 
       <div className="chips-scroll" style={{ marginBottom: 8 }}>
         {OCCASIONS.map(o => (

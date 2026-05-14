@@ -282,6 +282,7 @@ export async function addFood(food) {
     fodmap: food.fodmap || null,
     contrainte: food.contrainte || null,
     details: food.details || null,
+    recette: food.recette || null,
     photo_url: food.photo_url || null,
     tags: food.tags || [],
   }).select().single()
@@ -301,6 +302,7 @@ export async function updateFood(id, food) {
     fodmap: food.fodmap || null,
     contrainte: food.contrainte || null,
     details: food.details || null,
+    recette: food.recette || null,
     tags: food.tags || [],
     updated_at: new Date().toISOString(),
   }
@@ -370,6 +372,7 @@ export async function addSuggestion(suggestion) {
     rating: suggestion.rating ?? null,
     infos_cles: suggestion.infos_cles || null,
     comment: suggestion.comment || null,
+    recette: suggestion.recette || null,
     photo_url: suggestion.photo_url || null,
     to_try: !!suggestion.to_try,
   }).select().single()
@@ -387,6 +390,7 @@ export async function updateSuggestion(id, suggestion) {
     rating: suggestion.rating ?? null,
     infos_cles: suggestion.infos_cles || null,
     comment: suggestion.comment || null,
+    recette: suggestion.recette || null,
     to_try: !!suggestion.to_try,
     updated_at: new Date().toISOString(),
   }

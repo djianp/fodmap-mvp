@@ -215,6 +215,15 @@ function SuggestionDetailModal({ suggestion, onClose, onEdit, onDelete }) {
               </div>
             )}
 
+            {suggestion.recette && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Recette</div>
+                <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.45 }}>
+                  <Markdown>{suggestion.recette}</Markdown>
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
               <button onClick={onEdit} style={{
                 flex: 1,

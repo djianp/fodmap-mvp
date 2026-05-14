@@ -1,5 +1,6 @@
 import { PHOTOS, tileFor, VERDICT_TEXT, metaFor, initialFor } from '../lib/foods-meta.js'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const MARKDOWN_COMPONENTS = {
   p: ({ children }) => <p style={{ margin: '4px 0' }}>{children}</p>,
@@ -13,11 +14,22 @@ const MARKDOWN_COMPONENTS = {
   code: ({ children }) => <code style={{ background: 'rgba(31,26,20,0.08)', padding: '1px 4px', borderRadius: 4, fontSize: '0.95em' }}>{children}</code>,
   blockquote: ({ children }) => <blockquote style={{ margin: '4px 0', paddingLeft: 10, borderLeft: '3px solid rgba(31,26,20,0.25)', color: 'var(--text-muted)' }}>{children}</blockquote>,
   hr: () => <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px solid var(--border-soft)' }} />,
+  table: ({ children }) => (
+    <div style={{ overflowX: 'auto', overscrollBehavior: 'contain', margin: '8px 0' }}>
+      <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.95em' }}>{children}</table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th style={{ textAlign: 'left', padding: '5px 8px', borderBottom: '2px solid var(--ink)', fontWeight: 700, whiteSpace: 'nowrap' }}>{children}</th>
+  ),
+  td: ({ children }) => (
+    <td style={{ padding: '5px 8px', borderBottom: '1px solid var(--border-divider)', verticalAlign: 'top' }}>{children}</td>
+  ),
 }
 
 export function Markdown({ children }) {
   if (!children) return null
-  return <ReactMarkdown components={MARKDOWN_COMPONENTS}>{children}</ReactMarkdown>
+  return <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>{children}</ReactMarkdown>
 }
 
 export function Thumb({ food, size = 48 }) {

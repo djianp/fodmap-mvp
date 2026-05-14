@@ -105,6 +105,7 @@ export function AlimentForm({ food, onClose, onSaved }) {
     fodmap: food?.fodmap || '',
     contrainte: food?.contrainte || '',
     details: food?.details || '',
+    recette: food?.recette || '',
   })
   // Photo state. existingUrl is what's already saved (food.photo_url); pendingFile is a newly-picked
   // File the user hasn't saved yet. cleared means the user tapped "Retirer" — applied on save.
@@ -132,6 +133,7 @@ export function AlimentForm({ food, onClose, onSaved }) {
         fodmap: form.fodmap.trim() || null,
         contrainte: form.contrainte.trim() || null,
         details: form.details.trim() || null,
+        recette: form.recette.trim() || null,
         tags: food?.tags || [],
       }
       // Save text fields first so we have a stable id for the photo path
@@ -203,10 +205,15 @@ export function AlimentForm({ food, onClose, onSaved }) {
       <Field label="Contrainte" hint="Limite de portion ou avertissement">
         <input value={form.contrainte} onChange={e => update('contrainte', e.target.value)} style={inputStyle} placeholder="Ex: Max 75g" />
       </Field>
-      <Field label="Notes personnelles" hint="Recettes, observations, ressentis. Affiche l'icône ⓘ sur la liste.">
+      <Field label="Notes personnelles" hint="Observations, ressentis. Affiche l'icône ⓘ sur la liste.">
         <textarea value={form.details} onChange={e => update('details', e.target.value)} rows={4}
           style={{...inputStyle, resize: 'vertical', fontFamily: 'inherit', minHeight: 90}}
           placeholder="Ex: Bien toléré le matin avec œufs, à éviter le soir…" />
+      </Field>
+      <Field label="Recette" hint="Optionnel — markdown accepté (listes, tableaux…).">
+        <textarea value={form.recette} onChange={e => update('recette', e.target.value)} rows={4}
+          style={{...inputStyle, resize: 'vertical', fontFamily: 'inherit', minHeight: 90}}
+          placeholder="Étapes de préparation, ingrédients…" />
       </Field>
     </FormShell>
   )

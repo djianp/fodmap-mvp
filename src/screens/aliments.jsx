@@ -138,6 +138,15 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
           </div>
         )}
 
+        {food.recette && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Recette</div>
+            <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.45 }}>
+              <Markdown>{food.recette}</Markdown>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
           <button onClick={onEdit} style={{
             flex: 1,

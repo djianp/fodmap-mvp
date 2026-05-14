@@ -145,6 +145,7 @@ export function SuggestionForm({ suggestion, onClose, onSaved }) {
     rating: suggestion?.rating ?? null,
     infos_cles: suggestion?.infos_cles || '',
     comment: suggestion?.comment || '',
+    recette: suggestion?.recette || '',
     to_try: !!suggestion?.to_try,
   })
   const [pendingFile, setPendingFile] = useState(null)
@@ -173,6 +174,7 @@ export function SuggestionForm({ suggestion, onClose, onSaved }) {
         rating: form.rating ? parseFloat(form.rating) : null,
         infos_cles: form.infos_cles.trim() || null,
         comment: form.comment.trim() || null,
+        recette: form.recette.trim() || null,
         to_try: form.to_try,
       }
       let saved = isEdit
@@ -260,10 +262,15 @@ export function SuggestionForm({ suggestion, onClose, onSaved }) {
         <input value={form.infos_cles} onChange={e => update('infos_cles', e.target.value)} style={inputStyle}
           placeholder="Ex: Rapide, sans cuisson" />
       </Field>
-      <Field label="Commentaire" hint="Recettes, observations, ressentis.">
+      <Field label="Commentaire" hint="Observations, ressentis.">
         <textarea value={form.comment} onChange={e => update('comment', e.target.value)} rows={4}
           style={{...inputStyle, resize: 'vertical', fontFamily: 'inherit', minHeight: 90}}
           placeholder="Ex: Servir tiède avec un filet de miel" />
+      </Field>
+      <Field label="Recette" hint="Optionnel — markdown accepté (listes, tableaux…).">
+        <textarea value={form.recette} onChange={e => update('recette', e.target.value)} rows={4}
+          style={{...inputStyle, resize: 'vertical', fontFamily: 'inherit', minHeight: 90}}
+          placeholder="Étapes de préparation, ingrédients…" />
       </Field>
       {isEdit && (
         <button type="button" onClick={onDelete} disabled={deleting} style={{

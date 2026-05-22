@@ -1,5 +1,7 @@
 # fodmap-mvp
 
+![fodmap-mvp](readme-hero.png)
+
 A personal mobile-first web app for managing a low-FODMAP / SIBO-friendly diet:
 a curated food reference and a directory of approved Paris restaurants with per-meal notes to give the necessary food modification asks to the waiter.
 

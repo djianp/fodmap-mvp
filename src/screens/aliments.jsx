@@ -118,7 +118,9 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
         {food.fodmap && (
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>FODMAP</div>
-            <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.45 }}>{food.fodmap}</div>
+            <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.45 }}>
+              <Markdown>{food.fodmap}</Markdown>
+            </div>
           </div>
         )}
 

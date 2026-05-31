@@ -542,3 +542,64 @@ export async function deleteReintroRecipe({ protocolId }) {
     .eq('protocol_id', protocolId)
   if (error) throw error
 }
+
+// ──────────── Reintro category notes ────────────
+// Per-user markdown describing the same-FODMAP-family foods that become safe once a protocol
+// is tolerated. Same shape as reintro_recipes (separate table so each field saves/resets
+// independently); absent = use the static default from src/data/reintro.js.
+
+async function fetchReintroCategoryNotes() {
+  const { data, error } = await supabase
+    .from('reintro_category_notes')
+    .select('*')
+    .order('protocol_id')
+  if (error) throw error
+  return data || []
+}
+
+export function useReintroCategoryNotes() {
+  const [notes, setNotes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      setNotes(await fetchReintroCategoryNotes())
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  return { notes, loading, error, refresh: load }
+}
+
+export async function upsertReintroCategoryNote({ protocolId, content }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('reintro_category_notes')
+    .upsert({
+      user_id: user.id,
+      protocol_id: protocolId,
+      content,
+      updated_at: new Date().toISOString(),
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteReintroCategoryNote({ protocolId }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { error } = await supabase.from('reintro_category_notes')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('protocol_id', protocolId)
+  if (error) throw error
+}

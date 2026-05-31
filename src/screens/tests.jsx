@@ -1,19 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BlobLogo, Markdown } from '../components/ui.jsx'
 import { PHOTOS, tileFor, initialFor } from '../lib/foods-meta.js'
-import { REINTRO_PROTOCOLS, COMFORT_LEVELS, TEST_DAYS, defaultRecipeMarkdown } from '../data/reintro.js'
+import { REINTRO_PROTOCOLS, COMFORT_LEVELS, TEST_DAYS, defaultRecipeMarkdown, defaultCategoryMarkdown } from '../data/reintro.js'
 import {
   useReintroLogs, upsertReintroLog, deleteReintroLog,
   useReintroRecipes, upsertReintroRecipe, deleteReintroRecipe,
+  useReintroCategoryNotes, upsertReintroCategoryNote, deleteReintroCategoryNote,
 } from '../lib/user-data.js'
 
 const keyFor = (protocolId, day) => `${protocolId}|${day}`
+
+// Display label for the "same family" card — change freely (it's the only place it's set).
+const CATEGORY_TITLE = 'Aliments associés'
 
 const iconBtnStyle = {
   width: 32, height: 32, borderRadius: 999, border: '2px solid var(--ink)',
   background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: 'var(--ink)', padding: 0,
+}
+
+const rowCardStyle = {
+  width: '100%', textAlign: 'left', cursor: 'pointer',
+  background: 'var(--bg-card)', border: '2px solid var(--ink)', borderRadius: 16,
+  padding: '12px 14px', boxShadow: '0 3px 0 var(--ink)',
+  display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit',
 }
 
 // ──────────── Comfort face (custom SVG, not OS emoji) ────────────
@@ -195,15 +206,32 @@ function circleStyle(bg, border) {
   }
 }
 
-function RecipeSheet({ protocol, day, recipe, isCustom, onSave, onReset, onClose }) {
+function SheetMeta({ foodName, chip }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{foodName}</span>
+      {chip && (
+        <span style={{
+          padding: '4px 10px', borderRadius: 999, background: 'var(--bg-comment)',
+          border: '1.5px solid var(--ink)', fontSize: 11, fontWeight: 700,
+          color: 'var(--text-on-comment)', whiteSpace: 'nowrap',
+        }}>{chip}</span>
+      )}
+    </div>
+  )
+}
+
+// Generic bottom-sheet for a per-protocol markdown field (recipe, same-family foods, …):
+// renders <Markdown> in view mode and a textarea in edit mode, with Enregistrer / Annuler
+// and Réinitialiser (revert to the seed default).
+function EditableSheet({ title, meta, content, isCustom, onSave, onReset, onClose }) {
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
   }, [onClose])
-  const dose = protocol.days.find(d => d.day === day)?.doseGrams
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(recipe)
+  const [draft, setDraft] = useState(content)
   const [busy, setBusy] = useState(false)
 
   const save = async () => { setBusy(true); await onSave(draft); setBusy(false); setEditing(false) }
@@ -224,10 +252,10 @@ function RecipeSheet({ protocol, day, recipe, isCustom, onSave, onReset, onClose
           padding: '16px 18px 14px', borderBottom: '2px dashed var(--border-soft)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
         }}>
-          <div style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px' }}>Recette détaillée</div>
+          <div style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px' }}>{title}</div>
           <div style={{ display: 'flex', gap: 8 }}>
             {!editing && (
-              <button onClick={() => { setDraft(recipe); setEditing(true) }} aria-label="Modifier la recette" title="Modifier" style={iconBtnStyle}>
+              <button onClick={() => { setDraft(content); setEditing(true) }} aria-label="Modifier" title="Modifier" style={iconBtnStyle}>
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
@@ -238,17 +266,7 @@ function RecipeSheet({ protocol, day, recipe, isCustom, onSave, onReset, onClose
           </div>
         </div>
         <div style={{ padding: '16px 18px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{protocol.foodName}</span>
-            {dose != null && (
-              <span style={{
-                padding: '4px 10px', borderRadius: 999, background: 'var(--bg-comment)',
-                border: '1.5px solid var(--ink)', fontSize: 11, fontWeight: 700,
-                color: 'var(--text-on-comment)', whiteSpace: 'nowrap',
-              }}>Dose cible : {dose} g</span>
-            )}
-          </div>
-
+          {meta}
           {editing ? (
             <>
               <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={10} autoFocus style={{
@@ -258,7 +276,7 @@ function RecipeSheet({ protocol, day, recipe, isCustom, onSave, onReset, onClose
                 resize: 'vertical', minHeight: 200,
               }} />
               <div style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 4 }}>
-                Markdown supporté — listes numérotées, **gras**, &gt; conseil.
+                Markdown supporté — listes, **gras**, &gt; citation.
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }}>
                 {isCustom && (
@@ -285,11 +303,11 @@ function RecipeSheet({ protocol, day, recipe, isCustom, onSave, onReset, onClose
           ) : (
             <>
               <div style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.4 }}>
-                <Markdown>{recipe}</Markdown>
+                <Markdown>{content}</Markdown>
               </div>
               {isCustom && (
                 <div style={{ fontSize: 10, color: 'var(--text-hint)', fontStyle: 'italic', marginTop: 12 }}>
-                  Recette personnalisée
+                  Personnalisé
                 </div>
               )}
             </>
@@ -323,19 +341,21 @@ function NoteEditor({ initial, onSave }) {
   )
 }
 
-function ProtocolDetail({ protocol, logsByKey, customRecipe, onBack, onSaveComfort, onSaveNote, onSaveRecipe, onResetRecipe }) {
+function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onBack, onSaveComfort, onSaveNote, onSaveRecipe, onResetRecipe, onSaveCategory, onResetCategory }) {
   const currentDay = useMemo(
     () => TEST_DAYS.find(d => !logsByKey[keyFor(protocol.id, d)]?.comfort_level) ?? 5,
     [protocol.id, logsByKey],
   )
   const [selectedDay, setSelectedDay] = useState(currentDay)
-  const [showRecipe, setShowRecipe] = useState(false)
+  const [sheet, setSheet] = useState(null) // 'recipe' | 'category' | null
 
   const selectedLog = logsByKey[keyFor(protocol.id, selectedDay)]
   const dose = protocol.days.find(d => d.day === selectedDay)?.doseGrams
   const selectedComfort = selectedLog?.comfort_level || null
   const effectiveRecipe = customRecipe ?? defaultRecipeMarkdown(protocol)
   const isCustomRecipe = customRecipe != null
+  const effectiveCategory = customCategory ?? defaultCategoryMarkdown(protocol)
+  const isCustomCategory = customCategory != null
 
   return (
     <>
@@ -377,12 +397,7 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, onBack, onSaveComfo
         </div>
       </div>
 
-      <button onClick={() => setShowRecipe(true)} style={{
-        width: '100%', textAlign: 'left', cursor: 'pointer',
-        background: 'var(--bg-card)', border: '2px solid var(--ink)', borderRadius: 16,
-        padding: '12px 14px', marginBottom: 22, boxShadow: '0 3px 0 var(--ink)',
-        display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit',
-      }}>
+      <button onClick={() => setSheet('recipe')} style={{ ...rowCardStyle, marginBottom: 10 }}>
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
           <path d="M4 13h16a8 8 0 0 1-16 0z" />
           <line x1="3" y1="21" x2="21" y2="21" />
@@ -392,6 +407,24 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, onBack, onSaveComfo
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Préparation &amp; recette</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>Voir la recette détaillée</div>
+        </div>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-muted)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </button>
+
+      <button onClick={() => setSheet('category')} style={{ ...rowCardStyle, marginBottom: 22 }}>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <line x1="9" y1="6" x2="20" y2="6" />
+          <line x1="9" y1="12" x2="20" y2="12" />
+          <line x1="9" y1="18" x2="20" y2="18" />
+          <circle cx="4.5" cy="6" r="1.1" fill="var(--ink)" stroke="none" />
+          <circle cx="4.5" cy="12" r="1.1" fill="var(--ink)" stroke="none" />
+          <circle cx="4.5" cy="18" r="1.1" fill="var(--ink)" stroke="none" />
+        </svg>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{CATEGORY_TITLE}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>Une fois ce test bien toléré</div>
         </div>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-muted)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
           <path d="M9 6l6 6-6 6" />
@@ -434,15 +467,26 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, onBack, onSaveComfo
         onSave={text => onSaveNote(protocol.id, selectedDay, text)}
       />
 
-      {showRecipe && (
-        <RecipeSheet
-          protocol={protocol}
-          day={selectedDay}
-          recipe={effectiveRecipe}
+      {sheet === 'recipe' && (
+        <EditableSheet
+          title="Recette détaillée"
+          meta={<SheetMeta foodName={protocol.foodName} chip={dose != null ? `Dose cible : ${dose} g` : null} />}
+          content={effectiveRecipe}
           isCustom={isCustomRecipe}
           onSave={text => onSaveRecipe(protocol.id, text)}
           onReset={() => onResetRecipe(protocol.id)}
-          onClose={() => setShowRecipe(false)}
+          onClose={() => setSheet(null)}
+        />
+      )}
+      {sheet === 'category' && (
+        <EditableSheet
+          title={CATEGORY_TITLE}
+          meta={<SheetMeta foodName={protocol.foodName} chip={protocol.fodmapFamily.replace(/^Test\s+/i, '')} />}
+          content={effectiveCategory}
+          isCustom={isCustomCategory}
+          onSave={text => onSaveCategory(protocol.id, text)}
+          onReset={() => onResetCategory(protocol.id)}
+          onClose={() => setSheet(null)}
         />
       )}
     </>
@@ -453,11 +497,13 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, onBack, onSaveComfo
 export function MVPTestsScreen() {
   const { logs, loading, error, refresh } = useReintroLogs()
   const { recipes, refresh: refreshRecipes } = useReintroRecipes()
+  const { notes: categoryNotes, refresh: refreshCategory } = useReintroCategoryNotes()
   const [selectedId, setSelectedId] = useState(null)
   // Optimistic edits layered over the server data: key -> value, or null = locally deleted/reset.
   // Kept separate from the fetched rows so the merged views are DERIVED (useMemo), never copied via an effect.
   const [overrides, setOverrides] = useState({})
   const [recipeOverrides, setRecipeOverrides] = useState({})
+  const [categoryOverrides, setCategoryOverrides] = useState({})
 
   useEffect(() => { window.scrollTo(0, 0) }, [selectedId])
 
@@ -481,6 +527,17 @@ export function MVPTestsScreen() {
     }
     return m
   }, [recipes, recipeOverrides])
+
+  // protocol_id -> custom "same family" markdown (server override + optimistic edits).
+  const categoryByProtocol = useMemo(() => {
+    const m = {}
+    for (const r of categoryNotes) if (r.content != null) m[r.protocol_id] = r.content
+    for (const [k, v] of Object.entries(categoryOverrides)) {
+      if (v === null) delete m[k]
+      else m[k] = v
+    }
+    return m
+  }, [categoryNotes, categoryOverrides])
 
   const saveComfort = async (protocolId, day, level) => {
     const key = keyFor(protocolId, day)
@@ -538,6 +595,29 @@ export function MVPTestsScreen() {
     }
   }
 
+  const resetCategory = async (protocolId) => {
+    setCategoryOverrides(o => ({ ...o, [protocolId]: null }))
+    try {
+      await deleteReintroCategoryNote({ protocolId })
+    } catch (err) {
+      window.alert('Impossible de réinitialiser : ' + (err.message || err))
+      setCategoryOverrides(o => { const n = { ...o }; delete n[protocolId]; return n })
+      refreshCategory()
+    }
+  }
+
+  const saveCategory = async (protocolId, text) => {
+    if (!text.trim()) return resetCategory(protocolId)
+    setCategoryOverrides(o => ({ ...o, [protocolId]: text }))
+    try {
+      await upsertReintroCategoryNote({ protocolId, content: text })
+    } catch (err) {
+      window.alert('Impossible d’enregistrer : ' + (err.message || err))
+      setCategoryOverrides(o => { const n = { ...o }; delete n[protocolId]; return n })
+      refreshCategory()
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
@@ -554,11 +634,14 @@ export function MVPTestsScreen() {
         protocol={selected}
         logsByKey={logsByKey}
         customRecipe={recipeByProtocol[selected.id]}
+        customCategory={categoryByProtocol[selected.id]}
         onBack={() => setSelectedId(null)}
         onSaveComfort={saveComfort}
         onSaveNote={saveNote}
         onSaveRecipe={saveRecipe}
         onResetRecipe={resetRecipe}
+        onSaveCategory={saveCategory}
+        onResetCategory={resetCategory}
       />
     )
   }

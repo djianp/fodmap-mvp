@@ -247,6 +247,22 @@ alter table public.reintro_recipes enable row level security;
 create policy "owner rw reintro_recipes" on public.reintro_recipes
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Per-user markdown describing the same-FODMAP-family foods that become safe once a protocol
+-- is tolerated. Absent = use the static default from src/data/reintro.js; deleting reverts to default.
+create table public.reintro_category_notes (
+  user_id uuid references auth.users(id) on delete cascade not null,
+  protocol_id text not null,
+  content text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  primary key (user_id, protocol_id)
+);
+create index idx_reintro_category_notes_user_id on public.reintro_category_notes(user_id);
+
+alter table public.reintro_category_notes enable row level security;
+create policy "owner rw reintro_category_notes" on public.reintro_category_notes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 create index idx_restos_user_id on public.restos(user_id);
 create index idx_meals_resto_id on public.meals(resto_id);
 create index idx_meals_user_id on public.meals(user_id);

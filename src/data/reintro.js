@@ -102,6 +102,23 @@ export function defaultRecipeMarkdown(protocol) {
   return protocol.recipeTip ? `${steps}\n\n> 💡 ${protocol.recipeTip}` : steps
 }
 
+// Example same-family foods per protocol — the starting point for the "same family" card.
+// Editable by the user (persisted in reintro_category_notes); these are only the defaults.
+const RELATED_FOODS = {
+  'patate-douce-mannitol': ['Champignons', 'Chou-fleur', 'Céleri', 'Pois mange-tout', 'Pastèque'],
+  'oignon-fructanes': ['Ail', 'Échalote', 'Blé (pain, pâtes)', 'Artichaut', 'Asperge'],
+  'pain-levain-fructanes': ['Seigle', 'Orge', 'Blé complet', 'Couscous', 'Biscottes'],
+  'mangue-fructose': ['Miel', 'Pomme', 'Poire', 'Pastèque', 'Cerise'],
+}
+
+// Default markdown for the "same family" card: a short intro + a bullet list of foods that
+// usually become safe once this test is tolerated. Used until the user saves an override.
+export function defaultCategoryMarkdown(protocol) {
+  const family = protocol.fodmapFamily.replace(/^Test\s+/i, '').toLowerCase()
+  const list = (RELATED_FOODS[protocol.id] || []).map(f => `- ${f}`).join('\n')
+  return `Une fois ce test bien toléré, vous tolérez probablement les autres aliments riches en **${family}**, par exemple :\n\n${list}\n\n> Ajoutez ou retirez des aliments selon votre tolérance.`
+}
+
 // Comfort levels logged on test days, ordered from best to worst tolerance.
 export const COMFORT_LEVELS = [
   { v: 'very_good', label: 'Très bien' },

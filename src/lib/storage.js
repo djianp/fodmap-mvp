@@ -2,6 +2,7 @@ import { supabase } from './supabase.js'
 
 const FOOD_BUCKET = 'food-photos'
 const SUGGESTION_BUCKET = 'suggestion-photos'
+const REINTRO_BUCKET = 'reintro-photos'
 
 async function uploadPhoto(bucket, ownerId, file) {
   const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
@@ -44,4 +45,14 @@ export async function uploadSuggestionPhoto(suggestionId, file) {
 
 export async function deleteSuggestionPhoto(photoUrl) {
   return deletePhoto(SUGGESTION_BUCKET, photoUrl)
+}
+
+export async function uploadReintroPhoto(protocolId, file) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  return uploadPhoto(REINTRO_BUCKET, { userId: user.id, entityId: protocolId }, file)
+}
+
+export async function deleteReintroPhoto(photoUrl) {
+  return deletePhoto(REINTRO_BUCKET, photoUrl)
 }

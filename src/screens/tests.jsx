@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BlobLogo, Markdown } from '../components/ui.jsx'
-import { PHOTOS, tileFor, initialFor } from '../lib/foods-meta.js'
-import { REINTRO_PROTOCOLS, COMFORT_LEVELS, TEST_DAYS, defaultRecipeMarkdown, defaultCategoryMarkdown } from '../data/reintro.js'
+import { tileFor, initialFor } from '../lib/foods-meta.js'
+import { COMFORT_LEVELS, TEST_DAYS, STANDARD_DAYS, defaultRecipeMarkdown, defaultCategoryMarkdown } from '../data/reintro.js'
 import {
+  useReintroProtocols, deleteReintroProtocol,
   useReintroLogs, upsertReintroLog, deleteReintroLog,
   useReintroRecipes, upsertReintroRecipe, deleteReintroRecipe,
   useReintroCategoryNotes, upsertReintroCategoryNote, deleteReintroCategoryNote,
 } from '../lib/user-data.js'
+import { deleteReintroPhoto } from '../lib/storage.js'
+import { AddTestForm } from './tests-forms.jsx'
 
 const keyFor = (protocolId, day) => `${protocolId}|${day}`
 
@@ -63,7 +66,7 @@ function ComfortFace({ level, size = 24 }) {
 
 // ──────────── Shared bits ────────────
 function ProtocolImage({ protocol, size, radius }) {
-  const url = PHOTOS[protocol.image]
+  const url = protocol.photoUrl
   const base = {
     width: size, height: size, flexShrink: 0,
     borderRadius: radius, border: '2px solid var(--ink)',
@@ -74,7 +77,7 @@ function ProtocolImage({ protocol, size, radius }) {
   }
   return (
     <div style={{
-      ...base, background: tileFor(protocol.image),
+      ...base, background: tileFor(protocol.id),
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontWeight: 700, fontSize: Math.round(size * 0.4), color: 'var(--ink)',
     }}>{initialFor({ nom: protocol.foodName })}</div>
@@ -118,19 +121,32 @@ function ProtocolCard({ protocol, logsByKey, onClick }) {
   )
 }
 
-function ProtocolList({ logsByKey, onSelect }) {
+function ProtocolList({ protocols, logsByKey, onSelect, onAdd }) {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <BlobLogo size={30} />
         <div style={{ fontWeight: 700, fontSize: 22, letterSpacing: '-0.6px' }}>Mes tests</div>
+        <button onClick={onAdd} style={{
+          marginLeft: 'auto', padding: '6px 12px', borderRadius: 999,
+          background: 'var(--ink)', color: 'var(--paper)', border: '2px solid var(--ink)',
+          boxShadow: '0 2px 0 var(--ink)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+          fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 4, letterSpacing: 0.3,
+        }}>
+          <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> Test
+        </button>
       </div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 18 }}>
         Aperçu de vos réintroductions en cours
       </div>
-      {REINTRO_PROTOCOLS.map(p => (
+      {protocols.map(p => (
         <ProtocolCard key={p.id} protocol={p} logsByKey={logsByKey} onClick={() => onSelect(p.id)} />
       ))}
+      {protocols.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
+          Aucun test pour le moment. Touchez « + Test » pour en créer un.
+        </div>
+      )}
     </>
   )
 }
@@ -341,7 +357,7 @@ function NoteEditor({ initial, onSave }) {
   )
 }
 
-function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onBack, onSaveComfort, onSaveNote, onSaveRecipe, onResetRecipe, onSaveCategory, onResetCategory }) {
+function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onBack, onSaveComfort, onSaveNote, onSaveRecipe, onResetRecipe, onSaveCategory, onResetCategory, onDelete }) {
   const currentDay = useMemo(
     () => TEST_DAYS.find(d => !logsByKey[keyFor(protocol.id, d)]?.comfort_level) ?? 5,
     [protocol.id, logsByKey],
@@ -467,6 +483,13 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
         onSave={text => onSaveNote(protocol.id, selectedDay, text)}
       />
 
+      <button onClick={() => onDelete(protocol)} style={{
+        width: '100%', marginTop: 28, padding: '10px 16px', borderRadius: 999,
+        background: 'var(--bg-card)', color: 'var(--accent-error)',
+        border: '2px solid var(--accent-error)', boxShadow: '0 3px 0 var(--accent-error)',
+        fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+      }}>Supprimer ce test</button>
+
       {sheet === 'recipe' && (
         <EditableSheet
           title="Recette détaillée"
@@ -495,10 +518,12 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
 
 // ──────────── Screen ────────────
 export function MVPTestsScreen() {
+  const { protocols: protocolRows, loading: protocolsLoading, error: protocolsError, refresh: refreshProtocols } = useReintroProtocols()
   const { logs, loading, error, refresh } = useReintroLogs()
   const { recipes, refresh: refreshRecipes } = useReintroRecipes()
   const { notes: categoryNotes, refresh: refreshCategory } = useReintroCategoryNotes()
   const [selectedId, setSelectedId] = useState(null)
+  const [showAdd, setShowAdd] = useState(false)
   // Optimistic edits layered over the server data: key -> value, or null = locally deleted/reset.
   // Kept separate from the fetched rows so the merged views are DERIVED (useMemo), never copied via an effect.
   const [overrides, setOverrides] = useState({})
@@ -538,6 +563,15 @@ export function MVPTestsScreen() {
     }
     return m
   }, [categoryNotes, categoryOverrides])
+
+  // DB rows -> the shape the UI components expect. The 5-day schedule is the shared constant.
+  const protocols = useMemo(() => protocolRows.map(r => ({
+    id: r.id,
+    foodName: r.food_name,
+    fodmapFamily: r.fodmap_family,
+    photoUrl: r.photo_url,
+    days: STANDARD_DAYS,
+  })), [protocolRows])
 
   const saveComfort = async (protocolId, day, level) => {
     const key = keyFor(protocolId, day)
@@ -618,7 +652,19 @@ export function MVPTestsScreen() {
     }
   }
 
-  if (loading) {
+  const deleteProtocol = async (protocol) => {
+    if (!window.confirm(`Supprimer le test « ${protocol.foodName} » et toutes ses données ?`)) return
+    try {
+      if (protocol.photoUrl) await deleteReintroPhoto(protocol.photoUrl).catch(() => {})
+      await deleteReintroProtocol(protocol.id)
+      setSelectedId(null)
+      refreshProtocols(); refresh(); refreshRecipes(); refreshCategory()
+    } catch (err) {
+      window.alert('Impossible de supprimer : ' + (err.message || err))
+    }
+  }
+
+  if (loading || protocolsLoading) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
         Chargement des tests…
@@ -626,7 +672,7 @@ export function MVPTestsScreen() {
     )
   }
 
-  const selected = REINTRO_PROTOCOLS.find(p => p.id === selectedId)
+  const selected = protocols.find(p => p.id === selectedId)
   if (selected) {
     return (
       <ProtocolDetail
@@ -642,23 +688,30 @@ export function MVPTestsScreen() {
         onResetRecipe={resetRecipe}
         onSaveCategory={saveCategory}
         onResetCategory={resetCategory}
+        onDelete={deleteProtocol}
       />
     )
   }
 
-  // Protocol definitions are static, so a logs load-failure (e.g. the reintro_logs table
-  // doesn't exist yet) still shows the list — just with ghost faces — plus a hint banner.
+  // A load failure (e.g. a table doesn't exist yet) still shows the list with whatever
+  // loaded, plus a hint banner.
   return (
     <>
-      {error && (
+      {(error || protocolsError) && (
         <div style={{
           padding: '10px 14px', background: 'var(--pill-red)', border: '1.5px solid var(--ink)',
           borderRadius: 10, fontSize: 12, color: 'var(--ink)', marginBottom: 14, boxShadow: '0 2px 0 var(--ink)',
         }}>
-          Impossible de charger vos résultats. Vérifiez que la table « reintro_logs » existe dans Supabase.
+          Impossible de charger vos tests. Vérifiez que les tables Supabase (reintro_protocols, reintro_logs…) existent.
         </div>
       )}
-      <ProtocolList logsByKey={logsByKey} onSelect={setSelectedId} />
+      <ProtocolList protocols={protocols} logsByKey={logsByKey} onSelect={setSelectedId} onAdd={() => setShowAdd(true)} />
+      {showAdd && (
+        <AddTestForm
+          onClose={() => setShowAdd(false)}
+          onSaved={() => { setShowAdd(false); refreshProtocols() }}
+        />
+      )}
     </>
   )
 }

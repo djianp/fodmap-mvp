@@ -263,6 +263,24 @@ alter table public.reintro_category_notes enable row level security;
 create policy "owner rw reintro_category_notes" on public.reintro_category_notes
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- The reintroduction tests themselves (Tests tab). Seeded with 4 defaults on first login;
+-- users add/remove their own. id is a text slug shared with logs / recipes / category_notes.
+create table public.reintro_protocols (
+  id text not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  food_name text not null,
+  fodmap_family text,
+  photo_url text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  primary key (user_id, id)
+);
+create index idx_reintro_protocols_user_id on public.reintro_protocols(user_id);
+
+alter table public.reintro_protocols enable row level security;
+create policy "owner rw reintro_protocols" on public.reintro_protocols
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 create index idx_restos_user_id on public.restos(user_id);
 create index idx_meals_resto_id on public.meals(resto_id);
 create index idx_meals_user_id on public.meals(user_id);
@@ -289,7 +307,8 @@ Then create the two public storage buckets used for user-uploaded photos:
 ```sql
 insert into storage.buckets (id, name, public)
 values ('food-photos', 'food-photos', true),
-       ('suggestion-photos', 'suggestion-photos', true)
+       ('suggestion-photos', 'suggestion-photos', true),
+       ('reintro-photos', 'reintro-photos', true)
 on conflict (id) do nothing;
 
 create policy "owner can write food photos" on storage.objects
@@ -317,6 +336,19 @@ create policy "owner can delete suggestion photos" on storage.objects
 create policy "anyone can read suggestion photos" on storage.objects
   for select to public
   using (bucket_id = 'suggestion-photos');
+
+create policy "owner can write reintro photos" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'reintro-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "owner can update reintro photos" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'reintro-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "owner can delete reintro photos" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'reintro-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "anyone can read reintro photos" on storage.objects
+  for select to public
+  using (bucket_id = 'reintro-photos');
 ```
 
 Each user's photos live under their own `<user_id>/…` folder; only that user can write or delete them, but the URLs are publicly readable so the app can render them without signed URLs.

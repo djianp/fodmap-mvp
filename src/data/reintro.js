@@ -95,11 +95,29 @@ export const REINTRO_PROTOCOLS = [
   },
 ]
 
-// Default preparation/recipe as editable markdown: the numbered steps, then the tip as a
-// blockquote. Used until the user saves their own override (table `reintro_recipes`).
+// The 5-day schedule is identical for every test (J1 100 g · J2 recovery · J3 150 g ·
+// J4 recovery · J5 200 g), so it's a shared constant rather than stored per protocol.
+export const STANDARD_DAYS = [
+  { day: 1, type: 'test', doseGrams: 100 },
+  { day: 2, type: 'recovery' },
+  { day: 3, type: 'test', doseGrams: 150 },
+  { day: 4, type: 'recovery' },
+  { day: 5, type: 'test', doseGrams: 200 },
+]
+
+// Seed definitions keyed by protocol id — the source of default recipe / associated-foods
+// content. A user-added test's id isn't here, so it falls back to an editable placeholder.
+const SEED_BY_ID = Object.fromEntries(REINTRO_PROTOCOLS.map(p => [p.id, p]))
+
+// Default preparation/recipe as editable markdown: numbered steps + the tip as a blockquote.
+// Used until the user saves an override (table `reintro_recipes`).
 export function defaultRecipeMarkdown(protocol) {
-  const steps = protocol.recipe.map(s => `${s.order}. ${s.text}`).join('\n')
-  return protocol.recipeTip ? `${steps}\n\n> 💡 ${protocol.recipeTip}` : steps
+  const seed = SEED_BY_ID[protocol.id]
+  if (!seed?.recipe?.length) {
+    return '_Aucune préparation enregistrée pour ce test. Touchez le crayon pour ajouter votre recette._'
+  }
+  const steps = seed.recipe.map(s => `${s.order}. ${s.text}`).join('\n')
+  return seed.recipeTip ? `${steps}\n\n> 💡 ${seed.recipeTip}` : steps
 }
 
 // Example same-family foods per protocol — the starting point for the "same family" card.
@@ -114,9 +132,13 @@ const RELATED_FOODS = {
 // Default markdown for the "same family" card: a short intro + a bullet list of foods that
 // usually become safe once this test is tolerated. Used until the user saves an override.
 export function defaultCategoryMarkdown(protocol) {
-  const family = protocol.fodmapFamily.replace(/^Test\s+/i, '').toLowerCase()
-  const list = (RELATED_FOODS[protocol.id] || []).map(f => `- ${f}`).join('\n')
-  return `Une fois ce test bien toléré, vous tolérez probablement les autres aliments riches en **${family}**, par exemple :\n\n${list}\n\n> Ajoutez ou retirez des aliments selon votre tolérance.`
+  const family = (protocol.fodmapFamily || '').replace(/^Test\s+/i, '').trim().toLowerCase()
+  const foods = RELATED_FOODS[protocol.id] || []
+  const list = foods.length ? foods.map(f => `- ${f}`).join('\n') : '- '
+  const intro = family
+    ? `Une fois ce test bien toléré, vous tolérez probablement les autres aliments riches en **${family}**, par exemple :`
+    : 'Une fois ce test bien toléré, listez ici les aliments de la même famille que vous pouvez réintroduire :'
+  return `${intro}\n\n${list}\n\n> Ajoutez ou retirez des aliments selon votre tolérance.`
 }
 
 // Comfort levels logged on test days, ordered from best to worst tolerance.

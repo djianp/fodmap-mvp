@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from './supabase.js'
 import { RESTOS, PROTEINES } from '../data/restos.js'
 import { FOODS } from '../data/foods.js'
+import { REINTRO_PROTOCOLS } from '../data/reintro.js'
 
 async function fetchRestos() {
   const { data, error } = await supabase
@@ -601,5 +602,100 @@ export async function deleteReintroCategoryNote({ protocolId }) {
     .delete()
     .eq('user_id', user.id)
     .eq('protocol_id', protocolId)
+  if (error) throw error
+}
+
+// ──────────── Reintro protocols ────────────
+// The reintroduction tests themselves. Seeded with the 4 defaults on first login (like
+// foods); users can add/remove their own. `id` is a text slug — seeds reuse their known
+// slug so existing logs/recipes/notes (keyed by protocol_id) keep matching.
+
+async function fetchReintroProtocols() {
+  const { data, error } = await supabase
+    .from('reintro_protocols')
+    .select('*')
+    .order('created_at')
+  if (error) throw error
+  return data || []
+}
+
+async function seedReintroProtocols(userId) {
+  const payload = REINTRO_PROTOCOLS.map(p => ({
+    id: p.id,
+    user_id: userId,
+    food_name: p.foodName,
+    fodmap_family: p.fodmapFamily,
+    photo_url: p.image ? `/aliments/${p.image}.jpg` : null,
+  }))
+  const { error } = await supabase.from('reintro_protocols').insert(payload)
+  if (error) throw error
+}
+
+export function useReintroProtocols() {
+  const [protocols, setProtocols] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const seededRef = useRef(false)
+
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      let data = await fetchReintroProtocols()
+      if (data.length === 0 && !seededRef.current) {
+        seededRef.current = true
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await seedReintroProtocols(user.id)
+          data = await fetchReintroProtocols()
+        }
+      }
+      setProtocols(data)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  return { protocols, loading, error, refresh: load }
+}
+
+export async function addReintroProtocol({ id, foodName, fodmapFamily }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('reintro_protocols').insert({
+    id,
+    user_id: user.id,
+    food_name: foodName,
+    fodmap_family: fodmapFamily || null,
+  }).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateReintroProtocol(id, fields) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('reintro_protocols')
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteReintroProtocol(id) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const uid = user.id
+  // No FK on protocol_id, so cascade the test's logs / recipe / notes in app code first.
+  await supabase.from('reintro_logs').delete().eq('user_id', uid).eq('protocol_id', id)
+  await supabase.from('reintro_recipes').delete().eq('user_id', uid).eq('protocol_id', id)
+  await supabase.from('reintro_category_notes').delete().eq('user_id', uid).eq('protocol_id', id)
+  const { error } = await supabase.from('reintro_protocols').delete().eq('user_id', uid).eq('id', id)
   if (error) throw error
 }

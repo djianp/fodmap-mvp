@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { MVPAlimentsScreen } from './screens/aliments.jsx'
 import { MVPRestosScreen } from './screens/restos.jsx'
 import { MVPSuggestionsScreen } from './screens/suggestions.jsx'
+import { MVPTestsScreen } from './screens/tests.jsx'
 import { Login } from './screens/login.jsx'
 import { SettingsModal } from './screens/settings.jsx'
 import { supabase } from './lib/supabase.js'
@@ -25,6 +26,13 @@ function MVPTabBar({ current, onChange }) {
         <path d="M9 18h6"/>
         <path d="M10 21h4"/>
         <path d="M12 2a7 7 0 0 0-4 12.7c.7.6 1.1 1.5 1.1 2.4V18h5.8v-.9c0-.9.4-1.8 1.1-2.4A7 7 0 0 0 12 2z"/>
+      </svg>
+    )},
+    { id: 'tests', label: 'Tests', icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+        <path d="M9 3h6"/>
+        <path d="M10 3v6.5L5.2 17.4A2 2 0 0 0 6.9 20.5h10.2a2 2 0 0 0 1.7-3.1L14 9.5V3"/>
+        <path d="M8 14h8"/>
       </svg>
     )},
   ]
@@ -115,6 +123,7 @@ function AppShell() {
         {tab === 'aliments' && <MVPAlimentsScreen moment={moment} setMoment={setMoment} />}
         {tab === 'restos' && <MVPRestosScreen />}
         {tab === 'suggestions' && <MVPSuggestionsScreen />}
+        {tab === 'tests' && <MVPTestsScreen />}
         <FooterLinks onSettings={() => setShowSettings(true)} />
       </div>
       <MVPTabBar current={tab} onChange={setTab} />

@@ -210,6 +210,27 @@ alter table public.suggestions enable row level security;
 create policy "owner rw suggestions" on public.suggestions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Reintroduction tests (Tests tab). Protocol DEFINITIONS are static app content
+-- (src/data/reintro.js) and are NOT stored here — only the user's per-test-day
+-- comfort level + note. One row per logged test day; currentDay/completed are derived.
+create table public.reintro_logs (
+  user_id uuid references auth.users(id) on delete cascade not null,
+  protocol_id text not null,
+  day integer not null check (day in (1, 3, 5)),
+  comfort_level text check (comfort_level in (
+    'very_good', 'slightly_bothered', 'moderately_bothered', 'very_bothered'
+  )),
+  note text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  primary key (user_id, protocol_id, day)
+);
+create index idx_reintro_logs_user_id on public.reintro_logs(user_id);
+
+alter table public.reintro_logs enable row level security;
+create policy "owner rw reintro_logs" on public.reintro_logs
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 create index idx_restos_user_id on public.restos(user_id);
 create index idx_meals_resto_id on public.meals(resto_id);
 create index idx_meals_user_id on public.meals(user_id);

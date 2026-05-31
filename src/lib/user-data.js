@@ -416,3 +416,69 @@ export async function deleteSuggestion(id) {
     .eq('user_id', user.id)
   if (error) throw error
 }
+
+// ──────────── Reintro logs ────────────
+// Protocol DEFINITIONS are static app content (src/data/reintro.js) and are never
+// written to Supabase — so there is no seed branch here, unlike useFoods/useRestos.
+// Only the user's per-test-day comfort level + note persist. currentDay / completed
+// are DERIVED in the UI from these rows (first test day with no comfort_level = current).
+
+async function fetchReintroLogs() {
+  const { data, error } = await supabase
+    .from('reintro_logs')
+    .select('*')
+    .order('protocol_id')
+    .order('day')
+  if (error) throw error
+  return data || []
+}
+
+export function useReintroLogs() {
+  const [logs, setLogs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      setLogs(await fetchReintroLogs())
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  return { logs, loading, error, refresh: load }
+}
+
+export async function upsertReintroLog({ protocolId, day, comfortLevel, note }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('reintro_logs')
+    .upsert({
+      user_id: user.id,
+      protocol_id: protocolId,
+      day,
+      comfort_level: comfortLevel ?? null,
+      note: note || null,
+      updated_at: new Date().toISOString(),
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteReintroLog({ protocolId, day }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { error } = await supabase.from('reintro_logs')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('protocol_id', protocolId)
+    .eq('day', day)
+  if (error) throw error
+}

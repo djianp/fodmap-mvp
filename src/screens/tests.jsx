@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BlobLogo } from '../components/ui.jsx'
+import { BlobLogo, Markdown } from '../components/ui.jsx'
 import { PHOTOS, tileFor, initialFor } from '../lib/foods-meta.js'
-import { REINTRO_PROTOCOLS, COMFORT_LEVELS, TEST_DAYS } from '../data/reintro.js'
-import { useReintroLogs, upsertReintroLog, deleteReintroLog } from '../lib/user-data.js'
+import { REINTRO_PROTOCOLS, COMFORT_LEVELS, TEST_DAYS, defaultRecipeMarkdown } from '../data/reintro.js'
+import {
+  useReintroLogs, upsertReintroLog, deleteReintroLog,
+  useReintroRecipes, upsertReintroRecipe, deleteReintroRecipe,
+} from '../lib/user-data.js'
 
 const keyFor = (protocolId, day) => `${protocolId}|${day}`
+
+const iconBtnStyle = {
+  width: 32, height: 32, borderRadius: 999, border: '2px solid var(--ink)',
+  background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: 'var(--ink)', padding: 0,
+}
 
 // ──────────── Comfort face (custom SVG, not OS emoji) ────────────
 // Severity reads as increasing darkness: green → amber → orange → red. A null level
@@ -185,13 +195,20 @@ function circleStyle(bg, border) {
   }
 }
 
-function RecipeSheet({ protocol, day, onClose }) {
+function RecipeSheet({ protocol, day, recipe, isCustom, onSave, onReset, onClose }) {
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
   }, [onClose])
   const dose = protocol.days.find(d => d.day === day)?.doseGrams
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(recipe)
+  const [busy, setBusy] = useState(false)
+
+  const save = async () => { setBusy(true); await onSave(draft); setBusy(false); setEditing(false) }
+  const reset = async () => { setBusy(true); await onReset(); setBusy(false); setEditing(false) }
+
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 30, background: 'var(--overlay)',
@@ -205,15 +222,20 @@ function RecipeSheet({ protocol, day, onClose }) {
       }}>
         <div style={{
           padding: '16px 18px 14px', borderBottom: '2px dashed var(--border-soft)',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
         }}>
           <div style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px' }}>Recette détaillée</div>
-          <button onClick={onClose} aria-label="Fermer" style={{
-            width: 32, height: 32, borderRadius: 999, border: '2px solid var(--ink)',
-            background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'inherit', fontSize: 16, lineHeight: 1, color: 'var(--ink)',
-          }}>×</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {!editing && (
+              <button onClick={() => { setDraft(recipe); setEditing(true) }} aria-label="Modifier la recette" title="Modifier" style={iconBtnStyle}>
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                </svg>
+              </button>
+            )}
+            <button onClick={onClose} aria-label="Fermer" style={iconBtnStyle}>×</button>
+          </div>
         </div>
         <div style={{ padding: '16px 18px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -226,21 +248,51 @@ function RecipeSheet({ protocol, day, onClose }) {
               }}>Dose cible : {dose} g</span>
             )}
           </div>
-          <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {protocol.recipe.map(step => (
-              <li key={step.order} style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.4 }}>{step.text}</li>
-            ))}
-          </ol>
-          {protocol.recipeTip && (
-            <div style={{
-              marginTop: 16, padding: '10px 12px', background: 'var(--bg-comment)',
-              border: '1.5px solid var(--ink)', borderRadius: 10,
-              fontSize: 12, color: 'var(--text-on-comment)', lineHeight: 1.4,
-              display: 'flex', gap: 8, alignItems: 'flex-start',
-            }}>
-              <span aria-hidden="true">💡</span>
-              <div style={{ flex: 1 }}>{protocol.recipeTip}</div>
-            </div>
+
+          {editing ? (
+            <>
+              <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={10} autoFocus style={{
+                width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--ink)',
+                background: 'var(--bg-card)', fontSize: 14, color: 'var(--ink)', fontFamily: 'inherit',
+                boxShadow: '0 2px 0 var(--ink)', outline: 'none', boxSizing: 'border-box',
+                resize: 'vertical', minHeight: 200,
+              }} />
+              <div style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 4 }}>
+                Markdown supporté — listes numérotées, **gras**, &gt; conseil.
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }}>
+                {isCustom && (
+                  <button type="button" onClick={reset} disabled={busy} style={{
+                    marginRight: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)',
+                    fontSize: 12, fontWeight: 600, cursor: busy ? 'not-allowed' : 'pointer',
+                    fontFamily: 'inherit', textDecoration: 'underline', padding: 0,
+                  }}>Réinitialiser</button>
+                )}
+                <button type="button" onClick={() => setEditing(false)} style={{
+                  marginLeft: isCustom ? 0 : 'auto', padding: '10px 16px', borderRadius: 999,
+                  border: '1.5px solid var(--ink)', background: 'var(--bg-card)', color: 'var(--ink)',
+                  fontSize: 13, fontWeight: 600, boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer', fontFamily: 'inherit',
+                }}>Annuler</button>
+                <button type="button" onClick={save} disabled={busy} style={{
+                  padding: '10px 18px', borderRadius: 999, border: '2px solid var(--ink)',
+                  background: busy ? 'var(--bg-disabled)' : 'var(--ink)',
+                  color: busy ? 'var(--text-muted)' : 'var(--paper)',
+                  fontSize: 13, fontWeight: 700, boxShadow: busy ? 'none' : '0 3px 0 var(--ink)',
+                  cursor: busy ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                }}>{busy ? 'Enregistrement…' : 'Enregistrer'}</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.4 }}>
+                <Markdown>{recipe}</Markdown>
+              </div>
+              {isCustom && (
+                <div style={{ fontSize: 10, color: 'var(--text-hint)', fontStyle: 'italic', marginTop: 12 }}>
+                  Recette personnalisée
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -271,7 +323,7 @@ function NoteEditor({ initial, onSave }) {
   )
 }
 
-function ProtocolDetail({ protocol, logsByKey, onBack, onSaveComfort, onSaveNote }) {
+function ProtocolDetail({ protocol, logsByKey, customRecipe, onBack, onSaveComfort, onSaveNote, onSaveRecipe, onResetRecipe }) {
   const currentDay = useMemo(
     () => TEST_DAYS.find(d => !logsByKey[keyFor(protocol.id, d)]?.comfort_level) ?? 5,
     [protocol.id, logsByKey],
@@ -282,6 +334,8 @@ function ProtocolDetail({ protocol, logsByKey, onBack, onSaveComfort, onSaveNote
   const selectedLog = logsByKey[keyFor(protocol.id, selectedDay)]
   const dose = protocol.days.find(d => d.day === selectedDay)?.doseGrams
   const selectedComfort = selectedLog?.comfort_level || null
+  const effectiveRecipe = customRecipe ?? defaultRecipeMarkdown(protocol)
+  const isCustomRecipe = customRecipe != null
 
   return (
     <>
@@ -380,7 +434,17 @@ function ProtocolDetail({ protocol, logsByKey, onBack, onSaveComfort, onSaveNote
         onSave={text => onSaveNote(protocol.id, selectedDay, text)}
       />
 
-      {showRecipe && <RecipeSheet protocol={protocol} day={selectedDay} onClose={() => setShowRecipe(false)} />}
+      {showRecipe && (
+        <RecipeSheet
+          protocol={protocol}
+          day={selectedDay}
+          recipe={effectiveRecipe}
+          isCustom={isCustomRecipe}
+          onSave={text => onSaveRecipe(protocol.id, text)}
+          onReset={() => onResetRecipe(protocol.id)}
+          onClose={() => setShowRecipe(false)}
+        />
+      )}
     </>
   )
 }
@@ -388,10 +452,12 @@ function ProtocolDetail({ protocol, logsByKey, onBack, onSaveComfort, onSaveNote
 // ──────────── Screen ────────────
 export function MVPTestsScreen() {
   const { logs, loading, error, refresh } = useReintroLogs()
+  const { recipes, refresh: refreshRecipes } = useReintroRecipes()
   const [selectedId, setSelectedId] = useState(null)
-  // Optimistic edits layered over the server logs: key -> row, or null = locally deleted.
-  // Kept separate from `logs` so the merged view is DERIVED (useMemo), never copied via an effect.
+  // Optimistic edits layered over the server data: key -> value, or null = locally deleted/reset.
+  // Kept separate from the fetched rows so the merged views are DERIVED (useMemo), never copied via an effect.
   const [overrides, setOverrides] = useState({})
+  const [recipeOverrides, setRecipeOverrides] = useState({})
 
   useEffect(() => { window.scrollTo(0, 0) }, [selectedId])
 
@@ -404,6 +470,17 @@ export function MVPTestsScreen() {
     }
     return m
   }, [logs, overrides])
+
+  // protocol_id -> custom recipe markdown (server override + optimistic edits). Undefined = use default.
+  const recipeByProtocol = useMemo(() => {
+    const m = {}
+    for (const r of recipes) if (r.recipe != null) m[r.protocol_id] = r.recipe
+    for (const [k, v] of Object.entries(recipeOverrides)) {
+      if (v === null) delete m[k]
+      else m[k] = v
+    }
+    return m
+  }, [recipes, recipeOverrides])
 
   const saveComfort = async (protocolId, day, level) => {
     const key = keyFor(protocolId, day)
@@ -438,6 +515,29 @@ export function MVPTestsScreen() {
     }
   }
 
+  const resetRecipe = async (protocolId) => {
+    setRecipeOverrides(o => ({ ...o, [protocolId]: null })) // back to the seed default
+    try {
+      await deleteReintroRecipe({ protocolId })
+    } catch (err) {
+      window.alert('Impossible de réinitialiser la recette : ' + (err.message || err))
+      setRecipeOverrides(o => { const n = { ...o }; delete n[protocolId]; return n })
+      refreshRecipes()
+    }
+  }
+
+  const saveRecipe = async (protocolId, text) => {
+    if (!text.trim()) return resetRecipe(protocolId) // empty = revert to default
+    setRecipeOverrides(o => ({ ...o, [protocolId]: text }))
+    try {
+      await upsertReintroRecipe({ protocolId, recipe: text })
+    } catch (err) {
+      window.alert('Impossible d’enregistrer la recette : ' + (err.message || err))
+      setRecipeOverrides(o => { const n = { ...o }; delete n[protocolId]; return n })
+      refreshRecipes()
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
@@ -453,9 +553,12 @@ export function MVPTestsScreen() {
         key={selected.id}
         protocol={selected}
         logsByKey={logsByKey}
+        customRecipe={recipeByProtocol[selected.id]}
         onBack={() => setSelectedId(null)}
         onSaveComfort={saveComfort}
         onSaveNote={saveNote}
+        onSaveRecipe={saveRecipe}
+        onResetRecipe={resetRecipe}
       />
     )
   }

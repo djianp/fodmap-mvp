@@ -482,3 +482,63 @@ export async function deleteReintroLog({ protocolId, day }) {
     .eq('day', day)
   if (error) throw error
 }
+
+// ──────────── Reintro recipes ────────────
+// Per-user override of a protocol's preparation text (markdown). Absent = use the static
+// default from src/data/reintro.js. One row per (user, protocol); deleting reverts to default.
+
+async function fetchReintroRecipes() {
+  const { data, error } = await supabase
+    .from('reintro_recipes')
+    .select('*')
+    .order('protocol_id')
+  if (error) throw error
+  return data || []
+}
+
+export function useReintroRecipes() {
+  const [recipes, setRecipes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      setRecipes(await fetchReintroRecipes())
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  return { recipes, loading, error, refresh: load }
+}
+
+export async function upsertReintroRecipe({ protocolId, recipe }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('reintro_recipes')
+    .upsert({
+      user_id: user.id,
+      protocol_id: protocolId,
+      recipe,
+      updated_at: new Date().toISOString(),
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteReintroRecipe({ protocolId }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { error } = await supabase.from('reintro_recipes')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('protocol_id', protocolId)
+  if (error) throw error
+}

@@ -95,6 +95,13 @@ export const REINTRO_PROTOCOLS = [
   },
 ]
 
+// Default preparation/recipe as editable markdown: the numbered steps, then the tip as a
+// blockquote. Used until the user saves their own override (table `reintro_recipes`).
+export function defaultRecipeMarkdown(protocol) {
+  const steps = protocol.recipe.map(s => `${s.order}. ${s.text}`).join('\n')
+  return protocol.recipeTip ? `${steps}\n\n> 💡 ${protocol.recipeTip}` : steps
+}
+
 // Comfort levels logged on test days, ordered from best to worst tolerance.
 export const COMFORT_LEVELS = [
   { v: 'very_good', label: 'Très bien' },

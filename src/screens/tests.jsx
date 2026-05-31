@@ -103,7 +103,7 @@ function ProtocolCard({ protocol, logsByKey, onClick }) {
       padding: 12, marginBottom: 14, boxShadow: '0 4px 0 var(--ink)',
       display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit',
     }}>
-      <ProtocolImage protocol={protocol} size={58} radius={14} />
+      <ProtocolImage protocol={protocol} size={72} radius={16} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.3px', lineHeight: 1.2, color: 'var(--ink)' }}>{protocol.foodName}</div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, marginTop: 2 }}>{protocol.fodmapFamily}</div>
@@ -371,7 +371,7 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
       </button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
-        <ProtocolImage protocol={protocol} size={68} radius={16} />
+        <ProtocolImage protocol={protocol} size={84} radius={18} />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 24, letterSpacing: '-0.6px', lineHeight: 1.1 }}>{protocol.foodName}</div>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, marginTop: 3 }}>{protocol.fodmapFamily}</div>

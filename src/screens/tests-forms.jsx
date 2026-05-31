@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { FormShell, Field, inputStyle } from './resto-forms.jsx'
 import { addReintroProtocol, updateReintroProtocol } from '../lib/user-data.js'
-import { uploadReintroPhoto } from '../lib/storage.js'
+import { uploadReintroPhoto, deleteReintroPhoto } from '../lib/storage.js'
 
 function slugify(s) {
   return (s || '')
@@ -13,17 +13,18 @@ function slugify(s) {
 }
 
 // Local photo picker — same shape as the one in suggestion-forms.jsx / aliment-forms.jsx.
-function PhotoPicker({ file, onPick, onClear }) {
+function PhotoPicker({ existingUrl, file, onPick, onClear }) {
   const inputRef = useRef(null)
-  const [preview, setPreview] = useState(null)
+  const [previewFromFile, setPreviewFromFile] = useState(null)
 
   useEffect(() => {
-    if (!file) { setPreview(null); return }
+    if (!file) { setPreviewFromFile(null); return }
     const url = URL.createObjectURL(file)
-    setPreview(url)
+    setPreviewFromFile(url)
     return () => URL.revokeObjectURL(url)
   }, [file])
 
+  const visiblePreview = previewFromFile || existingUrl
   const triggerPick = () => inputRef.current?.click()
   const onChange = (e) => {
     const f = e.target.files?.[0]
@@ -34,11 +35,11 @@ function PhotoPicker({ file, onPick, onClear }) {
   return (
     <div>
       <input ref={inputRef} type="file" accept="image/*" onChange={onChange} style={{ display: 'none' }} />
-      {preview ? (
+      {visiblePreview ? (
         <div style={{ position: 'relative', borderRadius: 12, border: '1.5px solid var(--ink)', overflow: 'hidden', boxShadow: '0 2px 0 var(--ink)' }}>
           <div role="img" aria-label="Aperçu de la photo" style={{
             height: 160, width: '100%',
-            backgroundImage: `url("${preview}")`, backgroundSize: 'cover', backgroundPosition: 'center',
+            backgroundImage: `url("${visiblePreview}")`, backgroundSize: 'cover', backgroundPosition: 'center',
           }} />
           <div style={{ display: 'flex', gap: 6, padding: 8, background: 'var(--bg-card)' }}>
             <button type="button" onClick={triggerPick} style={{
@@ -64,48 +65,75 @@ function PhotoPicker({ file, onPick, onClear }) {
   )
 }
 
-export function AddTestForm({ onClose, onSaved }) {
-  const [foodName, setFoodName] = useState('')
-  const [family, setFamily] = useState('')
+export function TestForm({ protocol, onClose, onSaved }) {
+  const isEdit = !!protocol
+  const [foodName, setFoodName] = useState(protocol?.foodName || '')
+  const [family, setFamily] = useState(protocol?.fodmapFamily || '')
   const [pendingFile, setPendingFile] = useState(null)
+  const [cleared, setCleared] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const valid = foodName.trim()
+  const existingPhoto = !cleared && protocol?.photoUrl
 
   const submit = async () => {
     if (!valid || submitting) return
     setSubmitting(true)
     setError(null)
     try {
-      const id = `${slugify(foodName) || 'test'}-${Math.random().toString(36).slice(2, 8)}`
-      let saved = await addReintroProtocol({ id, foodName: foodName.trim(), fodmapFamily: family.trim() })
+      let saved
+      if (isEdit) {
+        saved = await updateReintroProtocol(protocol.id, {
+          food_name: foodName.trim(),
+          fodmap_family: family.trim() || null,
+        })
+      } else {
+        const id = `${slugify(foodName) || 'test'}-${Math.random().toString(36).slice(2, 8)}`
+        saved = await addReintroProtocol({ id, foodName: foodName.trim(), fodmapFamily: family.trim() })
+      }
+
+      const wantClear = isEdit && cleared && protocol.photoUrl
+      if (wantClear) {
+        await deleteReintroPhoto(protocol.photoUrl).catch(() => {})
+        saved = await updateReintroProtocol(saved.id, { photo_url: null })
+      }
       if (pendingFile) {
+        if (protocol?.photoUrl && !wantClear) await deleteReintroPhoto(protocol.photoUrl).catch(() => {})
         const url = await uploadReintroPhoto(saved.id, pendingFile)
         saved = await updateReintroProtocol(saved.id, { photo_url: url })
       }
       onSaved(saved)
     } catch (err) {
-      setError(err.message || "Erreur d'enregistrement")
+      setError(err.message || "Erreur d’enregistrement")
       setSubmitting(false)
     }
   }
 
   return (
-    <FormShell title="Nouveau test" onClose={onClose} onSubmit={submit}
-      submitLabel={submitting ? 'Enregistrement…' : 'Ajouter'} disabled={!valid || submitting} error={error}>
+    <FormShell title={isEdit ? `Modifier · ${protocol.foodName}` : 'Nouveau test'}
+      onClose={onClose} onSubmit={submit}
+      submitLabel={submitting ? 'Enregistrement…' : (isEdit ? 'Sauver' : 'Ajouter')}
+      disabled={!valid || submitting} error={error}>
       <Field label="Aliment *">
-        <input value={foodName} onChange={e => setFoodName(e.target.value)} style={inputStyle} autoFocus placeholder="Ex: Yaourt nature" />
+        <input value={foodName} onChange={e => setFoodName(e.target.value)} style={inputStyle} autoFocus={!isEdit} placeholder="Ex: Yaourt nature" />
       </Field>
       <Field label="Type de test" hint="La famille FODMAP testée — affichée sous le nom.">
         <input value={family} onChange={e => setFamily(e.target.value)} style={inputStyle} placeholder="Ex: Test Lactose" />
       </Field>
       <Field label="Photo" hint="Optionnel — sinon une pastille avec l’initiale est utilisée.">
-        <PhotoPicker file={pendingFile} onPick={setPendingFile} onClear={() => setPendingFile(null)} />
+        <PhotoPicker
+          existingUrl={existingPhoto}
+          file={pendingFile}
+          onPick={(f) => { setPendingFile(f); setCleared(false) }}
+          onClear={() => { setPendingFile(null); setCleared(true) }}
+        />
       </Field>
-      <div style={{ fontSize: 11, color: 'var(--text-hint)', lineHeight: 1.4 }}>
-        Le test suivra le protocole standard en 5 jours (100 / 150 / 200 g). La recette et les
-        aliments associés pourront être renseignés ensuite, depuis la fiche du test.
-      </div>
+      {!isEdit && (
+        <div style={{ fontSize: 11, color: 'var(--text-hint)', lineHeight: 1.4 }}>
+          Le test suivra le protocole standard en 5 jours (100 / 150 / 200 g). La recette et les
+          aliments associés pourront être renseignés ensuite, depuis la fiche du test.
+        </div>
+      )}
     </FormShell>
   )
 }

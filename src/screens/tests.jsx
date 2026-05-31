@@ -9,7 +9,7 @@ import {
   useReintroCategoryNotes, upsertReintroCategoryNote, deleteReintroCategoryNote,
 } from '../lib/user-data.js'
 import { deleteReintroPhoto } from '../lib/storage.js'
-import { AddTestForm } from './tests-forms.jsx'
+import { TestForm } from './tests-forms.jsx'
 
 const keyFor = (protocolId, day) => `${protocolId}|${day}`
 
@@ -357,7 +357,7 @@ function NoteEditor({ initial, onSave }) {
   )
 }
 
-function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onBack, onSaveComfort, onSaveNote, onSaveRecipe, onResetRecipe, onSaveCategory, onResetCategory, onDelete }) {
+function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onBack, onEdit, onSaveComfort, onSaveNote, onSaveRecipe, onResetRecipe, onSaveCategory, onResetCategory, onDelete }) {
   const currentDay = useMemo(
     () => TEST_DAYS.find(d => !logsByKey[keyFor(protocol.id, d)]?.comfort_level) ?? 5,
     [protocol.id, logsByKey],
@@ -375,16 +375,27 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
 
   return (
     <>
-      <button onClick={onBack} aria-label="Retour" style={{
-        width: 36, height: 36, borderRadius: 999, border: '1.5px solid var(--ink)',
-        background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        marginBottom: 16, padding: 0, fontFamily: 'inherit',
-      }}>
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--ink)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <button onClick={onBack} aria-label="Retour" style={{
+          width: 36, height: 36, borderRadius: 999, border: '1.5px solid var(--ink)',
+          background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontFamily: 'inherit',
+        }}>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--ink)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <button onClick={() => onEdit(protocol)} aria-label="Modifier le test" title="Modifier" style={{
+          width: 36, height: 36, borderRadius: 999, border: '1.5px solid var(--ink)',
+          background: 'var(--bg-card)', boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontFamily: 'inherit',
+        }}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+          </svg>
+        </button>
+      </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
         <ProtocolImage protocol={protocol} size={84} radius={18} />
@@ -524,6 +535,7 @@ export function MVPTestsScreen() {
   const { notes: categoryNotes, refresh: refreshCategory } = useReintroCategoryNotes()
   const [selectedId, setSelectedId] = useState(null)
   const [showAdd, setShowAdd] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
   // Optimistic edits layered over the server data: key -> value, or null = locally deleted/reset.
   // Kept separate from the fetched rows so the merged views are DERIVED (useMemo), never copied via an effect.
   const [overrides, setOverrides] = useState({})
@@ -658,6 +670,7 @@ export function MVPTestsScreen() {
       if (protocol.photoUrl) await deleteReintroPhoto(protocol.photoUrl).catch(() => {})
       await deleteReintroProtocol(protocol.id)
       setSelectedId(null)
+      setShowEdit(false)
       refreshProtocols(); refresh(); refreshRecipes(); refreshCategory()
     } catch (err) {
       window.alert('Impossible de supprimer : ' + (err.message || err))
@@ -675,21 +688,31 @@ export function MVPTestsScreen() {
   const selected = protocols.find(p => p.id === selectedId)
   if (selected) {
     return (
-      <ProtocolDetail
-        key={selected.id}
-        protocol={selected}
-        logsByKey={logsByKey}
-        customRecipe={recipeByProtocol[selected.id]}
-        customCategory={categoryByProtocol[selected.id]}
-        onBack={() => setSelectedId(null)}
-        onSaveComfort={saveComfort}
-        onSaveNote={saveNote}
-        onSaveRecipe={saveRecipe}
-        onResetRecipe={resetRecipe}
-        onSaveCategory={saveCategory}
-        onResetCategory={resetCategory}
-        onDelete={deleteProtocol}
-      />
+      <>
+        <ProtocolDetail
+          key={selected.id}
+          protocol={selected}
+          logsByKey={logsByKey}
+          customRecipe={recipeByProtocol[selected.id]}
+          customCategory={categoryByProtocol[selected.id]}
+          onBack={() => { setSelectedId(null); setShowEdit(false) }}
+          onEdit={() => setShowEdit(true)}
+          onSaveComfort={saveComfort}
+          onSaveNote={saveNote}
+          onSaveRecipe={saveRecipe}
+          onResetRecipe={resetRecipe}
+          onSaveCategory={saveCategory}
+          onResetCategory={resetCategory}
+          onDelete={deleteProtocol}
+        />
+        {showEdit && (
+          <TestForm
+            protocol={selected}
+            onClose={() => setShowEdit(false)}
+            onSaved={() => { setShowEdit(false); refreshProtocols() }}
+          />
+        )}
+      </>
     )
   }
 
@@ -707,7 +730,7 @@ export function MVPTestsScreen() {
       )}
       <ProtocolList protocols={protocols} logsByKey={logsByKey} onSelect={setSelectedId} onAdd={() => setShowAdd(true)} />
       {showAdd && (
-        <AddTestForm
+        <TestForm
           onClose={() => setShowAdd(false)}
           onSaved={() => { setShowAdd(false); refreshProtocols() }}
         />

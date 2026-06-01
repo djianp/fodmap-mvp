@@ -169,8 +169,14 @@ function Stepper({ protocol, logsByKey, currentDay, selectedDay, onSelectDay }) 
             node = <ComfortFace level={log.comfort_level} size={30} />
           } else if (!isTest && done) {
             node = (
-              <div style={circleStyle('var(--pill-green)', 'var(--ink)')}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <div style={{
+                position: 'absolute', top: '50%', left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 22, height: 22, borderRadius: 999,
+                background: 'var(--bg-soft)', border: '1.5px solid var(--border-soft)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 13l4 4L19 7" />
                 </svg>
               </div>

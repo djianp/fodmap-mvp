@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BlobLogo, Markdown } from '../components/ui.jsx'
 import { tileFor, initialFor } from '../lib/foods-meta.js'
 import { COMFORT_LEVELS, TEST_DAYS, STANDARD_DAYS, defaultRecipeMarkdown, defaultCategoryMarkdown } from '../data/reintro.js'
@@ -241,11 +241,27 @@ function SheetMeta({ foodName, chip }) {
 // renders <Markdown> in view mode and a textarea in edit mode, with Enregistrer / Annuler
 // and Réinitialiser (revert to the seed default).
 function EditableSheet({ title, meta, content, isCustom, onSave, onReset, onClose }) {
+  const scrollRef = useRef(null)
+  const [expanded, setExpanded] = useState(false)
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
   }, [onClose])
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = () => {
+      if (el.scrollTop > 80) setExpanded(true)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(content)
   const [busy, setBusy] = useState(false)
@@ -257,16 +273,27 @@ function EditableSheet({ title, meta, content, isCustom, onSave, onReset, onClos
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 30, background: 'var(--overlay)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-      padding: '40px 14px 90px',
+      padding: expanded ? 0 : '40px 14px 90px',
+      transition: 'padding 0.3s ease',
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        width: '100%', maxWidth: 430, maxHeight: '100%', overflowY: 'auto',
-        background: 'var(--paper)', borderRadius: 22, border: '2px solid var(--ink)',
-        boxShadow: '0 8px 0 var(--ink)', position: 'relative', animation: 'slideUp 0.22s ease-out',
+        width: '100%',
+        maxWidth: expanded ? 'none' : 430,
+        height: expanded ? '100%' : undefined,
+        maxHeight: '100%',
+        background: 'var(--paper)',
+        borderRadius: expanded ? 0 : 22,
+        border: expanded ? 'none' : '2px solid var(--ink)',
+        boxShadow: expanded ? 'none' : '0 8px 0 var(--ink)',
+        position: 'relative', animation: 'slideUp 0.22s ease-out',
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+        transition: 'max-width 0.3s ease, border-radius 0.3s ease, height 0.3s ease',
       }}>
         <div style={{
           padding: '16px 18px 14px', borderBottom: '2px dashed var(--border-soft)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+          flexShrink: 0,
         }}>
           <div style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px' }}>{title}</div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -281,7 +308,7 @@ function EditableSheet({ title, meta, content, isCustom, onSave, onReset, onClos
             <button onClick={onClose} aria-label="Fermer" style={iconBtnStyle}>×</button>
           </div>
         </div>
-        <div style={{ padding: '16px 18px 20px' }}>
+        <div ref={scrollRef} style={{ padding: '16px 18px 20px', overflowY: 'auto', flex: 1, minHeight: 0, overscrollBehavior: 'contain' }}>
           {meta}
           {editing ? (
             <>

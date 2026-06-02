@@ -557,7 +557,7 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
       {sheet === 'category' && (
         <EditableSheet
           title={CATEGORY_TITLE}
-          meta={<SheetMeta foodName={protocol.foodName} chip={protocol.fodmapFamily.replace(/^Test\s+/i, '')} />}
+          meta={<SheetMeta foodName={protocol.foodName} chip={protocol.fodmapFamily?.replace(/^Test\s+/i, '')} />}
           content={effectiveCategory}
           isCustom={isCustomCategory}
           onSave={text => onSaveCategory(protocol.id, text)}

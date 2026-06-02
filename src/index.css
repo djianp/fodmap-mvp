@@ -33,6 +33,10 @@
   --pill-red:        #f0a390;
   --pill-lavender:   #c8b5d4;
 
+  /* "Statut actuel" summary card: warm neutral fill + tan disc behind the icon */
+  --status-card:     #f1ebdd;
+  --status-disc:     #e7dcc6;
+
   /* Map fallback decoration */
   --map-stroke:      #c4a878;
   --map-water:       #a8b4c4;
@@ -74,6 +78,10 @@
   --pill-amber:      #f0bc6a;
   --pill-red:        #ec8a72;
   --pill-lavender:   #b59dc9;
+
+  /* "Statut actuel" summary card (dark): subtly elevated warm surfaces */
+  --status-card:     #272320;
+  --status-disc:     #39332a;
 
   /* Map fallback — strokes lighter than the dark sand bg so they read */
   --map-stroke:      #7a6850;

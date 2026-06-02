@@ -7,6 +7,7 @@ import {
   useReintroLogs, upsertReintroLog, deleteReintroLog,
   useReintroRecipes, upsertReintroRecipe, deleteReintroRecipe,
   useReintroCategoryNotes, upsertReintroCategoryNote, deleteReintroCategoryNote,
+  useReintroStatus, upsertReintroStatus,
 } from '../lib/user-data.js'
 import { deleteReintroPhoto } from '../lib/storage.js'
 import { TestForm } from './tests-forms.jsx'
@@ -28,6 +29,12 @@ const rowCardStyle = {
   background: 'var(--bg-card)', border: '2px solid var(--ink)', borderRadius: 16,
   padding: '12px 14px', boxShadow: '0 3px 0 var(--ink)',
   display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit',
+}
+
+const statusInputStyle = {
+  width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--ink)',
+  background: 'var(--bg-card)', fontSize: 14, color: 'var(--ink)', fontFamily: 'inherit',
+  boxShadow: '0 2px 0 var(--ink)', outline: 'none', boxSizing: 'border-box',
 }
 
 // ──────────── Comfort face (custom SVG, not OS emoji) ────────────
@@ -121,7 +128,7 @@ function ProtocolCard({ protocol, logsByKey, onClick }) {
   )
 }
 
-function ProtocolList({ protocols, logsByKey, onSelect, onAdd }) {
+function ProtocolList({ protocols, logsByKey, onSelect, onAdd, status, onOpenStatus }) {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
@@ -139,6 +146,7 @@ function ProtocolList({ protocols, logsByKey, onSelect, onAdd }) {
       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 18 }}>
         Aperçu de vos réintroductions en cours
       </div>
+      <StatusCard status={status} onClick={onOpenStatus} />
       {protocols.map(p => (
         <ProtocolCard key={p.id} protocol={p} logsByKey={logsByKey} onClick={() => onSelect(p.id)} />
       ))}
@@ -569,12 +577,213 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
   )
 }
 
+// ──────────── Statut actuel (overall summary) ────────────
+// A user-curated overview above the test list. The three rows mirror the three short
+// fields; tapping opens StatusModal with those fields + a free-form markdown detail.
+const STATUS_ROWS = [
+  { key: 'validated', label: 'Familles validées', color: '#5f9e40' },
+  { key: 'upcoming',  label: 'Prochains tests',   color: '#e2a431' },
+  { key: 'avoid',     label: 'Familles à éviter',  color: '#c0492f' },
+]
+
+function StatusDot({ color }) {
+  return <span style={{
+    width: 14, height: 14, borderRadius: 999, background: color,
+    flexShrink: 0, display: 'inline-block',
+  }} />
+}
+
+function StatusCard({ status, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
+      background: 'var(--status-card)', border: 'none', borderRadius: 24,
+      padding: '16px 18px', boxShadow: '0 2px 6px rgba(31,26,20,0.05)', marginBottom: 18,
+      display: 'flex', alignItems: 'center', gap: 16,
+    }}>
+      <div style={{
+        width: 60, height: 60, borderRadius: 999, flexShrink: 0, background: 'var(--status-disc)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="var(--ink)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4.8" y="4.8" width="14.4" height="16.4" rx="2.4" />
+          <rect x="9" y="2.8" width="6" height="3.6" rx="1.3" />
+          <path d="M7.8 10.1l1.1 1.1 2-2.3" />
+          <line x1="12.7" y1="10" x2="16.2" y2="10" />
+          <path d="M7.8 14.7l1.1 1.1 2-2.3" />
+          <line x1="12.7" y1="14.6" x2="16.2" y2="14.6" />
+        </svg>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.3px', marginBottom: 2 }}>Statut actuel</div>
+        {STATUS_ROWS.map((r, i) => (
+          <div key={r.key} style={{
+            display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, minWidth: 0, padding: '7px 0',
+            borderTop: i === 0 ? 'none' : '1px solid var(--border-divider)',
+          }}>
+            <StatusDot color={r.color} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+              <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.label}</span>
+              <span style={{ color: status?.[r.key] ? 'var(--ink)' : 'var(--text-hint)' }}>{' : '}{status?.[r.key] || '—'}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--text-muted)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+    </button>
+  )
+}
+
+// Bottom-sheet for the summary: the three short fields + a free-form markdown detail.
+// Mirrors EditableSheet's chrome (esc to close, body lock, fullscreen-on-scroll).
+function StatusModal({ status, onSave, onClose }) {
+  const scrollRef = useRef(null)
+  const [expanded, setExpanded] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const fromStatus = () => ({
+    validated: status?.validated || '', upcoming: status?.upcoming || '',
+    avoid: status?.avoid || '', detail: status?.detail || '',
+  })
+  const [draft, setDraft] = useState(fromStatus)
+
+  useEffect(() => {
+    const esc = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
+  }, [onClose])
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = () => { if (el.scrollTop > 80) setExpanded(true) }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  const startEdit = () => { setDraft(fromStatus()); setEditing(true) }
+  const save = async () => {
+    setBusy(true)
+    await onSave({
+      validated: draft.validated.trim(), upcoming: draft.upcoming.trim(),
+      avoid: draft.avoid.trim(), detail: draft.detail.trim(),
+    })
+    setBusy(false)
+    setEditing(false)
+  }
+  const hasDetail = !!(status?.detail && status.detail.trim())
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 30, background: 'var(--overlay)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      padding: expanded ? 0 : '40px 14px 90px', transition: 'padding 0.3s ease',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '100%', maxWidth: expanded ? 'none' : 430,
+        height: expanded ? '100%' : undefined, maxHeight: '100%',
+        background: 'var(--paper)', borderRadius: expanded ? 0 : 22,
+        border: expanded ? 'none' : '2px solid var(--ink)',
+        boxShadow: expanded ? 'none' : '0 8px 0 var(--ink)',
+        position: 'relative', animation: 'slideUp 0.22s ease-out', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+        transition: 'max-width 0.3s ease, border-radius 0.3s ease, height 0.3s ease',
+      }}>
+        <div style={{
+          padding: '16px 18px 14px', borderBottom: '2px dashed var(--border-soft)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexShrink: 0,
+        }}>
+          <div style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px' }}>Statut actuel</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {!editing && (
+              <button onClick={startEdit} aria-label="Modifier" title="Modifier" style={iconBtnStyle}>
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                </svg>
+              </button>
+            )}
+            <button onClick={onClose} aria-label="Fermer" style={iconBtnStyle}>×</button>
+          </div>
+        </div>
+        <div ref={scrollRef} style={{ padding: '16px 18px 20px', overflowY: 'auto', flex: 1, minHeight: 0, overscrollBehavior: 'contain' }}>
+          {editing ? (
+            <>
+              {STATUS_ROWS.map(r => (
+                <div key={r.key} style={{ marginBottom: 12 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>
+                    <StatusDot color={r.color} />{r.label}
+                  </label>
+                  <input value={draft[r.key]} onChange={e => setDraft(d => ({ ...d, [r.key]: e.target.value }))}
+                    placeholder="Ex. : Polyols, GOS" style={statusInputStyle} />
+                </div>
+              ))}
+              <label style={{ display: 'block', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>Détails</label>
+              <textarea value={draft.detail} onChange={e => setDraft(d => ({ ...d, detail: e.target.value }))} rows={12}
+                style={{ ...statusInputStyle, resize: 'vertical', minHeight: 220 }} />
+              <div style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 4 }}>
+                Markdown supporté — titres, listes, **gras**, tableaux, &gt; citation.
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }}>
+                <button type="button" onClick={() => setEditing(false)} style={{
+                  marginLeft: 'auto', padding: '10px 16px', borderRadius: 999, border: '1.5px solid var(--ink)',
+                  background: 'var(--bg-card)', color: 'var(--ink)', fontSize: 13, fontWeight: 600,
+                  boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer', fontFamily: 'inherit',
+                }}>Annuler</button>
+                <button type="button" onClick={save} disabled={busy} style={{
+                  padding: '10px 18px', borderRadius: 999, border: '2px solid var(--ink)',
+                  background: busy ? 'var(--bg-disabled)' : 'var(--ink)', color: busy ? 'var(--text-muted)' : 'var(--paper)',
+                  fontSize: 13, fontWeight: 700, boxShadow: busy ? 'none' : '0 3px 0 var(--ink)',
+                  cursor: busy ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                }}>{busy ? 'Enregistrement…' : 'Enregistrer'}</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ marginBottom: 4 }}>
+                {STATUS_ROWS.map(r => (
+                  <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+                    <span style={{ position: 'relative', top: 3 }}><StatusDot color={r.color} /></span>
+                    <div style={{ fontSize: 13, lineHeight: 1.35 }}>
+                      <span style={{ fontWeight: 700, color: 'var(--ink)' }}>{r.label}</span>
+                      <span style={{ color: status?.[r.key] ? 'var(--text-on-comment)' : 'var(--text-hint)' }}>{' : '}{status?.[r.key] || 'Non renseigné'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ borderTop: '2px dashed var(--border-soft)', marginTop: 10, paddingTop: 14 }}>
+                {hasDetail ? (
+                  <div style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.4 }}>
+                    <Markdown>{status.detail}</Markdown>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, color: 'var(--text-hint)', fontStyle: 'italic' }}>
+                    Touchez le crayon pour ajouter un récapitulatif détaillé.
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+    </div>
+  )
+}
+
 // ──────────── Screen ────────────
 export function MVPTestsScreen() {
   const { protocols: protocolRows, loading: protocolsLoading, error: protocolsError, refresh: refreshProtocols } = useReintroProtocols()
   const { logs, loading, error, refresh } = useReintroLogs()
   const { recipes, refresh: refreshRecipes } = useReintroRecipes()
   const { notes: categoryNotes, refresh: refreshCategory } = useReintroCategoryNotes()
+  const { status: statusRow, refresh: refreshStatus } = useReintroStatus()
   const [selectedId, setSelectedId] = useState(null)
   const [showAdd, setShowAdd] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -583,6 +792,9 @@ export function MVPTestsScreen() {
   const [overrides, setOverrides] = useState({})
   const [recipeOverrides, setRecipeOverrides] = useState({})
   const [categoryOverrides, setCategoryOverrides] = useState({})
+  const [statusOverride, setStatusOverride] = useState(null)
+  const [showStatus, setShowStatus] = useState(false)
+  const status = statusOverride ?? statusRow
 
   useEffect(() => { window.scrollTo(0, 0) }, [selectedId])
 
@@ -716,6 +928,17 @@ export function MVPTestsScreen() {
     }
   }
 
+  const saveStatus = async (fields) => {
+    setStatusOverride(fields) // optimistic
+    try {
+      setStatusOverride(await upsertReintroStatus(fields)) // settle on the saved row
+    } catch (err) {
+      window.alert('Impossible d’enregistrer le statut : ' + (err.message || err))
+      setStatusOverride(null)
+      refreshStatus()
+    }
+  }
+
   const deleteProtocol = async (protocol) => {
     if (!window.confirm(`Supprimer le test « ${protocol.foodName} » et toutes ses données ?`)) return
     try {
@@ -780,7 +1003,11 @@ export function MVPTestsScreen() {
           Impossible de charger vos tests. Vérifiez que les tables Supabase (reintro_protocols, reintro_logs…) existent.
         </div>
       )}
-      <ProtocolList protocols={protocols} logsByKey={logsByKey} onSelect={setSelectedId} onAdd={() => setShowAdd(true)} />
+      <ProtocolList protocols={protocols} logsByKey={logsByKey} onSelect={setSelectedId} onAdd={() => setShowAdd(true)}
+        status={status} onOpenStatus={() => setShowStatus(true)} />
+      {showStatus && (
+        <StatusModal status={status} onSave={saveStatus} onClose={() => setShowStatus(false)} />
+      )}
       {showAdd && (
         <TestForm
           onClose={() => setShowAdd(false)}

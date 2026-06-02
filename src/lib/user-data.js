@@ -703,3 +703,56 @@ export async function deleteReintroProtocol(id) {
   const { error } = await supabase.from('reintro_protocols').delete().eq('user_id', uid).eq('id', id)
   if (error) throw error
 }
+
+// ──────────── Reintro status (the "Statut actuel" summary) ────────────
+// One row per user: a user-curated overview shown above the test list. Three short labels
+// (validated / upcoming / avoid FODMAP families) + a free-form markdown detail. Purely
+// manual — never derived from the tests — so there is no seed branch.
+
+async function fetchReintroStatus() {
+  const { data, error } = await supabase
+    .from('reintro_status')
+    .select('*')
+    .maybeSingle()
+  if (error) throw error
+  return data || null
+}
+
+export function useReintroStatus() {
+  const [status, setStatus] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      setStatus(await fetchReintroStatus())
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load]) // eslint-disable-line react-hooks/set-state-in-effect -- async data load: setState after fetch
+
+  return { status, loading, error, refresh: load }
+}
+
+export async function upsertReintroStatus({ validated, upcoming, avoid, detail }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('reintro_status')
+    .upsert({
+      user_id: user.id,
+      validated: validated || null,
+      upcoming: upcoming || null,
+      avoid: avoid || null,
+      detail: detail || null,
+      updated_at: new Date().toISOString(),
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}

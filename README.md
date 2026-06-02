@@ -289,6 +289,21 @@ alter table public.reintro_protocols enable row level security;
 create policy "owner rw reintro_protocols" on public.reintro_protocols
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- One row per user: the curated "Statut actuel" summary above the test list.
+create table public.reintro_status (
+  user_id uuid references auth.users(id) on delete cascade not null,
+  validated text,
+  upcoming text,
+  avoid text,
+  detail text,
+  updated_at timestamptz default now(),
+  primary key (user_id)
+);
+
+alter table public.reintro_status enable row level security;
+create policy "owner rw reintro_status" on public.reintro_status
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 create index idx_restos_user_id on public.restos(user_id);
 create index idx_meals_resto_id on public.meals(resto_id);
 create index idx_meals_user_id on public.meals(user_id);

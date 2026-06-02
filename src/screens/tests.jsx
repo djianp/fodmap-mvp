@@ -615,7 +615,7 @@ function StatusCard({ status, onClick }) {
         </svg>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.3px', marginBottom: 2 }}>Statut actuel</div>
+        <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.3px', marginBottom: 2, color: 'var(--ink)' }}>Statut actuel</div>
         {STATUS_ROWS.map((r, i) => (
           <div key={r.key} style={{
             display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, minWidth: 0, padding: '7px 0',

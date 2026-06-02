@@ -597,15 +597,15 @@ function StatusCard({ status, onClick }) {
   return (
     <button onClick={onClick} style={{
       width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
-      background: 'var(--status-card)', border: '1px solid var(--border-soft)', borderRadius: 24,
-      padding: '16px 18px', boxShadow: '0 4px 16px rgba(31,26,20,0.10)', marginBottom: 18,
+      background: 'var(--status-card)', border: '2px solid var(--border-soft)', borderRadius: 24,
+      padding: '16px 18px 16px 10px', boxShadow: '0 4px 16px rgba(31,26,20,0.10)', marginBottom: 18,
       display: 'flex', alignItems: 'center', gap: 16,
     }}>
       <div style={{
-        width: 60, height: 60, borderRadius: 999, flexShrink: 0, background: 'var(--status-disc)',
+        width: 76, height: 76, borderRadius: 999, flexShrink: 0, background: 'var(--status-disc)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="var(--ink)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" width="57" height="57" fill="none" stroke="var(--ink)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
           <rect x="4.8" y="4.8" width="14.4" height="16.4" rx="2.4" />
           <rect x="9" y="2.8" width="6" height="3.6" rx="1.3" />
           <path d="M7.8 10.1l1.1 1.1 2-2.3" />

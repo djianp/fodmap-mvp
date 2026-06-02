@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BlobLogo, Markdown } from '../components/ui.jsx'
 import { tileFor, initialFor } from '../lib/foods-meta.js'
 import { COMFORT_LEVELS, TEST_DAYS, STANDARD_DAYS, defaultRecipeMarkdown, defaultCategoryMarkdown } from '../data/reintro.js'
@@ -370,10 +370,19 @@ function EditableSheet({ title, meta, content, isCustom, onSave, onReset, onClos
 
 // Remounted (via key={selectedDay}) when the focused day changes, so the draft
 // re-initializes from `initial` without a setState-in-effect. Saves on blur.
+// Height auto-grows to fit content — no manual resize handle.
 function NoteEditor({ initial, onSave }) {
   const [draft, setDraft] = useState(initial)
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [draft])
   return (
     <textarea
+      ref={ref}
       value={draft}
       onChange={e => setDraft(e.target.value)}
       onBlur={() => onSave(draft)}
@@ -384,7 +393,7 @@ function NoteEditor({ initial, onSave }) {
         border: '1.5px solid var(--ink)', background: 'var(--bg-card)',
         fontSize: 14, color: 'var(--ink)', fontFamily: 'inherit',
         boxShadow: '0 2px 0 var(--ink)', outline: 'none', boxSizing: 'border-box',
-        resize: 'vertical', minHeight: 72,
+        resize: 'none', minHeight: 72, overflow: 'hidden',
       }}
     />
   )

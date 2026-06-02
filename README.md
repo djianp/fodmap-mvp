@@ -276,6 +276,9 @@ create table public.reintro_protocols (
   food_name text not null,
   fodmap_family text,
   photo_url text,
+  dose_day_1 text,
+  dose_day_3 text,
+  dose_day_5 text,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   primary key (user_id, id)

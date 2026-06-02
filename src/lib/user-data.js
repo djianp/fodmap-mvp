@@ -662,7 +662,7 @@ export function useReintroProtocols() {
   return { protocols, loading, error, refresh: load }
 }
 
-export async function addReintroProtocol({ id, foodName, fodmapFamily }) {
+export async function addReintroProtocol({ id, foodName, fodmapFamily, doseDay1, doseDay3, doseDay5 }) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not signed in')
   const { data, error } = await supabase.from('reintro_protocols').insert({
@@ -670,6 +670,9 @@ export async function addReintroProtocol({ id, foodName, fodmapFamily }) {
     user_id: user.id,
     food_name: foodName,
     fodmap_family: fodmapFamily || null,
+    dose_day_1: doseDay1 || null,
+    dose_day_3: doseDay3 || null,
+    dose_day_5: doseDay5 || null,
   }).select().single()
   if (error) throw error
   return data

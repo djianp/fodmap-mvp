@@ -65,10 +65,22 @@ function PhotoPicker({ existingUrl, file, onPick, onClear }) {
   )
 }
 
+function DoseInput({ label, value, onChange, placeholder }) {
+  return (
+    <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', color: 'var(--text-muted)' }}>{label}</span>
+      <input value={value} onChange={e => onChange(e.target.value)} style={inputStyle} placeholder={placeholder} />
+    </label>
+  )
+}
+
 export function TestForm({ protocol, onClose, onSaved }) {
   const isEdit = !!protocol
   const [foodName, setFoodName] = useState(protocol?.foodName || '')
   const [family, setFamily] = useState(protocol?.fodmapFamily || '')
+  const [doseDay1, setDoseDay1] = useState(protocol?.doseDay1 || '')
+  const [doseDay3, setDoseDay3] = useState(protocol?.doseDay3 || '')
+  const [doseDay5, setDoseDay5] = useState(protocol?.doseDay5 || '')
   const [pendingFile, setPendingFile] = useState(null)
   const [cleared, setCleared] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -86,10 +98,20 @@ export function TestForm({ protocol, onClose, onSaved }) {
         saved = await updateReintroProtocol(protocol.id, {
           food_name: foodName.trim(),
           fodmap_family: family.trim() || null,
+          dose_day_1: doseDay1.trim() || null,
+          dose_day_3: doseDay3.trim() || null,
+          dose_day_5: doseDay5.trim() || null,
         })
       } else {
         const id = `${slugify(foodName) || 'test'}-${Math.random().toString(36).slice(2, 8)}`
-        saved = await addReintroProtocol({ id, foodName: foodName.trim(), fodmapFamily: family.trim() })
+        saved = await addReintroProtocol({
+          id,
+          foodName: foodName.trim(),
+          fodmapFamily: family.trim(),
+          doseDay1: doseDay1.trim(),
+          doseDay3: doseDay3.trim(),
+          doseDay5: doseDay5.trim(),
+        })
       }
 
       const wantClear = isEdit && cleared && protocol.photoUrl
@@ -120,6 +142,13 @@ export function TestForm({ protocol, onClose, onSaved }) {
       <Field label="Type de test" hint="La famille FODMAP testée — affichée sous le nom.">
         <input value={family} onChange={e => setFamily(e.target.value)} style={inputStyle} placeholder="Ex: Test Lactose" />
       </Field>
+      <Field label="Doses des jours de test" hint="Laisser vide pour utiliser la dose standard. Texte libre — ex : « un quart d’avocat ».">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <DoseInput label="Jour 1" value={doseDay1} onChange={setDoseDay1} placeholder="100 g" />
+          <DoseInput label="Jour 3" value={doseDay3} onChange={setDoseDay3} placeholder="150 g" />
+          <DoseInput label="Jour 5" value={doseDay5} onChange={setDoseDay5} placeholder="200 g" />
+        </div>
+      </Field>
       <Field label="Photo" hint="Optionnel — sinon une pastille avec l’initiale est utilisée.">
         <PhotoPicker
           existingUrl={existingPhoto}
@@ -130,8 +159,8 @@ export function TestForm({ protocol, onClose, onSaved }) {
       </Field>
       {!isEdit && (
         <div style={{ fontSize: 11, color: 'var(--text-hint)', lineHeight: 1.4 }}>
-          Le test suivra le protocole standard en 5 jours (100 / 150 / 200 g). La recette et les
-          aliments associés pourront être renseignés ensuite, depuis la fiche du test.
+          Le test suivra le protocole standard en 5 jours. La recette et les aliments associés
+          pourront être renseignés ensuite, depuis la fiche du test.
         </div>
       )}
     </FormShell>

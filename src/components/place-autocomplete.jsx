@@ -20,6 +20,7 @@ export function PlaceAutocomplete({ onPlaceSelected, placeholder = 'Chercher une
 
   useEffect(() => {
     if (!query.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clear stale predictions when the query is emptied
       setPredictions([])
       return
     }

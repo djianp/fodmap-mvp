@@ -18,6 +18,7 @@ function PhotoPicker({ existingUrl, file, onPick, onClear }) {
   const [previewFromFile, setPreviewFromFile] = useState(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- object-URL preview lifecycle (create + revoke)
     if (!file) { setPreviewFromFile(null); return }
     const url = URL.createObjectURL(file)
     setPreviewFromFile(url)

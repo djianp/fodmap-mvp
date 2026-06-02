@@ -110,7 +110,7 @@ function AppShell() {
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
-    try { localStorage.setItem('mvp_tab', tab) } catch {}
+    try { localStorage.setItem('mvp_tab', tab) } catch { /* localStorage unavailable (e.g. private mode) */ }
   }, [tab])
 
   useEffect(() => {

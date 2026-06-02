@@ -14,6 +14,7 @@ export function Field({ label, children, hint }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared style constant, intentionally exported alongside the form components
 export const inputStyle = {
   width: '100%', padding: '10px 12px', borderRadius: 10,
   border: '1.5px solid var(--ink)', background: 'var(--bg-card)',

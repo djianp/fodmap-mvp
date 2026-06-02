@@ -91,6 +91,7 @@ export function useRestos() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load: setState after fetch
     load()
   }, [load])
 
@@ -254,7 +255,7 @@ export function useFoods() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load() }, [load]) // eslint-disable-line react-hooks/set-state-in-effect -- async data load: setState after fetch
 
   return { foods, loading, error, refresh: load }
 }
@@ -357,7 +358,7 @@ export function useSuggestions() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load() }, [load]) // eslint-disable-line react-hooks/set-state-in-effect -- async data load: setState after fetch
 
   return { suggestions, loading, error, refresh: load }
 }
@@ -450,7 +451,7 @@ export function useReintroLogs() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load() }, [load]) // eslint-disable-line react-hooks/set-state-in-effect -- async data load: setState after fetch
 
   return { logs, loading, error, refresh: load }
 }
@@ -513,7 +514,7 @@ export function useReintroRecipes() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load() }, [load]) // eslint-disable-line react-hooks/set-state-in-effect -- async data load: setState after fetch
 
   return { recipes, loading, error, refresh: load }
 }
@@ -574,7 +575,7 @@ export function useReintroCategoryNotes() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load() }, [load]) // eslint-disable-line react-hooks/set-state-in-effect -- async data load: setState after fetch
 
   return { notes, loading, error, refresh: load }
 }
@@ -657,7 +658,7 @@ export function useReintroProtocols() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load() }, [load]) // eslint-disable-line react-hooks/set-state-in-effect -- async data load: setState after fetch
 
   return { protocols, loading, error, refresh: load }
 }

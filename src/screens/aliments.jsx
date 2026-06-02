@@ -27,6 +27,7 @@ function AlimentDetailModal({ food, onClose, onEdit, onDelete }) {
     return () => window.removeEventListener('keydown', esc)
   }, [onClose, food])
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset expanded state when the modal closes
     if (!food) { setExpanded(false); return }
     const el = scrollRef.current
     if (!el) return

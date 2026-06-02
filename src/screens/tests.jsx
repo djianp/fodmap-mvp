@@ -93,13 +93,8 @@ function ProtocolImage({ protocol, size, radius }) {
 
 function ProtocolMeta() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, color: 'var(--text-hint)' }}>
-      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="9" />
-        <line x1="12" y1="11" x2="12" y2="16" />
-        <circle cx="12" cy="8" r="0.5" fill="currentColor" />
-      </svg>
-      <span style={{ fontSize: 11, fontWeight: 500 }}>Protocole en 5 jours</span>
+    <div style={{ marginTop: 4, color: 'var(--text-hint)', fontSize: 11, fontWeight: 500 }}>
+      – Protocole en 5 jours –
     </div>
   )
 }

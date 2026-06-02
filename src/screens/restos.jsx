@@ -327,7 +327,7 @@ export function MVPRestosScreen() {
   const [location, setLocation] = useState('bureau')
   const [status, setStatus] = useState('all')
   const [proteine, setProteine] = useState('Toutes')
-  const [view, setView] = useState('list')
+  const [view, setView] = useState('map')
   const [selected, setSelected] = useState(null)
   const [showAddResto, setShowAddResto] = useState(false)
   const [editingResto, setEditingResto] = useState(null)

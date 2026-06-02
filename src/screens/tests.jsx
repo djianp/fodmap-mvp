@@ -162,7 +162,7 @@ function Stepper({ protocol, logsByKey, currentDay, selectedDay, onSelectDay }) 
           const isTest = d.type === 'test'
           const isSelected = d.day === selectedDay
           const done = isTest ? !!log?.comfort_level : d.day < currentDay
-          const sub = isTest ? `Test ${d.doseGrams} g` : 'Récupération'
+          const sub = isTest ? `Test ${d.doseLabel}` : 'Récupération'
 
           let node
           if (isTest && log?.comfort_level) {
@@ -399,7 +399,7 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
   const [sheet, setSheet] = useState(null) // 'recipe' | 'category' | null
 
   const selectedLog = logsByKey[keyFor(protocol.id, selectedDay)]
-  const dose = protocol.days.find(d => d.day === selectedDay)?.doseGrams
+  const dose = protocol.days.find(d => d.day === selectedDay)?.doseLabel
   const selectedComfort = selectedLog?.comfort_level || null
   const effectiveRecipe = customRecipe ?? defaultRecipeMarkdown(protocol)
   const isCustomRecipe = customRecipe != null
@@ -452,8 +452,8 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-on-comment)', marginTop: 4, lineHeight: 1.35 }}>
           {selectedComfort
-            ? `${dose} g · ${COMFORT_LEVELS.find(c => c.v === selectedComfort)?.label}`
-            : `Aujourd’hui, testez ${dose} g de ${protocol.foodName.toLowerCase()}.`}
+            ? `${dose} · ${COMFORT_LEVELS.find(c => c.v === selectedComfort)?.label}`
+            : `Aujourd’hui, testez ${dose} de ${protocol.foodName.toLowerCase()}.`}
         </div>
       </div>
 
@@ -493,7 +493,7 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
 
       <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>Comment vous sentez-vous aujourd’hui ?</div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, marginBottom: 12 }}>
-        En lien avec votre test de {dose} g.
+        En lien avec votre test de {dose}.
       </div>
       <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
         {COMFORT_LEVELS.map(c => {
@@ -537,7 +537,7 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
       {sheet === 'recipe' && (
         <EditableSheet
           title="Recette détaillée"
-          meta={<SheetMeta foodName={protocol.foodName} chip={dose != null ? `Dose cible : ${dose} g` : null} />}
+          meta={<SheetMeta foodName={protocol.foodName} chip={dose != null ? `Dose cible : ${dose}` : null} />}
           content={effectiveRecipe}
           isCustom={isCustomRecipe}
           onSave={text => onSaveRecipe(protocol.id, text)}
@@ -609,14 +609,24 @@ export function MVPTestsScreen() {
     return m
   }, [categoryNotes, categoryOverrides])
 
-  // DB rows -> the shape the UI components expect. The 5-day schedule is the shared constant.
-  const protocols = useMemo(() => protocolRows.map(r => ({
-    id: r.id,
-    foodName: r.food_name,
-    fodmapFamily: r.fodmap_family,
-    photoUrl: r.photo_url,
-    days: STANDARD_DAYS,
-  })), [protocolRows])
+  // DB rows -> the shape the UI components expect. The 5-day schedule is the shared constant;
+  // each test day's dose label falls back to the standard "100/150/200 g" when the user
+  // hasn't overridden it (e.g. "un quart d'avocat" instead of "100 g").
+  const protocols = useMemo(() => protocolRows.map(r => {
+    const overrides = { 1: r.dose_day_1, 3: r.dose_day_3, 5: r.dose_day_5 }
+    return {
+      id: r.id,
+      foodName: r.food_name,
+      fodmapFamily: r.fodmap_family,
+      photoUrl: r.photo_url,
+      doseDay1: r.dose_day_1,
+      doseDay3: r.dose_day_3,
+      doseDay5: r.dose_day_5,
+      days: STANDARD_DAYS.map(d => d.type === 'test'
+        ? { ...d, doseLabel: overrides[d.day] || `${d.doseGrams} g` }
+        : d),
+    }
+  }), [protocolRows])
 
   const saveComfort = async (protocolId, day, level) => {
     const key = keyFor(protocolId, day)

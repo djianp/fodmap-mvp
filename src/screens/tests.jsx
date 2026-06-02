@@ -581,9 +581,9 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
 // A user-curated overview above the test list. The three rows mirror the three short
 // fields; tapping opens StatusModal with those fields + a free-form markdown detail.
 const STATUS_ROWS = [
-  { key: 'validated', label: 'Familles validées', color: '#5f9e40' },
-  { key: 'upcoming',  label: 'Prochains tests',   color: '#e2a431' },
-  { key: 'avoid',     label: 'Familles à éviter',  color: '#c0492f' },
+  { key: 'validated', label: 'Validé',   color: '#5f9e40' },
+  { key: 'upcoming',  label: 'Next',     color: '#e2a431' },
+  { key: 'avoid',     label: 'À éviter', color: '#c0492f' },
 ]
 
 function StatusDot({ color }) {

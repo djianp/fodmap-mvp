@@ -597,8 +597,8 @@ function StatusCard({ status, onClick }) {
   return (
     <button onClick={onClick} style={{
       width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
-      background: 'var(--status-card)', border: 'none', borderRadius: 24,
-      padding: '16px 18px', boxShadow: '0 2px 6px rgba(31,26,20,0.05)', marginBottom: 18,
+      background: 'var(--status-card)', border: '1px solid var(--border-soft)', borderRadius: 24,
+      padding: '16px 18px', boxShadow: '0 4px 16px rgba(31,26,20,0.10)', marginBottom: 18,
       display: 'flex', alignItems: 'center', gap: 16,
     }}>
       <div style={{

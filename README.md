@@ -215,6 +215,22 @@ alter table public.suggestions enable row level security;
 create policy "owner rw suggestions" on public.suggestions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Free-form markdown notes (Notes tab). Standalone user content — seeded with one
+-- "Le gras" note on first login (src/data/notes.js), then fully editable in-app.
+create table public.notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text not null,
+  content text not null default '',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create index idx_notes_user_id on public.notes(user_id);
+
+alter table public.notes enable row level security;
+create policy "owner rw notes" on public.notes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 -- Reintroduction tests (Tests tab). Protocol DEFINITIONS are static app content
 -- (src/data/reintro.js) and are NOT stored here — only the user's per-test-day
 -- comfort level + note. One row per logged test day; currentDay/completed are derived.

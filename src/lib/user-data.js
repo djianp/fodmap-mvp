@@ -3,6 +3,7 @@ import { supabase } from './supabase.js'
 import { RESTOS, PROTEINES } from '../data/restos.js'
 import { FOODS } from '../data/foods.js'
 import { REINTRO_PROTOCOLS } from '../data/reintro.js'
+import { NOTES } from '../data/notes.js'
 
 async function fetchRestos() {
   const { data, error } = await supabase
@@ -755,4 +756,95 @@ export async function upsertReintroStatus({ validated, upcoming, avoid, detail }
     .single()
   if (error) throw error
   return data
+}
+
+// ──────────── Notes ────────────
+
+async function fetchNotes() {
+  const { data, error } = await supabase
+    .from('notes')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+async function seedNotes(userId) {
+  const payload = NOTES.map(n => ({
+    user_id: userId,
+    title: n.title,
+    content: n.content,
+  }))
+  const { error } = await supabase.from('notes').insert(payload)
+  if (error) throw error
+}
+
+export function useNotes() {
+  const [notes, setNotes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const seededRef = useRef(false)
+
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      let data = await fetchNotes()
+      if (data.length === 0 && !seededRef.current) {
+        seededRef.current = true
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await seedNotes(user.id)
+          data = await fetchNotes()
+        }
+      }
+      setNotes(data)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load]) // eslint-disable-line react-hooks/set-state-in-effect -- async data load: setState after fetch
+
+  return { notes, loading, error, refresh: load }
+}
+
+export async function addNote(note) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('notes').insert({
+    user_id: user.id,
+    title: note.title,
+    content: note.content || '',
+  }).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateNote(id, note) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { data, error } = await supabase.from('notes')
+    .update({
+      title: note.title,
+      content: note.content || '',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteNote(id) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+  const { error } = await supabase.from('notes')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+  if (error) throw error
 }

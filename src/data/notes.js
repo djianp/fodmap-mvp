@@ -22,11 +22,9 @@ Ce sont des aliments parfaits pour le régime FODMAP, mais qui demandent un gros
 * **Certains fruits low-FODMAP :** L'avocat (un avocat entier apporte environ 15g à 20g de graisse) et la noix de coco (lait de coco, crème de coco).
 * **Les huiles et matières grasses pures :** L'huile d'olive (même infusée à l'ail), l'huile de tournesol, le beurre et la margarine. Ils ne contiennent aucun FODMAP mais sont de l'or noir pour l'estomac en période de fatigue digestive.
 * **Les protéines animales grasses :**
-* Les poissons gras (saumon, maquereau, sardines, thon rouge).
-* Les viandes grasses (porc, agneau, cuisses de poulet avec la peau, canard, charcuteries autorisées comme le bacon ou le jambon cru).
-
-
-* **Les produits laitiers autorisés (pauvres en lactose) :** Les fromages à pâte dure (Comté, Parmesan, cheddar) ne contiennent pas de lactose mais restent très riches en matières grasses animales. Il en va de même pe beurre.
+    * Les poissons gras (saumon, maquereau, sardines, thon rouge).
+    * Les viandes grasses (porc, agneau, cuisses de poulet avec la peau, canard, charcuteries autorisées comme le bacon ou le jambon cru).
+* **Les produits laitiers autorisés (pauvres en lactose) :** Les fromages à pâte dure (Comté, Parmesan, cheddar) ne contiennent pas de lactose mais restent très riches en matières grasses animales. Il en va de même pour la crème fraîche sans lactose ou le beurre.
 
 ---
 
@@ -35,23 +33,17 @@ Ce sont des aliments parfaits pour le régime FODMAP, mais qui demandent un gros
 Pour garantir des nuits parfaites et un réveil à 100 %, votre panier pour les deux prochains jours doit se concentrer sur des aliments qui combinent **zéro FODMAP** et **zéro graisse** :
 
 * **Les protéines ultra-maigres :**
-* Le blanc de poulet ou de dinde (sans la peau, cuit sans matière grasse).
-* Les poissons blancs (cabillaud, colin, lieu, dorade, sole) cuits vapeur ou papillote. Ils contiennent moins de 1 % de matières grasses.
-* Les œufs (au plat sans huile, pochés, ou coque. Évitez les œufs brouillés noyés dans le beurre).
-
-
+    * Le blanc de poulet ou de dinde (sans la peau, cuit sans matière grasse).
+    * Les poissons blancs (cabillaud, colin, lieu, dorade, sole) cuits vapeur ou papillote. Ils contiennent moins de 1 % de matières grasses.
+    * Les œufs (au plat sans huile, pochés, ou coque. Évitez les œufs brouillés noyés dans le beurre).
 * **Les féculents faciles :**
-* Le riz blanc (Basmati ou Jasmin), qui ne contient aucune graisse et s'assimile très vite.
-* Les pommes de terre (sans la peau, cuites à l'eau ou à la vapeur, sans ajout de beurre ou d'huile).
-* Le quinoa bien cuit.
-
-
+    * Le riz blanc (Basmati ou Jasmin), qui ne contient aucune graisse et s'assimile très vite.
+    * Les pommes de terre (sans la peau, cuites à l'eau ou à la vapeur, sans ajout de beurre ou d'huile).
+    * Le quinoa bien cuit.
 * **Les légumes cuits et légers :**
-* Les carottes cuites (zéro gras, ultra-douces).
-* Les courgettes cuites (en portion normale et sans la peau si vous voulez être encore plus doux avec vos intestins).
-* Les pousses d'épinards cuites.
-
-
+    * Les carottes cuites (zéro gras, ultra-douces).
+    * Les courgettes cuites (en portion normale et sans la peau si vous voulez être encore plus doux avec vos intestins).
+    * Les pousses d'épinards cuites.
 
 ---
 

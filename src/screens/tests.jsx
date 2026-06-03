@@ -526,13 +526,7 @@ function ProtocolDetail({ protocol, logsByKey, customRecipe, customCategory, onB
         })}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-        <span style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-muted)' }}>Notes (optionnel)</span>
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--text-hint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M12 20h9" />
-          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
-        </svg>
-      </div>
+      <span style={{ display: 'block', fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>Notes (optionnel)</span>
       <NoteEditor
         key={selectedDay}
         initial={selectedLog?.note || ''}

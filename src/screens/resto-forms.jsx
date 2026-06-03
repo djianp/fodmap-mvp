@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { addResto, addMeal, updateMeal, deleteMeal, updateResto, deleteResto } from '../lib/user-data.js'
 import { getRouteTimes } from '../lib/google-maps.js'
 import { PlaceAutocomplete } from '../components/place-autocomplete.jsx'
+import { useSubmitShortcut } from '../components/use-submit-shortcut.js'
 
 export function Field({ label, children, hint }) {
   return (
@@ -98,6 +99,7 @@ export function FormShell({ title, onClose, onSubmit, submitLabel, disabled, err
   const vv = useVisualViewport()
   const layoutHeight = typeof window !== 'undefined' ? window.innerHeight : vv.height
   const keyboardOpen = layoutHeight - vv.height > 100
+  useSubmitShortcut(onSubmit, !disabled)
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', esc)

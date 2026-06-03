@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BlobLogo, Markdown } from '../components/ui.jsx'
+import { useSubmitShortcut } from '../components/use-submit-shortcut.js'
 import { tileFor, initialFor } from '../lib/foods-meta.js'
 import { COMFORT_LEVELS, TEST_DAYS, STANDARD_DAYS, defaultRecipeMarkdown, defaultCategoryMarkdown } from '../data/reintro.js'
 import {
@@ -277,6 +278,7 @@ function EditableSheet({ title, meta, content, isCustom, onSave, onReset, onClos
 
   const save = async () => { setBusy(true); await onSave(draft); setBusy(false); setEditing(false) }
   const reset = async () => { setBusy(true); await onReset(); setBusy(false); setEditing(false) }
+  useSubmitShortcut(save, editing && !busy)
 
   return (
     <div onClick={onClose} style={{
@@ -666,6 +668,7 @@ function StatusModal({ status, onSave, onClose }) {
     setBusy(false)
     setEditing(false)
   }
+  useSubmitShortcut(save, editing && !busy)
   const hasDetail = !!(status?.detail && status.detail.trim())
 
   return (

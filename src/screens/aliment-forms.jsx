@@ -46,6 +46,21 @@ function PhotoPicker({ existingUrl, file, onPick, onClear }) {
     return () => URL.revokeObjectURL(url)
   }, [file])
 
+  useEffect(() => {
+    const onPaste = (e) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const f = item.getAsFile()
+          if (f) { e.preventDefault(); onPick(f); return }
+        }
+      }
+    }
+    window.addEventListener('paste', onPaste)
+    return () => window.removeEventListener('paste', onPaste)
+  }, [onPick])
+
   const visiblePreview = previewFromFile || existingUrl
   const triggerPick = () => inputRef.current?.click()
   const onChange = (e) => {

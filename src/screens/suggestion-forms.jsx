@@ -90,15 +90,16 @@ function PhotoPicker({ existingUrl, file, onPick, onClear }) {
     try {
       const items = await navigator.clipboard.read()
       for (const item of items) {
-        const imageType = item.types.find(t => t.startsWith('image/'))
+        const imageType = item.types.find(t => /image\//i.test(t))
         if (imageType) {
           const blob = await item.getType(imageType)
-          const ext = (imageType.split('/')[1] || 'png').replace('jpeg', 'jpg')
-          onPick(new File([blob], `pasted.${ext}`, { type: imageType }))
+          const ext = (imageType.split('image/')[1] || 'png').toLowerCase().replace('jpeg', 'jpg')
+          onPick(new File([blob], `pasted.${ext}`, { type: blob.type || imageType }))
           return
         }
       }
-      window.alert('Aucune image dans le presse-papiers.')
+      const allTypes = items.flatMap(it => it.types)
+      window.alert('Aucune image trouvée. Types détectés : ' + (allTypes.length ? allTypes.join(', ') : '(aucun)'))
     } catch (err) {
       window.alert(err.name === 'NotAllowedError'
         ? 'Accès au presse-papiers refusé.'

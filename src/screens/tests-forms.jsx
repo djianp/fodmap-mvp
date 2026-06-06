@@ -15,6 +15,7 @@ function slugify(s) {
 // Local photo picker — same shape as the one in suggestion-forms.jsx / aliment-forms.jsx.
 function PhotoPicker({ existingUrl, file, onPick, onClear }) {
   const inputRef = useRef(null)
+  const pasteZoneRef = useRef(null)
   const [previewFromFile, setPreviewFromFile] = useState(null)
 
   useEffect(() => {
@@ -25,12 +26,14 @@ function PhotoPicker({ existingUrl, file, onPick, onClear }) {
     return () => URL.revokeObjectURL(url)
   }, [file])
 
+  // Desktop convenience: a window-level Cmd/Ctrl+V also picks the image up.
+  // The paste-zone's own onPaste calls stopPropagation, so iOS pastes aren't double-handled.
   useEffect(() => {
     const onPaste = (e) => {
       const items = e.clipboardData?.items
       if (!items) return
       for (const item of items) {
-        if (item.kind === 'file' && item.type.startsWith('image/')) {
+        if (item.kind === 'file' && /^image\//i.test(item.type)) {
           const f = item.getAsFile()
           if (f) { e.preventDefault(); onPick(f); return }
         }
@@ -47,26 +50,26 @@ function PhotoPicker({ existingUrl, file, onPick, onClear }) {
     if (f) onPick(f)
     e.target.value = ''
   }
-  const canPaste = !!navigator.clipboard?.read
-  const pasteFromClipboard = async () => {
-    try {
-      const items = await navigator.clipboard.read()
+  // Contenteditable paste zone — needed for iOS Safari, where clipboard.read() returns
+  // nothing for cross-app image clipboard data. The legacy paste event on a focused
+  // contenteditable still receives the image, so we route it through onPick.
+  const onPasteIntoZone = (e) => {
+    const items = e.clipboardData?.items
+    if (items) {
       for (const item of items) {
-        const imageType = item.types.find(t => /image\//i.test(t))
-        if (imageType) {
-          const blob = await item.getType(imageType)
-          const ext = (imageType.split('image/')[1] || 'png').toLowerCase().replace('jpeg', 'jpg')
-          onPick(new File([blob], `pasted.${ext}`, { type: blob.type || imageType }))
-          return
+        if (item.kind === 'file' && /^image\//i.test(item.type)) {
+          const f = item.getAsFile()
+          if (f) {
+            e.preventDefault()
+            e.stopPropagation()
+            onPick(f)
+            pasteZoneRef.current?.blur()
+            return
+          }
         }
       }
-      const allTypes = items.flatMap(it => it.types)
-      window.alert('Aucune image trouvée. Types détectés : ' + (allTypes.length ? allTypes.join(', ') : '(aucun)'))
-    } catch (err) {
-      window.alert(err.name === 'NotAllowedError'
-        ? 'Accès au presse-papiers refusé.'
-        : 'Impossible de coller : ' + (err.message || err))
     }
+    e.preventDefault() // swallow non-image pastes so text doesn't land in the zone
   }
 
   return (
@@ -98,17 +101,25 @@ function PhotoPicker({ existingUrl, file, onPick, onClear }) {
           <span aria-hidden="true">📷</span> Choisir une photo
         </button>
       )}
-      {canPaste && (
-        <button type="button" onClick={pasteFromClipboard} style={{
+      <div
+        ref={pasteZoneRef}
+        contentEditable
+        suppressContentEditableWarning
+        onPaste={onPasteIntoZone}
+        role="textbox"
+        aria-label="Coller une image"
+        spellCheck={false}
+        style={{
           marginTop: 8, width: '100%', padding: '10px 14px', borderRadius: 999,
           border: '1.5px solid var(--ink)', background: 'var(--bg-card)',
           color: 'var(--ink)', fontSize: 12, fontWeight: 600,
           boxShadow: '0 2px 0 var(--ink)', cursor: 'pointer', fontFamily: 'inherit',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-        }}>
-          <span aria-hidden="true">📋</span> Coller depuis le presse-papiers
-        </button>
-      )}
+          caretColor: 'transparent', outline: 'none', boxSizing: 'border-box',
+        }}
+      >
+        <span aria-hidden="true">📋</span> Coller une image
+      </div>
     </div>
   )
 }

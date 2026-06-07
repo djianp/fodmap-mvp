@@ -1,4 +1,4 @@
-# FOR PIERRE — How this got built, what's in it, what to remember
+# How it works — A tour of the codebase
 
 This document is a cheat-sheet for **future you** (and present you, when you come back to this code in three months and forget how it works). It's written like a tour guide, not a manual. Read it once now, skim it later when something breaks.
 
@@ -6,14 +6,17 @@ This document is a cheat-sheet for **future you** (and present you, when you com
 
 ## What you actually built
 
-A four-tab mobile-first app called **fodmap-mvp**:
+A five-tab mobile-first app called **fodmap-mvp**:
 
 - **Aliments** — searchable, editable list of foods (39 to start, growing — you can add, edit, and delete), filterable by category and meal-of-day, color-coded green/amber/red for SIBO compatibility. Each food has a detail modal with FODMAP rationale, contrainte (max quantity etc.), markdown-rendered personal notes, and an optional hero photo you upload yourself.
 - **Restos** — your personal directory of Paris restaurants you've vetted, each with the meals you've ordered, what to ask the waiter to modify, and your half-star ratings out of 5. Restos are tagged with one of four statuses: `dinein`, `takeaway`, `totry`, `delivery`. The first three are filtered by walking time; `delivery` by drive time.
 - **Suggestions** — a small list of meal/snack ideas tagged by occasion (Petit-déj / Déj / Snack / Dîner) and context (Maison / Bureau / Resto), with multi-select chip filters. Optional photo, half-star rating, "À tester" pill, and a markdown comment field.
-- **Tests** — a FODMAP reintroduction tracker. Each test is a food you run over a fixed 5-day protocol (J1 100 g · J2 recovery · J3 150 g · J4 recovery · J5 200 g); on the three test days you log a digestive-comfort level (four faces, green→red) and an optional note. The list shows each food's photo and three comfort "spots"; the detail view has a 5-day stepper, an editable **recipe** and an editable **"Aliments associés"** list (same-family foods that become safe once tolerated), each markdown with a seed default. You add / edit / delete your own tests (with photo upload); the 4 starter tests are seeded on first login and removable.
+- **Tests** — a FODMAP reintroduction tracker. Each test is a food you run over a fixed 5-day protocol (J1 100 g · J2 recovery · J3 150 g · J4 recovery · J5 200 g); on the three test days you log a digestive-comfort level (four faces, green→red) and an optional note. The list shows each food's photo and three comfort "spots"; the detail view has a 5-day stepper, an editable **recipe** and an editable **"Aliments associés"** list (same-family foods that become safe once tolerated), each markdown with a seed default. Above the list, a **"Statut actuel"** summary card surfaces which FODMAP families are validated / next / to avoid (free-text, edited from a modal). You add / edit / delete your own tests (with photo upload); the 4 starter tests are seeded on first login and removable.
+- **Notes** — free-form markdown memos about the diet. Each note is a title + markdown body; tap to read, pencil to edit. One "Le gras" note is seeded on first login; otherwise add / edit / delete freely.
 
 Plus a **Settings** screen behind a "Paramètres" link in the footer where you set your bureau and domicile addresses (used for walking + driving time calculations on the Restos tab). Saved settings sync across devices.
+
+Two cross-cutting niceties touch every form: photo pickers also accept a pasted image (a "Coller une image" zone on top of file selection, plus desktop Cmd/Ctrl+V), and Save buttons across modals respond to Cmd/Ctrl+Enter.
 
 It runs at **https://fodmap-mvp.vercel.app**, accessible from any web-connected device. You log in with a magic link sent to your email. Your data lives in a Postgres database in Paris and follows you to every device. Photos you upload sit in Supabase Storage. There are no usernames, no passwords, no apps to install. It's a website that feels like an app.
 
@@ -44,18 +47,18 @@ That's the whole system. There's no server you maintain, no API code you wrote, 
 
 ## The codebase, room by room
 
-The project lives in `fodmap-mvp/`. **26 source files**, ~5,300 total lines of JS/JSX.
+The project lives in `fodmap-mvp/`. **29 source files**, ~6,300 total lines of JS/JSX.
 
 ### The entry hallway
 
 - **`index.html`** — bare bones. A `<div id="root">`, a Google-Fonts `<link>`, and a viewport meta with `interactive-widget=resizes-content` (helps Chrome resize the layout viewport when the keyboard opens — see "iOS keyboard" in the bugs section).
 - **`src/main.jsx`** — three lines that mount React onto `<div id="root">`.
-- **`src/App.jsx`** — the **router-without-a-router**. Checks Supabase for a session; either shows `<Login />` or `<AppShell />`. `AppShell` holds the active tab id (`aliments` / `restos` / `suggestions`), persists it to `localStorage`, mounts the matching screen, and renders the bottom tab bar plus the Paramètres + Se déconnecter footer. Settings open as an overlay modal from the same shell.
+- **`src/App.jsx`** — the **router-without-a-router**. Checks Supabase for a session; either shows `<Login />` or `<AppShell />`. `AppShell` holds the active tab id (`aliments` / `restos` / `suggestions` / `tests` / `notes`), persists it to `localStorage`, mounts the matching screen, and renders the bottom tab bar plus the Paramètres + Se déconnecter footer. Settings open as an overlay modal from the same shell.
 
 ### The data layer (`src/lib/`)
 
 - **`supabase.js`** — six lines that read env vars and call `createClient(url, key)`. Every other module imports `supabase` from here.
-- **`user-data.js`** — the most interesting file. Hosts the React hooks (`useRestos`, `useFoods`, `useSuggestions`, plus the Tests-tab hooks `useReintroProtocols` / `useReintroLogs` / `useReintroRecipes` / `useReintroCategoryNotes`) and the imperative CRUD helpers (`addResto` / `updateResto` / `deleteResto`, `addMeal` / `updateMeal` / `deleteMeal`, `addFood` / `updateFood` / `deleteFood`, `addSuggestion` / `updateSuggestion` / `deleteSuggestion`, the reintro helpers `addReintroProtocol` / `updateReintroProtocol` / `deleteReintroProtocol` plus the per-test `upsert*` / `delete*` for logs / recipes / category-notes, and `seedRestos` / `seedFoods` / `seedReintroProtocols` for first-login). Also: `useRestos` listens for a `restos-refresh` window event so the background walking-time recalc can poke the UI to re-fetch after it finishes.
+- **`user-data.js`** — the most interesting file. Hosts the React hooks (`useRestos`, `useFoods`, `useSuggestions`, the Tests-tab hooks `useReintroProtocols` / `useReintroLogs` / `useReintroRecipes` / `useReintroCategoryNotes` / `useReintroStatus`, and the Notes-tab `useNotes`) and the imperative CRUD helpers (`addResto` / `updateResto` / `deleteResto`, `addMeal` / `updateMeal` / `deleteMeal`, `addFood` / `updateFood` / `deleteFood`, `addSuggestion` / `updateSuggestion` / `deleteSuggestion`, the reintro helpers `addReintroProtocol` / `updateReintroProtocol` / `deleteReintroProtocol` plus the per-test `upsert*` / `delete*` for logs / recipes / category-notes / status, the notes helpers `addNote` / `updateNote` / `deleteNote`, and `seedRestos` / `seedFoods` / `seedReintroProtocols` / `seedNotes` for first-login). Also: `useRestos` listens for a `restos-refresh` window event so the background walking-time recalc can poke the UI to re-fetch after it finishes.
 - **`user-settings.js`** — pub-sub-style module (no Context) holding `{office, home, recalcing}` for the active user. `loadSettings()` reads the `user_settings` row on auth; `saveSettings()` writes both addresses, then kicks off `recalcAllRouteTimes()` in the background which fans out Distance Matrix calls in batches of 25 destinations and patches each resto's `walk_min_*` and `drive_min_*` columns. The Restos screen subscribes via `useSettings()` and shows a "Recalcul des temps de trajet en cours…" pill while the work is running.
 - **`google-maps.js`** — single point of contact for the Google SDK. `loadMaps()` lazy-loads the bundle once (shared `loadPromise`). `getRouteTimes(destination)` and `getRouteTimesBatch(office, home, destinations)` fire walking + driving Distance Matrix calls in parallel and return all four `walk_min_*` / `drive_min_*` numbers per destination. `getOfficeLatLng()` / `getHomeLatLng()` cache geocodes by address so the cache invalidates the moment you save a new address.
 - **`places-config.js`** — exports `DEFAULT_OFFICE_ADDRESS` and `DEFAULT_HOME_ADDRESS`, used as fallbacks when a user has no row in `user_settings` yet.
@@ -68,24 +71,27 @@ The project lives in `fodmap-mvp/`. **26 source files**, ~5,300 total lines of J
 - **`foods.js`** — the curated seed foods (~40 entries), bulk-inserted into the `foods` table the first time you log in. Decorative once seeded — edits inside the running app go to Supabase, not back here.
 - **`restos.js`** — the seed Paris restos (Bistrot Paul-Bert) with full Google `place_id` / lat / lng / walking minutes. Same one-shot-then-frozen pattern.
 - **`reintro.js`** — the 4 seed reintroduction tests, the shared 5-day schedule (`STANDARD_DAYS`), and the default recipe / associated-foods markdown (keyed by protocol id). Unlike foods/restos, those defaults *stay* in code (resolved by id) — only the protocol row and the user's overrides live in Supabase.
+- **`notes.js`** — the seed Notes-tab content (one "Le gras" markdown note today). Same one-shot-then-frozen pattern as foods/restos: editable in the running app after first login.
 
 ### The presentation layer (`src/components/`, `src/screens/`)
 
 - **`components/ui.jsx`** — small, dumb pieces. `BlobLogo` (orange blob, accepts optional children — used for the 💡 in the Suggestions header), `Thumb` (round food icon — prefers `food.photo_url` over the static `PHOTOS` map), `Verdict` (green/amber/red pill), `Chip` (filter pill, accepts an `icon` prop for emoji prefixes), `FoodRow`, `IconBtn`, and the **`Markdown`** component (a thin react-markdown wrapper with custom renderers tuned to the parchment look — used in aliment notes and meal/suggestion comments).
 - **`components/google-map.jsx`** — the real Google Map. Lazy-loads the SDK, places one marker per resto. Subscribes to `useSettings()` so the office/home anchor pin updates instantly when addresses change. Delivery restos render as a salmon circle marker (instead of the default red drop-pin) so they're readable at a glance vs walked-to places.
 - **`components/place-autocomplete.jsx`** — a **custom** address autocomplete on top of Google's lower-level `AutocompleteSuggestion` API. We replaced Google's `PlaceAutocompleteElement` web component because its mobile expanded mode took over the whole viewport on iOS Chrome and broke layout — see the bugs section. Renders our own `<input>` + in-flow dropdown.
+- **`components/use-submit-shortcut.js`** — `useSubmitShortcut(onSubmit, enabled)` — a tiny hook that wires Cmd/Ctrl+Enter to a surface's primary save handler. Bound to that one callback only (never destructive actions), and inert while `enabled` is false (e.g. form invalid or mid-submit). Used across every form modal and the Notes / Tests editable sheets.
 - **`screens/aliments.jsx`** — the food browser. `useFoods()`, search, category filter, grouped sort (verdict → numeric note desc → alphabetical). The detail modal (`AlimentDetailModal`) shows a hero image (240 px when present, scrollable so it can move out of the way for long notes), title, category line, midi/soir verdict pills, FODMAP, Contrainte, Notes (markdown-rendered), Modifier + Supprimer buttons. **Scroll past ~80 px and the modal expands to fill the viewport** for a more comfortable reading experience.
-- **`screens/aliment-forms.jsx`** — `AlimentForm`, polymorphic for add vs edit. Photo picker uploads to the `food-photos` bucket; storage path is `<user_id>/<food_id>.<ext>` (upsert). All other fields the same as before, with markdown-encouraged hint text on the Notes field.
+- **`screens/aliment-forms.jsx`** — `AlimentForm`, polymorphic for add vs edit. Photo picker uploads to the `food-photos` bucket; storage path is `<user_id>/<food_id>.<ext>` (upsert). The picker accepts a pasted image too — a contenteditable "Coller une image" zone (so iOS Safari's long-press → Coller routes through the same `onPick(file)` path as the file picker; desktop Cmd/Ctrl+V works via a window-level paste listener). Same picker pattern is duplicated in `suggestion-forms.jsx` and `tests-forms.jsx`.
 - **`screens/restos.jsx`** — the most complex screen. `useRestos()` + `useSettings()`. Layered filters: location anchor (Bureau / Domicile), status (Tous / À emporter / Sur place / Livraison / À tester), protein dropdown (alphabetical, emoji-prefixed, hides empty options, shows result counts in parentheses), search, and view-mode (Liste / Carte). The list groups À-tester restos under their own section header at the bottom when status is "Tous". The card has a travel pill that switches between a walking icon + walk-minutes (default) and a car icon + drive-minutes (delivery restos), plus a status pill (green "À emporter", lavender "Livraison", salmon "À tester") and tap-to-edit on the top section.
 - **`screens/resto-forms.jsx`** — `AddRestoForm` (Places-Autocomplete-driven, eagerly fetches walk + drive times in parallel), `EditRestoForm` (text inputs only, no place re-pick), `MealForm` (polymorphic: tap a meal row in a card to edit; rating optional with × clear button), and the shared `FormShell` / `Field` / `inputStyle`. **`FormShell` uses the VisualViewport API** to keep the modal fitting above the iOS keyboard (and switches from bottom-anchored to top-anchored when a keyboard is detected).
 - **`screens/suggestions.jsx`** — the third tab. Search, two horizontally scrollable multi-select chip rows (occasions + contexts), card list. Each card is a tap-to-edit button with round photo, title, categories joined `·`-separated, half-stars, optional markdown comment in a 💬 bubble, and a salmon "À tester" pill when `to_try` is set.
 - **`screens/suggestion-forms.jsx`** — `SuggestionForm` with photo picker (uploads to `suggestion-photos`), multi-select chip toggles, StarInput, "À tester" toggle, comment textarea, Supprimer.
-- **`screens/tests.jsx`** — the Tests tab. `useReintroProtocols` + the three override/log hooks. A list of protocol cards (food photo + three comfort `ComfortFace` spots) → tap into a detail view with a 5-day stepper, an active-day card, a 4-option comfort logger, an optional note, and two cards ("Préparation & recette" + "Aliments associés") that each open a generic **`EditableSheet`** (markdown in view mode, textarea in edit mode, "Réinitialiser" to drop the override back to the seed default). A pencil in the header opens the edit form; "Supprimer ce test" deletes it (cascading the test's logs/recipe/notes/photo).
+- **`screens/tests.jsx`** — the Tests tab. `useReintroProtocols` + the override/log hooks plus `useReintroStatus`. Above the protocol list, a **`StatusCard`** surfaces three curated free-text rows — *Validé*, *Next*, *À éviter* — tap to open the editor (a modal that writes to `reintro_status` via `upsertReintroStatus`). Then a list of protocol cards (food photo + three comfort `ComfortFace` spots) → tap into a detail view with a 5-day stepper, an active-day card, a 4-option comfort logger, an optional note, and two cards ("Préparation & recette" + "Aliments associés") that each open a generic **`EditableSheet`** (markdown in view mode, textarea in edit mode, "Réinitialiser" to drop the override back to the seed default). A pencil in the header opens the edit form; "Supprimer ce test" deletes it (cascading the test's logs/recipe/notes/photo).
 - **`screens/tests-forms.jsx`** — `TestForm`, polymorphic add vs edit (like the other forms), capturing food name + FODMAP family + an uploaded photo (`reintro-photos` bucket); its own copy of `PhotoPicker`.
+- **`screens/notes.jsx`** — the Notes tab. `useNotes()` for data; a list of `NoteCard`s (title + a 2-line markdown-stripped preview) opens an `EditableSheet`-style detail with `<Markdown>` in view mode and a textarea in edit mode. New notes are created via "+ Note" in the header; existing notes are edited in place or deleted from the detail.
 - **`screens/settings.jsx`** — the settings modal. Two `PlaceAutocomplete` inputs for bureau and domicile. Save writes to `user_settings` and triggers the background route-time recalc.
 - **`screens/login.jsx`** — magic-link email flow, two states. Copy is impersonal/infinitive across the app (no "tu" forms).
 
-That's it. **Twenty-six source files**, ~5,300 total lines.
+That's it. **Twenty-nine source files**, ~6,300 total lines.
 
 ---
 
@@ -100,10 +106,12 @@ Postgres tables (run from `README.md` if you ever rebuild from scratch):
 | `foods` | The aliment list | `cat`, `midi`/`soir` verdicts, `note`, `fodmap`, `contrainte`, `details` (markdown-friendly), `photo_url` |
 | `suggestions` | Meal/snack ideas | `occasions[]`, `contexts[]`, `rating`, `comment`, `photo_url`, `to_try` |
 | `user_settings` | Per-user preferences | `office_address` / `office_lat` / `office_lng`, `home_address` / `home_lat` / `home_lng` |
-| `reintro_protocols` | The reintroduction tests | `id` (text slug, shared key), `food_name`, `fodmap_family`, `photo_url` |
+| `reintro_protocols` | The reintroduction tests | `id` (text slug, shared key), `food_name`, `fodmap_family`, `photo_url`, `dose_day_1` / `dose_day_3` / `dose_day_5` |
 | `reintro_logs` | Per-test-day comfort log | `protocol_id`, `day` (1/3/5), `comfort_level`, `note` |
 | `reintro_recipes` | Per-test recipe override (markdown) | `protocol_id`, `recipe` |
 | `reintro_category_notes` | Per-test "associated foods" override (markdown) | `protocol_id`, `content` |
+| `reintro_status` | One row per user — the curated "Statut actuel" card | `validated`, `upcoming`, `avoid`, `detail` |
+| `notes` | Free-form markdown memos (Notes tab) | `title`, `content` |
 
 Storage buckets:
 
@@ -319,8 +327,8 @@ In three months you'll forget half of this. Don't try to memorise. Instead:
 1. **Read this file again.** It's faster than re-deriving the architecture.
 2. **`npm run dev`** to start the local dev server. Visit `http://localhost:5173`.
 3. **`git log --oneline`** to remind yourself of the recent changes.
-4. **Open `src/App.jsx`** to see the entry point. Mental model: App → either Login or AppShell → AppShell renders one of three screens (`aliments`, `restos`, `suggestions`) plus an optional Settings overlay → screens use `useFoods` / `useRestos` / `useSuggestions` / `useSettings` for data and the components in `ui.jsx` for rendering.
-5. **Open the Supabase dashboard** to inspect the database directly. The `Table Editor` shows your `restos`, `meals`, `foods`, `suggestions`, `user_settings` rows. The `Storage` panel shows your `food-photos` and `suggestion-photos` buckets. You can edit/delete from there if the UI doesn't yet support what you need.
+4. **Open `src/App.jsx`** to see the entry point. Mental model: App → either Login or AppShell → AppShell renders one of five screens (`aliments`, `restos`, `suggestions`, `tests`, `notes`) plus an optional Settings overlay → screens use `useFoods` / `useRestos` / `useSuggestions` / the reintro hooks / `useNotes` / `useSettings` for data and the components in `ui.jsx` for rendering.
+5. **Open the Supabase dashboard** to inspect the database directly. The `Table Editor` shows your `restos`, `meals`, `foods`, `suggestions`, `user_settings`, `reintro_*`, and `notes` rows. The `Storage` panel shows the `food-photos`, `suggestion-photos`, and `reintro-photos` buckets. You can edit/delete from there if the UI doesn't yet support what you need.
 6. **`README.md`** has the full reproducible SQL schema. **`CLAUDE.md`** has session-start conventions. **`i18n-plan.md`** is the next-feature spec for bilingual UI if you want it.
 
 You built a real app. It's small, it's solid, and it covers a specific problem you actually have. That's the best kind of software to build.

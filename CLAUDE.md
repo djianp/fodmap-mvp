@@ -14,7 +14,7 @@ Live at `https://fodmap-mvp.vercel.app`. Public GitHub repo at `github.com/djian
 - **Backend**: Supabase (Postgres + Auth + Row-Level Security). The publishable key + URL go in client env vars; secret key is never used.
 - **Hosting**: Vercel, auto-deploys on push to `main`.
 
-For deeper architecture and rationale, read `FOR PIERRE.md`. For setup commands and the SQL schema, read `README.md`. Don't duplicate them here.
+For deeper architecture and rationale, read `HOW_IT_WORKS.md`. For setup commands and the SQL schema, read `README.md`. Don't duplicate them here.
 
 ## Commands
 
@@ -80,7 +80,7 @@ Locally: `.env.local` at the project root (gitignored via `*.local`). In product
 - **Don't use Supabase's `secret` key** anywhere in this project. The publishable key + RLS is the entire security model.
 - **Don't curl-poll `fodmap-mvp.vercel.app`** in tight loops. Vercel's bot mitigation will challenge you, and the response will look like the site changed (it didn't). Use `gh api repos/djianp/fodmap-mvp/commits/<sha>/statuses` to check deploy state instead.
 - **Don't add `react-router`** unless explicitly asked. Tabs are intentionally non-routed — the state lives in memory and `localStorage`. Adding URL routing would mean updating bookmarks, share links, the auth-redirect flow, etc.
-- **Don't add documentation files (`*.md`, `README.md` updates) unless asked.** Exception: this `CLAUDE.md` and `FOR PIERRE.md` exist by user request.
+- **Don't add documentation files (`*.md`, `README.md` updates) unless asked.** Exception: this `CLAUDE.md` and `HOW_IT_WORKS.md` exist by user request.
 - **Don't pre-emptively delete the legacy prototype files** in the parent `untitled folder/` (`assets/`, `data/`, `mvp/`, `v2/`, `index.html`). They're unused but kept as a reference snapshot. Wait for explicit cleanup authorization.
 
 ## Google Maps integration
@@ -115,4 +115,4 @@ Locally: `.env.local` at the project root (gitignored via `*.local`). In product
 ## Cross-references
 
 - `README.md` — public-facing overview, setup steps, full SQL schema for the Supabase tables.
-- `FOR PIERRE.md` — narrative deep-dive: bugs encountered, lessons, technology rationale, glossary. Useful when you need *why* not *what*.
+- `HOW_IT_WORKS.md` — narrative deep-dive: bugs encountered, lessons, technology rationale, glossary. Useful when you need *why* not *what*.

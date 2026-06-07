@@ -175,7 +175,7 @@ What doesn't need touching: git repo, GitHub, Vercel, Supabase, `.env.local` —
 
 ## Cross-references (already documented elsewhere)
 
-These are **risks to be aware of**, not action items. Listed here so this roadmap is the single index — full details in `FOR PIERRE.md` under "Things to be careful about, going forward":
+These are **risks to be aware of**, not action items. Listed here so this roadmap is the single index — full details in `HOW_IT_WORKS.md` under "Things to be careful about, going forward":
 
 - **Custom domain → Supabase redirect URL allowlist** — adding a new domain breaks magic-link auth until you add it to the Supabase dashboard's Authentication → URL Configuration.
 - **Supabase free tier auto-pauses** after 7 days of inactivity → first visit takes ~10s. Fix: Pro tier ($25/mo) or daily health-check ping from a cron service.

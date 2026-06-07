@@ -26,9 +26,13 @@ UI is in French.
 
 **Suggestions tab** — meal/snack ideas tagged by occasion (Petit-déj / Déj / Snack / Dîner) and context (Maison / Bureau / Resto). Multi-select chip filters, optional photo, half-star rating, "À tester" pill, plus a short `infos_cles` displayed on the card and a longer markdown `commentaire` shown only inside the detail modal.
 
-**Tests tab** — a FODMAP reintroduction tracker. Each test is a food run over a fixed 5-day protocol (J1 100 g · J2 recovery · J3 150 g · J4 recovery · J5 200 g); on the three test days you log a digestive-comfort level (four faces, green→red) and an optional note. A list card shows the food photo and the three comfort spots; the detail view has a 5-day stepper, an editable **recipe** and an editable **"Aliments associés"** list (same-FODMAP-family foods that become safe once tolerated) — both markdown with a seed default and a "Réinitialiser" to revert. You can **add, edit, and delete** your own tests (photo upload included); the 4 starter tests are seeded on first login and are removable.
+**Tests tab** — a FODMAP reintroduction tracker. Each test is a food run over a fixed 5-day protocol (J1 100 g · J2 recovery · J3 150 g · J4 recovery · J5 200 g); on the three test days you log a digestive-comfort level (four faces, green→red) and an optional note. A list card shows the food photo and the three comfort spots; the detail view has a 5-day stepper, an editable **recipe** and an editable **"Aliments associés"** list (same-FODMAP-family foods that become safe once tolerated) — both markdown with a seed default and a "Réinitialiser" to revert. Above the list, a **"Statut actuel"** summary card surfaces which FODMAP families are validated / next / to avoid (curated free-text fields, editable from a modal). You can **add, edit, and delete** your own tests (photo upload included); the 4 starter tests are seeded on first login and are removable.
+
+**Notes tab** — free-form markdown notes about the diet (cooking principles, do-this / avoid-that reminders, anything you want to come back to). Each note is a title + markdown body; tap a card to read, tap the pencil to edit, save with the button or Cmd/Ctrl+Enter. One "Le gras" note is seeded on first login; otherwise add / edit / delete freely.
 
 **Settings** (link in the footer) — set your bureau and domicile addresses. Saved per-user in Supabase, syncs across devices. Saving triggers a background recalc of walking *and* driving times for every existing restaurant.
+
+**Across every form** — photo pickers accept both file selection and pasting an image from the clipboard (a "Coller une image" zone, plus desktop Cmd/Ctrl+V). Save buttons across modals respond to Cmd/Ctrl+Enter.
 
 UI is in French; copy uses infinitive / impersonal phrasing. A future bilingual (FR / EN) plan is documented in [`i18n-plan.md`](./i18n-plan.md).
 
@@ -99,14 +103,16 @@ fodmap-mvp/
     ├── components/
     │   ├── ui.jsx                   BlobLogo, Thumb, Chip, Verdict, FoodRow, IconBtn, Markdown
     │   ├── google-map.jsx           Real Google Maps view (lazy-loaded SDK)
-    │   └── place-autocomplete.jsx   Custom address picker (AutocompleteSuggestion + in-flow dropdown)
+    │   ├── place-autocomplete.jsx   Custom address picker (AutocompleteSuggestion + in-flow dropdown)
+    │   └── use-submit-shortcut.js   useSubmitShortcut hook — Cmd/Ctrl+Enter fires a form's primary save
     ├── data/
     │   ├── foods.js                 ~40 foods (seed only; first-login bulk insert)
     │   ├── restos.js                Seed restaurants
-    │   └── reintro.js               4 seed reintro tests + recipe/associated defaults + 5-day schedule
+    │   ├── reintro.js               4 seed reintro tests + recipe/associated defaults + 5-day schedule
+    │   └── notes.js                 1 seed markdown note ("Le gras") for the Notes tab
     ├── lib/
     │   ├── supabase.js              Supabase client (reads VITE_* env vars)
-    │   ├── user-data.js             Hooks + CRUD for foods / restos / meals / suggestions / reintro tests
+    │   ├── user-data.js             Hooks + CRUD for foods / restos / meals / suggestions / reintro tests / notes / reintro status
     │   ├── user-settings.js         Pub-sub state for office / home address + recalc
     │   ├── google-maps.js           SDK loader, getRouteTimes (walk + drive), geocode
     │   ├── places-config.js         Default office / home addresses
@@ -116,14 +122,15 @@ fodmap-mvp/
     └── screens/
         ├── login.jsx                Magic-link login
         ├── aliments.jsx             Foods tab + AlimentDetailModal
-        ├── aliment-forms.jsx        Add / edit aliment form (photo picker)
+        ├── aliment-forms.jsx        Add / edit aliment form (photo picker w/ paste)
         ├── restos.jsx               Restos tab (cards, map, modals)
         ├── resto-forms.jsx          Add resto / edit resto / meal form + shared FormShell
         ├── settings.jsx             Settings modal (office / home address)
         ├── suggestions.jsx          Suggestions tab + SuggestionDetailModal
-        ├── suggestion-forms.jsx     Add / edit suggestion form
-        ├── tests.jsx                Tests tab (list, detail, 5-day stepper, comfort log, editable recipe/associated sheets)
-        └── tests-forms.jsx          Add / edit test form (photo upload)
+        ├── suggestion-forms.jsx     Add / edit suggestion form (photo picker w/ paste)
+        ├── tests.jsx                Tests tab (list, Statut actuel card, detail, 5-day stepper, comfort log, editable recipe/associated sheets)
+        ├── tests-forms.jsx          Add / edit test form (photo picker w/ paste)
+        └── notes.jsx                Notes tab (list + detail card + inline markdown editor)
 ```
 
 ---
@@ -399,11 +406,12 @@ Then configure auth URLs at **Authentication → URL Configuration**:
   - `http://localhost:5173/**`
   - `https://fodmap-mvp.vercel.app/**`
 
-On a new user's first login, three seed sets are bulk-inserted into their account by routines in `src/lib/user-data.js`:
+On a new user's first login, four seed sets are bulk-inserted into their account by routines in `src/lib/user-data.js`:
 
 - `seedRestos()` — Paris restaurants from `src/data/restos.js`, including Google `place_id`, lat/lng, and pre-computed walking minutes so the map works immediately.
 - `seedFoods()` — the curated food entries from `src/data/foods.js`, fully editable and extendable from the Aliments tab thereafter.
 - `seedReintroProtocols()` — the 4 default reintroduction tests from `src/data/reintro.js` (reusing their slug ids so any existing logs/recipes/notes stay linked); add/edit/delete from the Tests tab thereafter. Their recipe/associated-foods defaults stay in code, resolved by slug id.
+- `seedNotes()` — the "Le gras" markdown note from `src/data/notes.js`. Add / edit / delete from the Notes tab thereafter.
 
 A separate env var, `VITE_GOOGLE_MAPS_API_KEY`, is required for the map view, the Places-Autocomplete-driven add-resto form, and the walking-time computation. See `CLAUDE.md` for the required API restrictions.
 
@@ -426,6 +434,6 @@ After adding the production URL to Supabase's redirect allowlist, magic-link log
 
 ## Notes for future-me
 
-See [`FOR PIERRE.md`](./FOR%20PIERRE.md) for a longer narrative write-up: why the project is structured this way, the bugs hit during development, and the lessons.
+See [`HOW_IT_WORKS.md`](./HOW_IT_WORKS.md) for a longer narrative write-up: why the project is structured this way, the bugs hit during development, and the lessons.
 
 For one-line architecture: **GitHub stores it. Vercel serves it. Supabase remembers it.**

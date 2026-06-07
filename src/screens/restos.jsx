@@ -392,7 +392,7 @@ export function MVPRestosScreen() {
         }
       })
     })
-    const out = [{ value: 'Toutes', label: `Toutes les protéines (${base.length})` }]
+    const out = [{ value: 'Toutes', label: `Toutes (${base.length})` }]
     const visible = proteines
       .filter(p => p !== 'Toutes' && (counts[p] > 0 || p === proteine))
       .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))

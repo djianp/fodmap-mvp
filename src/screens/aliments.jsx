@@ -264,7 +264,7 @@ export function MVPAlimentsScreen({ moment, setMoment }) {
       ) : (
         orderedCats.map(cat => (
           <div key={cat} style={{ marginBottom: 18 }}>
-            <div style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase',
+            <div style={{ fontSize: 12, letterSpacing: 2.5, textTransform: 'uppercase',
               fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>
               {CATEGORY_ICONS[cat] && <span style={{ marginRight: 6, letterSpacing: 0 }} aria-hidden="true">{CATEGORY_ICONS[cat]}</span>}
               {cat} · {groups[cat].length}
